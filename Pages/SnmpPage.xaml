@@ -1,0 +1,74 @@
+﻿<infra:ToolPage x:Class="NetStuff.Pages.SnmpPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure"
+                xmlns:ctl="clr-namespace:NetStuff.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Text="SNMP-Browser" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Fragt Switches, Router, Drucker und Server per SNMP v1/v2c ab: Systeminfo, Ports mit Status/Geschwindigkeit/VLAN, Live-Traffic, LLDP-Nachbarn des Switches, Tonerstände und beliebige OIDs." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Gerät (IP/Host)" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="HostBox" Width="200" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Community" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="CommunityBox" Text="public" Width="140" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Version" Style="{StaticResource Label}" />
+                        <ComboBox x:Name="VersionBox" Width="100" SelectedIndex="0">
+                            <ComboBoxItem Content="v2c" />
+                            <ComboBoxItem Content="v1" />
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Port" Style="{StaticResource Label}" />
+                        <ui:NumberBox x:Name="PortBox" Value="161" Minimum="1" Maximum="65535" Width="140" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="OID für freien Walk" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="OidBox" Text="1.3.6.1.2.1.1" Width="200" />
+                    </StackPanel>
+                </WrapPanel>
+                <WrapPanel>
+                    <ui:Button x:Name="StartButton" Content="Systeminfo" Style="{StaticResource PrimaryButton}" Click="System_Click" Margin="0,0,8,0" />
+                    <ui:Button Content="Ports / Schnittstellen" Click="Interfaces_Click" Margin="0,0,8,0" Height="34" />
+                    <ui:Button Content="LLDP-Nachbarn" Click="Lldp_Click" Margin="0,0,8,0" Height="34" />
+                    <ui:Button Content="Drucker-Verbrauchsmaterial" Click="Supplies_Click" Margin="0,0,8,0" Height="34" />
+                    <ui:Button Content="Walk" Click="Walk_Click" Margin="0,0,8,0" Height="34" />
+                    <ui:Button x:Name="StopButton" Content="Live-Traffic stoppen" Click="Stop_Click" IsEnabled="False" Height="34" />
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" x:Name="StatusText" Style="{StaticResource Muted}" Margin="2,0,0,8" />
+
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <ScrollViewer x:Name="ResultScroll" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ResultsPanel" />
+            </ScrollViewer>
+            <DataGrid x:Name="ResultGrid" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" CanUserAddRows="False"
+                      Visibility="Collapsed" SelectionMode="Single" MouseDoubleClick="ResultGrid_MouseDoubleClick" />
+            <Border Grid.Row="1" x:Name="TrafficCard" Style="{StaticResource Card}" Margin="0,10,0,0" Padding="8" Height="220" Visibility="Collapsed">
+                <ctl:LineChart x:Name="TrafficChart" Unit="Mbit/s" ShowLoss="False" MaxPoints="90" />
+            </Border>
+        </Grid>
+    </Grid>
+</infra:ToolPage>

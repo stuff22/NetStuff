@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traceroute-Karte</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body, #map { height: 100%; margin: 0; }
+  body { background: #1c1c1c; font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; }
+  body.light { background: #f3f3f3; }
+  .hop {
+    background: #4ca3ff; color: #fff; border: 2px solid #fff; border-radius: 50%;
+    width: 22px; height: 22px; line-height: 20px; text-align: center; font-size: 11px; font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,.5); box-sizing: border-box;
+  }
+  .hop.start { background: #3fb950; }
+  .hop.end { background: #f85149; }
+  .leaflet-popup-content { font-size: 12.5px; line-height: 1.45; }
+  /* Dunkles Design: OSM-Kacheln invertieren */
+  body:not(.light) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6); }
+  body:not(.light) .leaflet-container { background: #1c1c1c; }
+  #empty {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000;
+    color: #999; font-size: 14px; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="empty">Starte einen Traceroute, um die Route auf der Karte zu sehen.</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const dark = params.get('theme') !== 'light';
+  if (!dark) document.body.classList.add('light');
+
+  const map = L.map('map', { worldCopyJump: true }).setView([48, 12], 3);
+  let tiles;
+  function setTheme(isDark) {
+    document.body.classList.toggle('light', !isDark);
+    if (tiles) return;
+    tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'
+    }).addTo(map);
+  }
+  setTheme(dark);
+
+  const layer = L.layerGroup().addTo(map);
+
+  function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  // points: [{hop, ip, host, lat, lon, place, isp, rtt, kind}]
+  function setPoints(points) {
+    layer.clearLayers();
+    document.getElementById('empty').style.display = points.length ? 'none' : 'flex';
+    if (!points.length) return;
+
+    const latlngs = [];
+    points.forEach((p, i) => {
+      const ll = [p.lat, p.lon];
+      latlngs.push(ll);
+      const cls = p.kind === 'start' ? 'hop start' : (p.kind === 'end' ? 'hop end' : 'hop');
+      const icon = L.divIcon({ className: '', html: `<div class="${cls}">${p.kind === 'start' ? '⌂' : esc(p.hop)}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] });
+      L.marker(ll, { icon }).addTo(layer).bindPopup(
+        `<b>${p.kind === 'start' ? 'Dein Standort' : 'Hop ' + esc(p.hop)}</b><br>${esc(p.ip)}` +
+        (p.host ? `<br>${esc(p.host)}` : '') +
+        (p.place ? `<br>${esc(p.place)}` : '') +
+        (p.isp ? `<br><i>${esc(p.isp)}</i>` : '') +
+        (p.rtt ? `<br>${esc(p.rtt)}` : ''));
+    });
+
+    for (let i = 1; i < latlngs.length; i++) {
+      L.polyline([latlngs[i - 1], latlngs[i]], { color: '#4ca3ff', weight: 3, opacity: .85, dashArray: '6 6' }).addTo(layer);
+    }
+    map.fitBounds(L.latLngBounds(latlngs).pad(0.25), { maxZoom: 7 });
+  }
+
+  window.setPoints = setPoints;
+  window.setTheme = setTheme;
+</script>
+</body>
+</html>

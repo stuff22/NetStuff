@@ -1,0 +1,122 @@
+﻿<ui:FluentWindow x:Class="NetStuff.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="Net-Stuff" Width="1400" Height="900" MinWidth="1000" MinHeight="640"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round">
+    <Window.Resources>
+        <Style x:Key="TabHeaderClose" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Net-Stuff" x:Name="TitleBar">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/netstuff.ico" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Navigation -->
+            <DockPanel Grid.Column="0" Margin="8,0,4,8">
+                <StackPanel DockPanel.Dock="Bottom" Margin="4,8,4,0">
+                    <ui:Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Settings_Click" Appearance="Transparent">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE713;" Margin="0,2,10,0" />
+                            <TextBlock Text="Einstellungen" />
+                        </StackPanel>
+                    </ui:Button>
+                    <ui:Button x:Name="ThemeButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                               Click="ThemeButton_Click" Appearance="Transparent">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE793;" Margin="0,2,10,0" />
+                            <TextBlock x:Name="ThemeLabel" Text="Helles Design" />
+                        </StackPanel>
+                    </ui:Button>
+                    <TextBlock x:Name="VersionText" Style="{StaticResource Muted}" Margin="12,6,0,0" />
+                </StackPanel>
+
+                <ui:TextBox x:Name="NavSearch" DockPanel.Dock="Top" PlaceholderText="Werkzeug suchen …" Margin="4,0,4,8"
+                            TextChanged="NavSearch_TextChanged" ClearButtonEnabled="True" />
+
+                <ListBox x:Name="NavList" SelectionChanged="NavList_SelectionChanged" BorderThickness="0" Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseDown="NavList_PreviewMouseDown">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="In neuem Tab öffnen" Click="OpenInNewTab_Click" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Margin="10,12,0,4"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="2,1">
+                                <TextBlock FontFamily="{StaticResource IconFont}" Text="{Binding Glyph}" FontSize="16"
+                                           Width="22" Margin="0,1,10,0" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                <TextBlock Text="{Binding Title}" FontSize="13.5" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- Inhalt -->
+            <DockPanel Grid.Column="1" Margin="4,0,8,8">
+                <!-- Werkzeugleiste -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <TextBlock x:Name="ToolbarInfo" Style="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Projekt:" VerticalAlignment="Center" Margin="2,0,8,0" Style="{StaticResource Muted}" />
+                        <ComboBox x:Name="ProjectBox" Width="280" DisplayMemberPath="Display" SelectionChanged="ProjectBox_SelectionChanged" />
+                        <ui:Button Click="Projects_Click" Margin="6,0,0,0">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8F1;" Margin="0,2,0,0" />
+                        </ui:Button>
+                    </StackPanel>
+                </DockPanel>
+
+                <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged" Padding="0" BorderThickness="0" Background="Transparent" />
+            </DockPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

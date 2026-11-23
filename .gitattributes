@@ -1,0 +1,14 @@
+# Zeilenenden automatisch normalisieren (Windows: CRLF, Mac: LF – im Repository LF)
+* text=auto
+
+# Windows-Skripte immer mit CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binärdateien
+*.png binary
+*.ico binary
+*.jpg binary
+*.exe binary
+*.dll binary
+*.zip binary

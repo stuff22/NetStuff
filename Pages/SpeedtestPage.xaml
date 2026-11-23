@@ -1,0 +1,122 @@
+﻿<infra:ToolPage x:Class="NetStuff.Pages.SpeedtestPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure"
+                xmlns:ctl="clr-namespace:NetStuff.Controls">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Speedtest &amp; iPerf3" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Misst Download, Upload, Ping und Jitter ins Internet (Cloudflare-Netz) oder den Durchsatz zu einem iPerf3-Server im LAN/WAN – ohne Zusatzsoftware." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Internet -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <ui:Button x:Name="StartButton" Content="Internet-Test starten" Style="{StaticResource PrimaryButton}" Click="Start_Click" />
+                                <ui:Button x:Name="StopButton" Content="Stopp" Margin="8,0,0,0" MinWidth="90" Height="34" IsEnabled="False" Click="Stop_Click" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Internet-Speedtest" Style="{StaticResource SectionTitle}" />
+                                <TextBlock x:Name="NetInfo" Style="{StaticResource Muted}" Text="Server: speed.cloudflare.com (nächstgelegenes Rechenzentrum)" />
+                            </StackPanel>
+                        </DockPanel>
+                        <UniformGrid Columns="4" Margin="0,16,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Download" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="DownText" Text="–" FontSize="34" FontWeight="SemiBold" />
+                                <TextBlock Text="Mbit/s" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Upload" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="UpText" Text="–" FontSize="34" FontWeight="SemiBold" />
+                                <TextBlock Text="Mbit/s" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Ping" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="PingText" Text="–" FontSize="34" FontWeight="SemiBold" />
+                                <TextBlock Text="ms" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Jitter" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="JitterText" Text="–" FontSize="34" FontWeight="SemiBold" />
+                                <TextBlock Text="ms" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <ctl:LineChart x:Name="NetChart" Height="200" Unit="Mbit/s" ShowLoss="False" MaxPoints="80" />
+                        <TextBlock x:Name="NetStatus" Style="{StaticResource Muted}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- iPerf3 -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="iPerf3-Durchsatz" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Style="{StaticResource Muted}" Margin="0,-4,0,10"
+                                   Text="Für Messungen im eigenen Netz: auf einem Server/PC „iperf3 -s“ starten und hier dessen IP eintragen. Öffentliche Server sind oft belegt – dann wird automatisch der nächste Port probiert." />
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,10,8">
+                                <TextBlock Text="Server" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="IperfHost" IsEditable="True" Width="260">
+                                    <ComboBoxItem Content="speedtest.wtnet.de" />
+                                    <ComboBoxItem Content="ping.online.net" />
+                                    <ComboBoxItem Content="iperf3.moji.fr" />
+                                    <ComboBoxItem Content="iperf.par2.as49434.net" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,8">
+                                <TextBlock Text="Port(s)" Style="{StaticResource Label}" />
+                                <ui:TextBox x:Name="IperfPort" Text="5200-5209" Width="130" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,8">
+                                <TextBlock Text="Richtung" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="IperfDir" Width="200" SelectedIndex="2">
+                                    <ComboBoxItem Content="Upload (Client → Server)" />
+                                    <ComboBoxItem Content="Download (Server → Client)" />
+                                    <ComboBoxItem Content="Beide nacheinander" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,8">
+                                <TextBlock Text="Dauer (s)" Style="{StaticResource Label}" />
+                                <ui:NumberBox x:Name="IperfTime" Value="10" Minimum="3" Maximum="120" Width="140" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,8">
+                                <TextBlock Text="Streams" Style="{StaticResource Label}" />
+                                <ui:NumberBox x:Name="IperfStreams" Value="4" Minimum="1" Maximum="16" Width="140" />
+                            </StackPanel>
+                            <ui:Button x:Name="IperfButton" Content="iPerf3 starten" Style="{StaticResource PrimaryButton}" Click="Iperf_Click" VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                        </WrapPanel>
+                        <UniformGrid Columns="3" Margin="0,8,0,8">
+                            <StackPanel>
+                                <TextBlock Text="Upload" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="IperfUp" Text="–" FontSize="30" FontWeight="SemiBold" />
+                                <TextBlock Text="Mbit/s" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Download" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="IperfDown" Text="–" FontSize="30" FontWeight="SemiBold" />
+                                <TextBlock Text="Mbit/s" Style="{StaticResource Muted}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="TCP-Retransmits" Style="{StaticResource Label}" />
+                                <TextBlock x:Name="IperfRetr" Text="–" FontSize="30" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <ctl:LineChart x:Name="IperfChart" Height="180" Unit="Mbit/s" ShowLoss="False" MaxPoints="60" />
+                        <TextBlock x:Name="IperfStatus" Style="{StaticResource Muted}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Ergebnisse" Style="{StaticResource SectionTitle}" />
+                        <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CheckItemTemplate}" Focusable="False" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>

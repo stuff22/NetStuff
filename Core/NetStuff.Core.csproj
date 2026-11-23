@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Plattformunabhängiger Kern von Net-Stuff (Windows, macOS, iOS): Dienste, Modelle, Speicher, Übersetzung, Berichte.
+       Keine Abhängigkeit zu WPF/Windows – Plattformfunktionen laufen über NetStuff.Platform. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>NetStuff</RootNamespace>
+    <AssemblyName>NetStuff.Core</AssemblyName>
+    <Version>1.1.3</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\lang\*.json" />
+    <EmbeddedResource Include="Assets\netstuff.png" LogicalName="NetStuff.Assets.netstuff.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DnsClient" Version="1.8.0" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.7" />
+  </ItemGroup>
+
+</Project>

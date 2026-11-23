@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>NetStuff</AssemblyName>
+    <RootNamespace>NetStuff</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\netstuff.ico</ApplicationIcon>
+    <Version>1.1.3</Version>
+    <Product>Net-Stuff</Product>
+    <AssemblyTitle>Net-Stuff</AssemblyTitle>
+    <Description>Das Schweizer Taschenmesser für Netzwerktechniker</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Stabilität: Code vorab kompilieren und profilgesteuerte JIT-Nachoptimierung abschalten
+         (weniger JIT-Arbeit zur Laufzeit) -->
+    <TieredPGO>false</TieredPGO>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Der plattformunabhängige Kern liegt im Unterordner Core (eigenes Projekt), Release-Ordner nicht mitkompilieren -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Core\**;Net-Stuff-*\**;publish\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\map.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Assets\netstuff.ico" />
+    <Resource Include="Assets\netstuff.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Core\NetStuff.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Notifications" Version="7.1.2" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>
+

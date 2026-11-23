@@ -1,0 +1,165 @@
+using System.Collections.ObjectModel;
+using System.Windows;
+using NetStuff.Controls;
+using NetStuff.Infrastructure;
+using NetStuff.Services;
+
+namespace NetStuff.Pages;
+
+public partial class SpeedtestPage : ToolPage
+{
+    private readonly ObservableCollection<CheckItem> _results = new();
+    private CancellationTokenSource _cts;
+
+    public SpeedtestPage()
+    {
+        InitializeComponent();
+        ResultList.ItemsSource = _results;
+        if (!string.IsNullOrEmpty(AppSettings.Current.IperfServer)) IperfHost.Text = AppSettings.Current.IperfServer;
+        else IperfHost.SelectedIndex = 0;
+    }
+
+    public override string PrimaryTarget => IperfHost.Text?.Trim() ?? "";
+
+    public override void SetPrimaryTarget(string value) => IperfHost.Text = value;
+
+    private static string Mbps(double v) => v >= 100 ? v.ToString("0") : v.ToString("0.0");
+
+    private void Busy(bool b)
+    {
+        StartButton.IsEnabled = !b;
+        IperfButton.IsEnabled = !b;
+        StopButton.IsEnabled = b;
+    }
+
+    private async void Start_Click(object sender, RoutedEventArgs e)
+    {
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+        Busy(true);
+        DownText.Text = UpText.Text = PingText.Text = JitterText.Text = "…";
+        NetChart.SeriesList.Clear();
+        var down = new LineChart.Series { Name = L.T("Download"), Color = Palette.Series[0] };
+        var up = new LineChart.Series { Name = L.T("Upload"), Color = Palette.Series[2] };
+        NetChart.SeriesList.Add(down);
+        NetChart.SeriesList.Add(up);
+        NetChart.Refresh();
+
+        try
+        {
+            var meta = await CloudflareSpeed.MetaAsync(ct);
+            string M(string k) => meta.TryGetValue(k, out var v) ? v : "";
+            NetInfo.Text = L.F("Server: Cloudflare {0} {1} · Ihre IP: {2} · {3}", M("colo"), M("city"), M("clientIp"), M("asOrganization"));
+
+            NetStatus.Text = L.T("Messe Latenz …");
+            var (lat, jit) = await CloudflareSpeed.LatencyAsync(10, ct);
+            PingText.Text = lat.ToString("0.0");
+            JitterText.Text = jit.ToString("0.0");
+
+            NetStatus.Text = L.T("Messe Download …");
+            var dl = await CloudflareSpeed.DownloadAsync(10, 6, new Progress<SpeedSample>(s =>
+            {
+                down.Values.Add(s.Mbps); up.Values.Add(null);
+                DownText.Text = Mbps(s.Mbps);
+                NetChart.Refresh();
+            }), ct);
+            DownText.Text = Mbps(dl);
+
+            NetStatus.Text = L.T("Messe Upload …");
+            var ul = await CloudflareSpeed.UploadAsync(10, 4, new Progress<SpeedSample>(s =>
+            {
+                up.Values.Add(s.Mbps); down.Values.Add(null);
+                UpText.Text = Mbps(s.Mbps);
+                NetChart.Refresh();
+            }), ct);
+            UpText.Text = Mbps(ul);
+            NetStatus.Text = L.F("Fertig – {0:HH:mm:ss}", DateTime.Now);
+
+            _results.Insert(0, new CheckItem(L.F("Internet {0:HH:mm}", DateTime.Now),
+                L.F("↓ {0} Mbit/s · ↑ {1} Mbit/s · Ping {2:0.0} ms · Jitter {3:0.0} ms · {4} ({5})", Mbps(dl), Mbps(ul), lat, jit, M("asOrganization"), M("colo")),
+                dl > 0 ? Level.Ok : Level.Warn));
+        }
+        catch (OperationCanceledException) { NetStatus.Text = L.T("Abgebrochen."); }
+        catch (Exception ex) { NetStatus.Text = L.T("Fehler: ") + (ex.InnerException?.Message ?? ex.Message); }
+        finally
+        {
+            Busy(false);
+            _cts = null;
+        }
+    }
+
+    private async void Iperf_Click(object sender, RoutedEventArgs e)
+    {
+        var host = IperfHost.Text?.Trim();
+        if (string.IsNullOrEmpty(host)) return;
+        List<int> ports;
+        try { ports = PortCatalog.Parse(IperfPort.Text); }
+        catch { IperfStatus.Text = L.T("Ungültige Portangabe."); return; }
+        if (ports.Count == 0) ports.Add(5201);
+
+        AppSettings.Current.IperfServer = host;
+        AppSettings.Current.Save();
+        HistoryStore.Add("speed", "Speedtest & iPerf3", host);
+
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+        Busy(true);
+        int seconds = (int)(IperfTime.Value ?? 10);
+        int streams = (int)(IperfStreams.Value ?? 4);
+        var dirs = IperfDir.SelectedIndex switch { 0 => new[] { false }, 1 => new[] { true }, _ => new[] { false, true } };
+        IperfUp.Text = IperfDown.Text = IperfRetr.Text = "–";
+        IperfChart.SeriesList.Clear();
+        var su = new LineChart.Series { Name = L.T("Upload"), Color = Palette.Series[2] };
+        var sd = new LineChart.Series { Name = L.T("Download"), Color = Palette.Series[0] };
+        IperfChart.SeriesList.Add(su);
+        IperfChart.SeriesList.Add(sd);
+
+        try
+        {
+            int portIndex = 0;
+            foreach (var reverse in dirs)
+            {
+                IperfResult res = null;
+                while (res == null)
+                {
+                    int port = ports[portIndex % ports.Count];
+                    IperfStatus.Text = L.F("{0} zu {1}:{2} läuft …", reverse ? "Download" : "Upload", host, port);
+                    try
+                    {
+                        res = await IperfClient.RunAsync(host, port, seconds, streams, reverse, new Progress<SpeedSample>(s =>
+                        {
+                            (reverse ? sd : su).Values.Add(s.Mbps);
+                            (reverse ? su : sd).Values.Add(null);
+                            (reverse ? IperfDown : IperfUp).Text = Mbps(s.Mbps);
+                            IperfChart.Refresh();
+                        }), ct);
+                    }
+                    catch (Exception busy) when (busy is IperfBusyException or System.Net.Sockets.SocketException && ports.Count > 1)
+                    {
+                        portIndex++;
+                        if (portIndex >= ports.Count * (dirs.Length)) throw new Exception(L.T("Kein Port des Servers verfügbar (belegt oder nicht erreichbar) – bitte später erneut versuchen oder anderen Server wählen."));
+                        await Task.Delay(500, ct);
+                    }
+                }
+                (reverse ? IperfDown : IperfUp).Text = Mbps(res.Mbps);
+                if (res.Retransmits >= 0) IperfRetr.Text = res.Retransmits.ToString("N0");
+                _results.Insert(0, new CheckItem(L.F("iPerf3 {0} {1:HH:mm}", L.T(res.Direction), DateTime.Now),
+                    L.F("{0} Mbit/s · {1} · {2} Streams, {3} s · Server {4}", Mbps(res.Mbps), NetUtil.FormatBytes(res.Bytes), streams, seconds, host)
+                    + (res.Retransmits >= 0 ? L.F(" · Retransmits {0}", res.Retransmits) : ""), Level.Ok));
+            }
+            IperfStatus.Text = L.F("Fertig – {0:HH:mm:ss}", DateTime.Now);
+        }
+        catch (OperationCanceledException) { IperfStatus.Text = L.T("Abgebrochen."); }
+        catch (Exception ex)
+        {
+            IperfStatus.Text = L.T("Fehler: ") + (ex is System.Net.Sockets.SocketException ? L.T("Server nicht erreichbar (Firewall? iperf3 -s gestartet?)") : ex.Message);
+        }
+        finally
+        {
+            Busy(false);
+            _cts = null;
+        }
+    }
+
+    private void Stop_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();
+}

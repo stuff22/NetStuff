@@ -1,0 +1,77 @@
+<infra:ToolPage x:Class="NetStuff.Pages.ProjectsPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Text="Projekte &amp; Berichte" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Kundenprojekte anlegen, Messergebnisse sammeln (Button „Zum Bericht“ in jedem Werkzeug) und als professionellen HTML- oder PDF-Bericht mit Ihrem Logo exportieren." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="6*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Projektliste -->
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <ui:Button Content="Neues Projekt" Style="{StaticResource PrimaryButton}" Click="New_Click" />
+                    <ui:Button Content="Löschen" Click="Delete_Click" Margin="8,0,0,0" Height="34" />
+                </StackPanel>
+                <ListBox x:Name="ProjectList" DisplayMemberPath="Display" SelectionChanged="ProjectList_SelectionChanged" />
+            </DockPanel>
+
+            <!-- Details -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="DetailPanel" IsEnabled="False">
+                    <TextBlock Text="Kunde" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="CustomerBox" Margin="0,0,0,8" LostFocus="Field_LostFocus" />
+                    <TextBlock Text="Standort" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="SiteBox" Margin="0,0,0,8" LostFocus="Field_LostFocus" />
+                    <TextBlock Text="Adresse" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="AddressBox" Margin="0,0,0,8" AcceptsReturn="True" Height="56" TextWrapping="Wrap" VerticalContentAlignment="Top" LostFocus="Field_LostFocus" />
+                    <TextBlock Text="Ansprechpartner" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="ContactBox" Margin="0,0,0,8" LostFocus="Field_LostFocus" />
+                    <TextBlock Text="Notizen / Zusammenfassung (erscheint im Bericht)" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="NotesBox" Margin="0,0,0,12" AcceptsReturn="True" Height="90" TextWrapping="Wrap" VerticalContentAlignment="Top" LostFocus="Field_LostFocus" />
+
+                    <DockPanel Margin="0,4,0,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ui:Button Content="▲" Click="Up_Click" Height="30" MinWidth="36" />
+                            <ui:Button Content="▼" Click="Down_Click" Height="30" MinWidth="36" Margin="4,0,0,0" />
+                            <ui:Button Content="Entfernen" Click="RemoveEntry_Click" Height="30" Margin="4,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="Berichtseinträge" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" Margin="0" />
+                    </DockPanel>
+                    <ListBox x:Name="EntryList" DisplayMemberPath="Summary" Height="220" SelectionChanged="EntryList_SelectionChanged" />
+                    <TextBlock Text="Kommentar zum ausgewählten Eintrag" Style="{StaticResource Label}" Margin="0,8,0,4" />
+                    <ui:TextBox x:Name="CommentBox" AcceptsReturn="True" Height="70" TextWrapping="Wrap" VerticalContentAlignment="Top" LostFocus="Comment_LostFocus" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <ui:Button Content="Vorschau aktualisieren" Click="Preview_Click" Height="34" />
+                        <ui:Button Content="Als PDF speichern" Style="{StaticResource PrimaryButton}" Click="Pdf_Click" Margin="8,0,0,0" />
+                        <ui:Button Content="Als HTML speichern" Click="Html_Click" Margin="8,0,0,0" Height="34" />
+                    </StackPanel>
+                    <TextBlock x:Name="StatusText" Style="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Vorschau -->
+            <Border Grid.Column="4" CornerRadius="8" ClipToBounds="True" BorderThickness="1" Background="White"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                <wv2:WebView2 x:Name="Preview" />
+            </Border>
+        </Grid>
+    </Grid>
+</infra:ToolPage>

@@ -1,0 +1,72 @@
+﻿<infra:ToolPage x:Class="NetStuff.Pages.TraceroutePage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Text="Traceroute &amp; Karte" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Verfolgt den Weg der Pakete Hop für Hop und zeigt die Stationen mit Standort und Provider auf der Weltkarte." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}">
+            <WrapPanel VerticalAlignment="Bottom">
+                <StackPanel Margin="0,0,10,0">
+                    <TextBlock Text="Ziel" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="TargetBox" Text="google.com" Width="300" KeyDown="TargetBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,10,0">
+                    <TextBlock Text="Max. Hops" Style="{StaticResource Label}" />
+                    <ui:NumberBox x:Name="MaxHopsBox" Value="30" Minimum="1" Maximum="64" Width="150" />
+                </StackPanel>
+                <StackPanel Margin="0,0,10,0">
+                    <TextBlock Text="Timeout (ms)" Style="{StaticResource Label}" />
+                    <ui:NumberBox x:Name="TimeoutBox" Value="1500" Minimum="200" Maximum="10000" Width="150" SmallChange="100" />
+                </StackPanel>
+                <StackPanel Margin="0,0,16,0" VerticalAlignment="Bottom">
+                    <CheckBox x:Name="V6Box" Content="IPv6 bevorzugen" />
+                </StackPanel>
+                <ui:Button x:Name="StartButton" Content="Start" Style="{StaticResource PrimaryButton}" Click="Start_Click" VerticalAlignment="Bottom" />
+                <ui:Button x:Name="StopButton" Content="Stopp" Margin="8,0,0,0" MinWidth="90" Height="34" IsEnabled="False" Click="Stop_Click" VerticalAlignment="Bottom" />
+                <ui:Button Content="Kopieren" Margin="8,0,0,0" Height="34" Click="Copy_Click" VerticalAlignment="Bottom" />
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*" MinHeight="160" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="3*" MinHeight="120" />
+            </Grid.RowDefinitions>
+            <DataGrid Grid.Row="2" x:Name="HopGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="56" />
+                    <DataGridTextColumn Header="IP-Adresse" Binding="{Binding Ip}" Width="160" />
+                    <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="150" />
+                    <DataGridTextColumn Header="Hostname" Binding="{Binding Host}" Width="260" />
+                    <DataGridTextColumn Header="Ort" Binding="{Binding Place}" Width="170" />
+                    <DataGridTextColumn Header="Provider / AS" Binding="{Binding Isp}" Width="*" MinWidth="180" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" />
+            <Border Grid.Row="0" CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                <Grid>
+                    <wv2:WebView2 x:Name="Map" />
+                    <TextBlock x:Name="MapError" Visibility="Collapsed" Style="{StaticResource Muted}" Margin="16"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="3" x:Name="StatusText" Style="{StaticResource Muted}" Margin="2,8,0,0"
+                   Text="Geodaten: ip-api.com · Karte: © OpenStreetMap-Mitwirkende. Standorte von Routern sind Näherungswerte." />
+    </Grid>
+</infra:ToolPage>

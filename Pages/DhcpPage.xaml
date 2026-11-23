@@ -1,0 +1,32 @@
+﻿<infra:ToolPage x:Class="NetStuff.Pages.DhcpPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="DHCP-Test" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Sendet eine DHCP-Anfrage (DISCOVER) ins Netz und zeigt alle DHCP-Server, die antworten – inklusive angebotener Einstellungen. Findet auch fremde („rogue“) DHCP-Server. Es wird keine Adresse übernommen." Style="{StaticResource PageSubtitle}" />
+            <Border Style="{StaticResource Card}">
+                <WrapPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Netzwerkadapter" Style="{StaticResource Label}" />
+                        <ComboBox x:Name="AdapterBox" Width="380" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,10,8">
+                        <TextBlock Text="Wartezeit (s)" Style="{StaticResource Label}" />
+                        <ui:NumberBox x:Name="WaitBox" Value="6" Minimum="2" Maximum="30" Width="140" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,16,8" VerticalAlignment="Bottom">
+                        <CheckBox x:Name="RandomMacBox" Content="Zufällige MAC verwenden" />
+                    </StackPanel>
+                    <ui:Button x:Name="StartButton" Content="DHCP-Server suchen" Style="{StaticResource PrimaryButton}" Click="Start_Click" VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                </WrapPanel>
+            </Border>
+            <TextBlock x:Name="StatusText" Style="{StaticResource Muted}" Margin="2,0,0,10" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>

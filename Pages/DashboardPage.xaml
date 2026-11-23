@@ -1,0 +1,51 @@
+<infra:ToolPage x:Class="NetStuff.Pages.DashboardPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Übersicht" Style="{StaticResource PageTitle}" />
+                <ui:Button Content="Aktualisieren" Click="Refresh_Click" VerticalAlignment="Center" Margin="20,4,0,0">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="ArrowSync24" /></ui:Button.Icon>
+                </ui:Button>
+            </StackPanel>
+            <TextBlock Text="Netzwerkadapter dieses PCs, Gateways, DNS-Server und die öffentliche IP-Adresse." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Internetverbindung" Style="{StaticResource SectionTitle}" />
+                        <ItemsControl x:Name="PublicList" ItemTemplate="{StaticResource CheckItemTemplate}" Focusable="False" />
+                    </StackPanel>
+                </Border>
+                <TextBlock Text="Netzwerkadapter" Style="{StaticResource SectionTitle}" Margin="2,8,0,8" />
+                <ItemsControl x:Name="AdapterList" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Margin="0,0,12,12">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Right" CornerRadius="10" Padding="8,2" Background="{Binding StatusBrush}">
+                                            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="White" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}" Margin="0,2,0,10" />
+                                    <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource CheckItemTemplate}" Focusable="False" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>

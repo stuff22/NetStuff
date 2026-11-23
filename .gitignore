@@ -1,0 +1,24 @@
+# Build-Ausgaben
+bin/
+obj/
+publish/
+*.wpftmp.*
+
+# Releases (große EXE/ZIP-Dateien – gehören nicht ins Repository)
+Net-Stuff-*/
+
+# IDE / Benutzerdateien
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+
+# Betriebssystem
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Lokale Claude-Einstellungen
+.claude/settings.local.json

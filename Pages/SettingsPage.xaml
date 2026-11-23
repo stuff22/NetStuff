@@ -1,0 +1,82 @@
+<infra:ToolPage x:Class="NetStuff.Pages.SettingsPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Einstellungen" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Sprache, Erscheinungsbild, Ihre Firmendaten für Berichte und Benachrichtigungen." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Allgemein" Style="{StaticResource SectionTitle}" />
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,16,8">
+                                <TextBlock Text="Sprache / Language" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="LangBox" Width="220" SelectionChanged="Changed">
+                                    <ComboBoxItem Content="Systemsprache" Tag="system" />
+                                    <ComboBoxItem Content="Deutsch" Tag="de" />
+                                    <ComboBoxItem Content="English" Tag="en" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8">
+                                <TextBlock Text="Design beim Start" Style="{StaticResource Label}" />
+                                <ComboBox x:Name="ThemeBox" Width="220" SelectionChanged="Changed">
+                                    <ComboBoxItem Content="Wie Windows" Tag="system" />
+                                    <ComboBoxItem Content="Hell" Tag="light" />
+                                    <ComboBoxItem Content="Dunkel" Tag="dark" />
+                                </ComboBox>
+                            </StackPanel>
+                        </WrapPanel>
+                        <CheckBox x:Name="NotifyBox" Content="Windows-Benachrichtigungen bei Ausfällen (Überwachung)" Checked="Changed" Unchecked="Changed" Margin="0,4,0,0" />
+                        <TextBlock x:Name="RestartHint" Style="{StaticResource Muted}" Foreground="#D29922" Margin="0,8,0,0" Visibility="Collapsed"
+                                   Text="Die Sprache wird nach einem Neustart von Net-Stuff übernommen." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Berichte – Ihre Firmendaten" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="Firma" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="CompanyBox" Margin="0,0,0,8" LostFocus="Changed" />
+                        <TextBlock Text="Techniker" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="TechBox" Margin="0,0,0,8" LostFocus="Changed" />
+                        <TextBlock Text="Kontakt (Adresse, Telefon, E-Mail)" Style="{StaticResource Label}" />
+                        <ui:TextBox x:Name="ContactBox" Margin="0,0,0,8" AcceptsReturn="True" Height="70" TextWrapping="Wrap" VerticalContentAlignment="Top" LostFocus="Changed" />
+                        <TextBlock Text="Logo (PNG, JPG oder SVG)" Style="{StaticResource Label}" />
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <ui:Button Content="Auswählen …" Click="Logo_Click" Margin="8,0,0,0" Height="34" />
+                                <ui:Button Content="Entfernen" Click="LogoRemove_Click" Margin="8,0,0,0" Height="34" />
+                            </StackPanel>
+                            <ui:TextBox x:Name="LogoBox" IsReadOnly="True" PlaceholderText="Standard: Net-Stuff-Logo" />
+                        </DockPanel>
+                        <Image x:Name="LogoPreview" MaxHeight="70" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Daten" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="DataDirText" Style="{StaticResource Muted}" Margin="0,0,0,8" />
+                        <WrapPanel>
+                            <ui:Button Content="Datenordner öffnen" Click="OpenData_Click" Height="34" Margin="0,0,8,0" />
+                            <ui:Button Content="Herstellerliste aktualisieren" Click="Oui_Click" Height="34" Margin="0,0,8,0" />
+                        </WrapPanel>
+                        <TextBlock x:Name="StatusText" Style="{StaticResource Muted}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Über Net-Stuff" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="AboutText" Style="{StaticResource Muted}" LineHeight="20" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>
