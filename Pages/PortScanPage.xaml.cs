@@ -159,7 +159,7 @@ public partial class PortScanPage : ToolPage
                 await ssl.AuthenticateAsClientAsync(new System.Net.Security.SslClientAuthenticationOptions { TargetHost = ip.ToString() }, cts.Token);
                 var cert = ssl.RemoteCertificate as System.Security.Cryptography.X509Certificates.X509Certificate2
                            ?? (ssl.RemoteCertificate != null ? new System.Security.Cryptography.X509Certificates.X509Certificate2(ssl.RemoteCertificate) : null);
-                var info = SslPage.ProtoName(ssl.SslProtocol) + (cert != null ? " · " + cert.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false) : "");
+                var info = TlsInfo.ProtoName(ssl.SslProtocol) + (cert != null ? " · " + cert.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false) : "");
                 if (port is 443 or 4433 or 5001 or 8006 or 8443 or 9443)
                 {
                     var head = await HttpHead(ssl, ip.ToString(), cts.Token);

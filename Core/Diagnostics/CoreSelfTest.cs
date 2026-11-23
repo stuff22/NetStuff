@@ -128,6 +128,46 @@ public static class CoreSelfTest
             return $"{hops.Count} Hops, Ziel {(hops[^1].Reached ? "erreicht" : "nicht erreicht")}, erster Hop {hops[0].Ip} {hops[0].Host}";
         });
 
+        // DNS & Web (echte Abfragen)
+        static string Sum(CheckCollector c) =>
+            $"{c.Sections.Count} Abschnitte, {c.AllItems.Count(i => i.Level == Level.Ok)} OK / {c.AllItems.Count(i => i.Level == Level.Warn)} Warn / {c.AllItems.Count(i => i.Level == Level.Bad)} Fehler";
+        await T("DNS-Abfrage example.com", async () =>
+        {
+            var r = await DnsLookup.QueryAsync("example.com", "1.1.1.1", false, new[] { DnsClient.QueryType.A, DnsClient.QueryType.NS, DnsClient.QueryType.SOA });
+            if (!r.Rows.Any(x => x.Type == "A") || !r.Rows.Any(x => x.Type == "NS")) throw new Exception("A/NS fehlen");
+            return $"{r.Rows.Count} Einträge, DNSSEC {(r.Authenticated ? "validiert" : "nicht validiert")}";
+        });
+        await T("SSL/TLS cloudflare.com", async () =>
+        {
+            var c = new CheckCollector();
+            await SslChecker.CheckAsync("cloudflare.com", 443, null, c);
+            if (!c.Sections.Any(s => s.Title.Contains("Zertifikat")) || !c.AllItems.Any(i => i.Value.StartsWith("TLS 1.3") || i.Name == "TLS 1.3"))
+                throw new Exception("Zertifikat/TLS 1.3 fehlt: " + Sum(c));
+            return Sum(c);
+        });
+        await T("HTTP-Header example.com", async () =>
+        {
+            var c = new CheckCollector();
+            await HttpHeaderChecker.CheckAsync(HttpHeaderChecker.ParseUrl("example.com"), new HttpHeaderOptions(), c);
+            var grade = c.Sections.FirstOrDefault(s => s.Title.Contains("Note") || s.Title.Contains("grade"))?.Title;
+            if (grade == null) throw new Exception("keine Sicherheitsnote: " + Sum(c));
+            return $"{grade}; {Sum(c)}";
+        });
+        await T("Mail-Check gmail.com", async () =>
+        {
+            var c = new CheckCollector();
+            await MailChecker.CheckAsync("gmail.com", new MailCheckOptions { DkimSelectors = new[] { "20230601", "google" }, SmtpTest = false }, c);
+            if (!c.AllItems.Any(i => i.Name.StartsWith("MX ")) || !c.AllItems.Any(i => i.Value.StartsWith("v=spf1"))) throw new Exception("MX/SPF fehlen: " + Sum(c));
+            return Sum(c);
+        });
+        await T("Domain-Check example.com", async () =>
+        {
+            var c = new CheckCollector();
+            var summary = await DomainChecker.CheckAsync("example.com", false, c);
+            if (c.Sections.Count < 6) throw new Exception("zu wenige Abschnitte: " + Sum(c));
+            return $"{summary.Items[0].Value}; {Sum(c)}";
+        });
+
         // Website-Kopierer: URL → lokaler Pfad
         await T("Kopierer Pfade", () =>
         {
