@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Selbsttest des plattformunabhängigen Kerns ohne Oberfläche (Windows, macOS, Linux).
+       Aufruf siehe Program.cs bzw. README (Abschnitt Projektstruktur). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>NetStuff.CoreTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\NetStuff.Core.csproj" />
+  </ItemGroup>
+
+</Project>

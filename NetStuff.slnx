@@ -2,5 +2,8 @@
   <Folder Name="/Core/">
     <Project Path="Core/NetStuff.Core.csproj" />
   </Folder>
+  <Folder Name="/CoreTests/">
+    <Project Path="CoreTests/NetStuff.CoreTests.csproj" />
+  </Folder>
   <Project Path="NetStuff.csproj" />
 </Solution>

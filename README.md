@@ -41,6 +41,7 @@ Deutsch und Englisch, läuft ohne Administratorrechte (nur LLDP/CDP fragt einmal
 |---|---|
 | `Core\` (NetStuff.Core, `net10.0`) | plattformunabhängiger Kern: Dienste (DNS, SNMP, Speedtest, iPerf3, Whois, Website-Kopierer …), Parser (LLDP/CDP, DHCP, WLAN-Beacons), Projekte/Verlauf/Einstellungen, Übersetzungen (`Core\Assets\lang`), HTML-Berichte |
 | `Core\Platform\Platform.cs` | Schnittstellen für Plattformfunktionen: Benachrichtigungen, ARP, LLDP-Mitschnitt, Datenordner |
+| `CoreTests\` | Selbsttest des Kerns als Konsolenprogramm – läuft auf jedem System: `dotnet run --project CoreTests` (zusätzlich `-- --live` für eine echte Website-Kopie) |
 | `Platform\Windows\` | Windows-Umsetzungen: Toasts, SendARP, pktmon, WLAN-API |
 | `Pages\`, `Controls\`, `Infrastructure\` | WPF-Oberfläche (nur Windows) |
 

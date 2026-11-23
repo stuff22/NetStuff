@@ -21,7 +21,7 @@
     <TieredPGO>false</TieredPGO>
     <PublishReadyToRun>true</PublishReadyToRun>
     <!-- Der plattformunabhängige Kern liegt im Unterordner Core (eigenes Projekt), Release-Ordner nicht mitkompilieren -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);Core\**;Net-Stuff-*\**;publish\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Core\**;CoreTests\**;Net-Stuff-*\**;publish\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
