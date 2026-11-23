@@ -66,24 +66,28 @@ public static class CoreSelfTest
         });
 
         // iPerf3 gegen öffentliche Server
-        foreach (var (host, ports) in new[] { ("speedtest.wtnet.de", "5200-5209"), ("ping.online.net", "5200-5209"), ("iperf3.moji.fr", "5200-5209") })
+        // Öffentliche iPerf3-Server sind oft ausgelastet: der Reihe nach probieren, Fehler nur wenn keiner funktioniert
+        await T("iPerf3 (öffentlicher Server)", async () =>
         {
-            await T($"iPerf3 {host}", async () =>
+            var errors = new List<string>();
+            foreach (var host in new[] { "speedtest.wtnet.de", "ping.online.net", "iperf3.moji.fr" })
             {
-                foreach (var port in PortCatalog.Parse(ports))
+                foreach (var port in PortCatalog.Parse("5200-5209"))
                 {
                     try
                     {
                         using var cts = new CancellationTokenSource(40000);
                         var up = await IperfClient.RunAsync(host, port, 4, 2, false, null, cts.Token);
                         var down = await IperfClient.RunAsync(host, port, 4, 2, true, null, cts.Token);
-                        return $"Port {port}: ↑ {up.Mbps:0.0} (client {up.ClientMbps:0.0}) / ↓ {down.Mbps:0.0} Mbit/s, Retr {up.Retransmits}";
+                        return $"{host}:{port}: ↑ {up.Mbps:0.0} (client {up.ClientMbps:0.0}) / ↓ {down.Mbps:0.0} Mbit/s, Retr {up.Retransmits}"
+                               + (errors.Count > 0 ? $" (vorher: {string.Join("; ", errors)})" : "");
                     }
                     catch (IperfBusyException) { }
+                    catch (Exception ex) { errors.Add($"{host}: {ex.GetType().Name}"); break; }
                 }
-                throw new Exception("alle Ports belegt");
-            });
-        }
+            }
+            throw new Exception("kein Server verfügbar: " + string.Join("; ", errors));
+        });
 
         // SNMP gegen Gateway
         await T("SNMP Gateway", async () =>
@@ -166,6 +170,55 @@ public static class CoreSelfTest
             var summary = await DomainChecker.CheckAsync("example.com", false, c);
             if (c.Sections.Count < 6) throw new Exception("zu wenige Abschnitte: " + Sum(c));
             return $"{summary.Items[0].Value}; {Sum(c)}";
+        });
+
+        // Lokales Netz & Werkzeuge
+        await T("Subnetzrechner", () =>
+        {
+            var v4 = SubnetCalculator.Calculate("192.168.10.77/22");
+            string V(SubnetInfo s, string name) => s.Sections[0].Items.First(i => i.Name == L.T(name)).Value;
+            if (V(v4, "Netzadresse") != "192.168.8.0/22" || V(v4, "Broadcast") != "192.168.11.255" || V(v4, "Nutzbare Hosts").Replace(".", "").Replace(",", "") != "1022")
+                throw new Exception($"IPv4 falsch: {V(v4, "Netzadresse")} / {V(v4, "Broadcast")}");
+            var mask = SubnetCalculator.Calculate("10.1.2.3 255.255.255.0");
+            if (mask.Prefix != 24) throw new Exception("Maske → Präfix falsch");
+            var (rows, _) = SubnetCalculator.Split(v4, 24);
+            if (rows.Count != 4 || rows[3].Network != "192.168.11.0/24") throw new Exception("Aufteilen falsch");
+            var v6 = SubnetCalculator.Calculate("2001:db8:abcd:12::1/48");
+            if (V(v6, "Netz") != "2001:db8:abcd::/48") throw new Exception("IPv6 falsch: " + V(v6, "Netz"));
+            if (SubnetCalculator.ReverseZone(NetUtil.ToUInt(System.Net.IPAddress.Parse("10.20.0.0")), 15) != "20–21.10.in-addr.arpa  " + L.F("({0} Zonen)", 2))
+                throw new Exception("Reverse-Zone falsch");
+            return Task.FromResult("IPv4, Maske, Aufteilen, IPv6, Reverse-Zone korrekt");
+        });
+        await T("Wake-on-LAN Paket", () =>
+        {
+            var p = WakeOnLan.MagicPacket(WakeOnLan.ParseMac("c8-5e-a9:8c.e0 38"));
+            if (p.Length != 102 || p[0] != 0xFF || p[5] != 0xFF || p[6] != 0xC8 || p[101] != 0x38) throw new Exception("Paket falsch");
+            try { WakeOnLan.ParseMac("12:34"); throw new Exception("ungültige MAC akzeptiert"); } catch (Exception ex) when (!ex.Message.Contains("akzeptiert")) { }
+            return Task.FromResult("Magic Packet korrekt, ungültige MAC erkannt");
+        });
+        await T("Resolver-Vergleich", async () =>
+        {
+            var rows = ResolverBench.DefaultResolvers().Where(r => r.Address is "1.1.1.1" or "8.8.8.8" or "9.9.9.9" or "https://cloudflare-dns.com/dns-query").ToList();
+            var summary = await ResolverBench.RunAsync(rows, "example.com", DnsClient.QueryType.A, 2);
+            var ok = rows.Count(r => r.Level == Level.Ok);
+            if (ok < 3) throw new Exception(string.Join("; ", rows.Select(r => $"{r.Name}: {r.Verdict} {r.Answer}")));
+            return $"{ok}/{rows.Count} übereinstimmend · {summary}";
+        });
+        await T("Whois/RDAP", async () =>
+        {
+            var w = await WhoisLookup.WhoisAsync("example.com", null, true);
+            var r = await WhoisLookup.RdapAsync("example.com");
+            if (!w.Raw.Contains("whois", StringComparison.OrdinalIgnoreCase) || r.Summary.Count == 0) throw new Exception("leer");
+            return $"Whois {w.Raw.Length} Zeichen, {w.Summary.Count} Felder · RDAP {r.Summary.Count} Felder";
+        });
+        await T("Port-Scanner 1.1.1.1", async () =>
+        {
+            using var cts = new CancellationTokenSource(30000);
+            var open = await PortScanner.ScanAsync(System.Net.IPAddress.Parse("1.1.1.1"), new[] { 22, 53, 80, 443, 3389 },
+                new PortScanSettings { TimeoutMs = 1500, Parallel = 5 }, null, null, cts.Token);
+            if (!open.Any(p => p.Port == 443)) throw new Exception("443 nicht offen: " + string.Join(",", open.Select(p => p.Port)));
+            var https = open.First(p => p.Port == 443);
+            return $"offen: {string.Join(", ", open.Select(p => $"{p.Port}/{p.Service}"))} · 443: {https.Banner}";
         });
 
         // Website-Kopierer: URL → lokaler Pfad
