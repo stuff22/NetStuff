@@ -15,6 +15,7 @@ public static class WindowsPlatform
         Platform.Notifier = new ToastNotifier();
         Platform.Arp = new SendArpResolver();
         Platform.Lldp = new PktmonLldpSource();
+        Platform.Wlan = new WindowsWlanScanner();
     }
 }
 

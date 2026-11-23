@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using NetStuff.Controls;
 using NetStuff.Infrastructure;
@@ -64,10 +64,7 @@ public partial class SnmpPage : ToolPage
         catch (Exception ex)
         {
             ShowPanel();
-            var msg = ex.GetType().Name.Contains("Timeout") || ex is System.Net.Sockets.SocketException || ex.Message.Contains("timed out", StringComparison.OrdinalIgnoreCase)
-                ? L.T("Keine Antwort – SNMP am Gerät aktiviert? Community und Version korrekt? UDP 161 erreichbar?")
-                : ex.Message;
-            ResultsPanel.Children.Add(UiFactory.Message(msg, Level.Bad));
+            ResultsPanel.Children.Add(UiFactory.Message(SnmpReport.ErrorText(ex), Level.Bad));
             StatusText.Text = "";
         }
     }
@@ -76,12 +73,7 @@ public partial class SnmpPage : ToolPage
     {
         var info = await c.SystemInfoAsync();
         ShowPanel();
-        var labels = new Dictionary<string, string>
-        {
-            ["sysName"] = "Name", ["sysDescr"] = "Beschreibung", ["sysUpTime"] = "Laufzeit", ["sysContact"] = "Kontakt",
-            ["sysLocation"] = "Standort", ["sysObjectID"] = "Objekt-ID", ["sysServices"] = "Dienste",
-        };
-        ResultsPanel.Children.Add(UiFactory.Section("System", info.Select(i => new CheckItem(labels.GetValueOrDefault(i.Name, i.Name), i.Value, Level.Info))));
+        ResultsPanel.Children.Add(UiFactory.Section(SnmpReport.System(info)));
         return L.F("Antwort von {0}", HostBox.Text);
     });
 
@@ -96,9 +88,7 @@ public partial class SnmpPage : ToolPage
     {
         var n = await c.LldpNeighborsAsync();
         ShowPanel();
-        ResultsPanel.Children.Add(n.Count == 0
-            ? UiFactory.Message("Keine LLDP-Nachbarn gefunden (LLDP am Gerät deaktiviert oder MIB nicht unterstützt).", Level.Warn)
-            : UiFactory.Section("LLDP-Nachbarn", n.Select(x => new CheckItem(x.LocalPort, $"{x.Neighbor} · Port {x.RemotePort}" + (x.Description != "" ? $"\n{x.Description}" : ""), Level.Info))));
+        ResultsPanel.Children.Add(UiFactory.Section(SnmpReport.LldpNeighbors(n)));
         return L.F("{0} Nachbarn", n.Count);
     });
 
@@ -106,33 +96,14 @@ public partial class SnmpPage : ToolPage
     {
         var s = await c.SuppliesAsync();
         ShowPanel();
-        if (s.Count == 0)
-        {
-            ResultsPanel.Children.Add(UiFactory.Message("Keine Printer-MIB-Daten – kein Drucker oder SNMP eingeschränkt.", Level.Warn));
-            return "";
-        }
-        ResultsPanel.Children.Add(UiFactory.Section("Verbrauchsmaterial", s.Select(x =>
-        {
-            if (x.Level >= 0 && x.Max > 0)
-            {
-                var pct = 100.0 * x.Level / x.Max;
-                return new CheckItem(x.Name, $"{pct:0} %  ({x.Level}/{x.Max})", pct < 10 ? Level.Bad : pct < 25 ? Level.Warn : Level.Ok);
-            }
-            return new CheckItem(x.Name, x.Level == -3 ? L.T("vorhanden (Füllstand nicht messbar)") : x.Level == -2 ? L.T("unbekannt") : x.Level.ToString(), Level.Info);
-        })));
+        ResultsPanel.Children.Add(UiFactory.Section(SnmpReport.Supplies(s)));
+        if (s.Count == 0) return "";
         return L.F("{0} Einträge", s.Count);
     });
 
     private async void Walk_Click(object sender, RoutedEventArgs e) => await Run("Walk läuft", async c =>
     {
-        var vars = await c.WalkAsync(OidBox.Text.Trim());
-        var rows = vars.Select(v => new SnmpRow
-        {
-            Oid = v.Id.ToString(),
-            Name = SnmpService.KnownOids.GetValueOrDefault(v.Id.ToString(), ""),
-            Type = v.Data.TypeCode.ToString(),
-            Value = SnmpService.Format(v.Data),
-        }).ToList();
+        var rows = await SnmpReport.WalkAsync(c, OidBox.Text.Trim());
         ShowGrid(rows);
         return L.F("{0} Werte", rows.Count);
     });
@@ -153,22 +124,13 @@ public partial class SnmpPage : ToolPage
         try
         {
             var c = await Client();
-            var (lastIn, lastOut) = await c.CountersAsync(itf.Index);
-            var last = DateTime.Now;
-            while (!ct.IsCancellationRequested)
+            await SnmpReport.TrafficAsync(c, itf.Index, 2000, (inMbps, outMbps) =>
             {
-                await Task.Delay(2000, ct);
-                var (i, o) = await c.CountersAsync(itf.Index);
-                var dt = (DateTime.Now - last).TotalSeconds;
-                last = DateTime.Now;
-                double inMbps = i >= lastIn ? (i - lastIn) * 8 / 1e6 / dt : 0;
-                double outMbps = o >= lastOut ? (o - lastOut) * 8 / 1e6 / dt : 0;
-                lastIn = i; lastOut = o;
                 sIn.Values.Add(inMbps);
                 sOut.Values.Add(outMbps);
                 TrafficChart.Refresh();
                 StatusText.Text = L.F("Live-Traffic {0}: ↓ {1:0.00} Mbit/s · ↑ {2:0.00} Mbit/s", itf.Name, inMbps, outMbps);
-            }
+            }, ct);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }

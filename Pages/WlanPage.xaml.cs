@@ -8,6 +8,7 @@ using NetStuff.Services;
 
 namespace NetStuff.Pages;
 
+/// <summary>Anzeigezeile eines Access Points (Farbe passend zum Spektrum-Diagramm).</summary>
 public class WlanRow : Bindable
 {
     private WlanBss _b;
@@ -27,7 +28,7 @@ public class WlanRow : Bindable
     public string Standard => _b.Standard;
     public string Security => _b.Security;
     public string RateText => _b.MaxRateMbps > 0 ? $"{_b.MaxRateMbps:0} Mbit" : "";
-    public string ConnectedText => _b.Connected ? "verbunden" : "";
+    public string ConnectedText => _b.Connected ? L.T("verbunden") : "";
     public Brush ColorBrush => new SolidColorBrush(SpectrumChart.ColorFor(_b.Ssid));
 
     public void Update(WlanBss b)
@@ -41,7 +42,6 @@ public partial class WlanPage : ToolPage
 {
     private readonly ObservableCollection<WlanRow> _rows = new();
     private CancellationTokenSource _cts;
-    private WlanApi _api;
     private List<WlanBss> _last = new();
 
     public WlanPage()
@@ -49,7 +49,6 @@ public partial class WlanPage : ToolPage
         InitializeComponent();
         NetGrid.ItemsSource = _rows;
         Loaded += (_, _) => LoadInterfaces();
-        Unloaded += (_, _) => { };
     }
 
     private void LoadInterfaces()
@@ -57,8 +56,7 @@ public partial class WlanPage : ToolPage
         if (IfaceBox.Items.Count > 0) return;
         try
         {
-            _api ??= new WlanApi();
-            var list = _api.Interfaces();
+            var list = WlanAnalysis.Scanner.Interfaces();
             IfaceBox.ItemsSource = list;
             if (list.Count > 0) IfaceBox.SelectedIndex = 0;
             else StatusText.Text = "Kein WLAN-Adapter gefunden.";
@@ -72,7 +70,7 @@ public partial class WlanPage : ToolPage
 
     private async void Start_Click(object sender, RoutedEventArgs e)
     {
-        if (IfaceBox.SelectedItem is not WlanApi.Interface iface) return;
+        if (IfaceBox.SelectedItem is not WlanInterfaceInfo iface) return;
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
         StartButton.IsEnabled = false;
@@ -84,13 +82,10 @@ public partial class WlanPage : ToolPage
         {
             try
             {
-                _api.Scan(iface.Id);
-                if (round++ == 0) await Task.Delay(300, ct);
-                var list = await Task.Run(() => _api.GetBssList(iface.Id), ct);
+                var list = WlanAnalysis.Prepare(await WlanAnalysis.Scanner.ScanAsync(iface.Id, round++ == 0 ? 300 : 0, ct));
                 PermissionPanel.Visibility = Visibility.Collapsed;
-                foreach (var b in list) b.Vendor = VendorOf(b.Bssid);
                 Apply(list);
-                StatusText.Text = $"{list.Count} Access Points · {list.Select(b => b.Ssid).Distinct().Count()} Netze · aktualisiert {DateTime.Now:HH:mm:ss}";
+                StatusText.Text = WlanAnalysis.Summary(list);
             }
             catch (OperationCanceledException) { break; }
             catch (WlanException ex) when (ex.LocationDenied)
@@ -111,7 +106,6 @@ public partial class WlanPage : ToolPage
 
     private void Apply(List<WlanBss> list)
     {
-        list = list.GroupBy(b => b.Bssid).Select(g => g.OrderByDescending(x => x.Rssi).First()).ToList();
         _last = list;
         var byBssid = list.ToDictionary(b => b.Bssid);
         for (int i = _rows.Count - 1; i >= 0; i--)
@@ -128,15 +122,6 @@ public partial class WlanPage : ToolPage
         UpdateAdvice();
     }
 
-    /// <summary>Virtuelle BSSIDs (mehrere SSIDs pro AP) haben das "lokal verwaltet"-Bit gesetzt – ohne dieses Bit findet man meist den echten Hersteller.</summary>
-    private static string VendorOf(string bssid)
-    {
-        if (!OuiDatabase.IsRandomized(bssid)) return OuiDatabase.Lookup(bssid);
-        var first = Convert.ToByte(bssid[..2], 16) & ~0x02;
-        var real = OuiDatabase.Lookup(first.ToString("X2") + bssid[2..]);
-        return real != "" && !real.StartsWith("Private") ? real + " (virtuell)" : "virtuelle BSSID";
-    }
-
     private string CurrentBand => Band5.IsChecked == true ? "5 GHz" : Band6.IsChecked == true ? "6 GHz" : "2,4 GHz";
 
     private void Band_Checked(object sender, RoutedEventArgs e)
@@ -147,38 +132,7 @@ public partial class WlanPage : ToolPage
         UpdateAdvice();
     }
 
-    /// <summary>Kanalempfehlung: Belastung je Kanal aus Signalstärke und Überlappung.</summary>
-    private void UpdateAdvice()
-    {
-        var band = CurrentBand;
-        var nets = _last.Where(b => b.Band == band).ToList();
-        if (nets.Count == 0) { AdviceText.Text = ""; return; }
-
-        IEnumerable<int> candidates = band switch
-        {
-            "2,4 GHz" => new[] { 1, 6, 11 },
-            "5 GHz" => new[] { 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140 },
-            _ => Enumerable.Range(0, 59).Select(i => 1 + i * 4),
-        };
-        double Mhz(int ch) => band == "2,4 GHz" ? 2407 + ch * 5 : band == "6 GHz" ? 5950 + ch * 5 : 5000 + ch * 5;
-
-        var scores = candidates.Select(ch =>
-        {
-            double c = Mhz(ch), load = 0;
-            foreach (var n in nets)
-            {
-                double overlap = (n.WidthMhz + 20) / 2.0 - Math.Abs(n.CenterMhz - c);
-                if (overlap > 0) load += Math.Pow(10, (n.Rssi + 100) / 20.0) * (overlap / ((n.WidthMhz + 20) / 2.0));
-            }
-            return (ch, load);
-        }).OrderBy(x => x.load).ToList();
-
-        var best = scores.Take(3).Select(s => s.ch.ToString());
-        var mine = nets.FirstOrDefault(n => n.Connected);
-        AdviceText.Text = $"Empfohlene Kanäle ({band}): {string.Join(", ", best)}"
-                          + (mine != null ? $"   ·   Dein AP „{mine.DisplaySsid}“ funkt auf Kanal {mine.Channel} ({mine.WidthMhz} MHz, {mine.Rssi} dBm)" : "")
-                          + (band == "5 GHz" ? "   ·   Kanäle 52–140 sind DFS-Kanäle (Radar-Erkennung)." : "");
-    }
+    private void UpdateAdvice() => AdviceText.Text = WlanAnalysis.ChannelAdvice(_last, CurrentBand);
 
     private void NetGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -193,7 +147,11 @@ public partial class WlanPage : ToolPage
         Spectrum.Refresh();
     }
 
-    private void OpenLocation_Click(object sender, RoutedEventArgs e) => NetUtil.OpenUrl("ms-settings:privacy-location");
+    private void OpenLocation_Click(object sender, RoutedEventArgs e)
+    {
+        var hint = Platform.Wlan?.PermissionHint;
+        if (!string.IsNullOrEmpty(hint)) NetUtil.OpenUrl(hint);
+    }
 
     private void Stop_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();
 }

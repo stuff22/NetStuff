@@ -355,7 +355,7 @@
   "Simuliert ein unbekanntes Gerät (z. B. um Reservierungen auszuschließen)": "Simulates an unknown device (e.g. to rule out reservations)",
   "DHCP-Server suchen": "Find DHCP servers",
   "DHCPDISCOVER gesendet – warte {0} s auf Angebote …": "DHCPDISCOVER sent – waiting {0} s for offers …",
-  "Kein DHCP-Server hat geantwortet. Mögliche Ursachen: statische IP-Konfiguration im Netz, Windows-Firewall blockiert eingehende Antworten (bei Nachfrage Zugriff erlauben) oder DHCP-Server antwortet nur bekannten Geräten.": "No DHCP server answered. Possible causes: static IP configuration in the network, Windows Firewall blocks incoming replies (allow access when asked) or the DHCP server only answers known devices.",
+  "Kein DHCP-Server hat geantwortet. Mögliche Ursachen: statische IP-Konfiguration im Netz, eine Firewall blockiert eingehende Antworten (bei Nachfrage Zugriff erlauben) oder DHCP-Server antwortet nur bekannten Geräten.": "No DHCP server answered. Possible causes: static IP configuration in the network, a firewall blocks incoming replies (allow access when asked) or the DHCP server only answers known devices.",
   "Mehrere DHCP-Server!": "Multiple DHCP servers!",
   "{0} verschiedene Server antworten: {1} – das führt zu IP-Konflikten. Fremden Server suchen (z. B. versehentlich angeschlossener Router).": "{0} different servers answer: {1} – this causes IP conflicts. Find the foreign server (e.g. an accidentally connected router).",
   "Genau ein Server antwortet ({0}) ✓": "Exactly one server answers ({0}) ✓",
@@ -667,7 +667,7 @@
   "unterstützt – veraltet, sollte deaktiviert werden": "supported – outdated, should be disabled",
   "nicht unterstützt ✓": "not supported ✓",
   "nicht unterstützt": "not supported",
-  "Hinweis: Windows 11 kann TLS 1.0/1.1 clientseitig deaktiviert haben – dann wird „nicht unterstützt“ angezeigt.": "Note: Windows 11 may have TLS 1.0/1.1 disabled on the client side – then “not supported” is shown.",
+  "Hinweis: Das Betriebssystem kann TLS 1.0/1.1 clientseitig deaktiviert haben – dann wird „nicht unterstützt“ angezeigt.": "Note: The operating system may have TLS 1.0/1.1 disabled on the client side – then “not supported” is shown.",
   "nicht gesetzt": "not set",
   "TLS-Verbindung fehlgeschlagen: ": "TLS connection failed: ",
   "Zeigt Weiterleitungskette, alle Response-Header und bewertet Sicherheits-Header (HSTS, CSP, X-Frame-Options …) sowie Cookies.": "Shows the redirect chain and all response headers, and rates security headers (HSTS, CSP, X-Frame-Options …) and cookies.",
@@ -852,5 +852,9 @@
   "Maximale Dateianzahl erreicht – weitere Seiten verweisen auf die Online-Version (Limit unter Optionen erhöhen).": "Maximum number of files reached – further pages link to the online version (increase the limit under Options).",
   "Fremde Domains geladen": "Other domains downloaded",
   "Fremde Domains nicht geladen": "Other domains not downloaded",
-  "Dynamische Inhalte (Formulare, Suche, per JavaScript nachgeladene Daten) funktionieren offline nicht.": "Dynamic content (forms, search, data loaded via JavaScript) does not work offline."
+  "Dynamische Inhalte (Formulare, Suche, per JavaScript nachgeladene Daten) funktionieren offline nicht.": "Dynamic content (forms, search, data loaded via JavaScript) does not work offline.",
+  "Dieses Gerät": "This device",
+  "WLAN-Scan ist auf dieser Plattform nicht verfügbar.": "Wi-Fi scanning is not available on this platform.",
+  " (virtuell)": " (virtual)",
+  "Arbeitsgruppe ": "Workgroup "
 }

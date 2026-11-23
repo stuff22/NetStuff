@@ -38,31 +38,7 @@ public partial class LldpPage : ToolPage
         {
             _ = OuiDatabase.EnsureLoadedAsync();
             var list = await LldpCapture.CaptureAsync(seconds, _cts.Token);
-            if (list.Count == 0)
-            {
-                ResultsPanel.Children.Add(UiFactory.Message(
-                    "Keine LLDP-/CDP-Pakete empfangen. Mögliche Ursachen: LLDP/CDP am Switch deaktiviert, unmanaged Switch, WLAN-Verbindung (LLDP gibt es nur am Kabel) oder Dauer zu kurz.", Level.Warn));
-            }
-            foreach (var n in list)
-            {
-                var items = new List<CheckItem>
-                {
-                    new("Gerät", n.DeviceName == "" ? "(kein Name übermittelt)" : n.DeviceName, Level.Ok),
-                    new("Switch-Port", n.PortId + (n.PortDescription != "" && n.PortDescription != n.PortId ? $"  ({n.PortDescription})" : ""), Level.Ok),
-                };
-                if (n.Vlan != "") items.Add(new CheckItem("VLAN (Port / nativ)", n.Vlan, Level.Ok));
-                if (n.VoiceVlan != "") items.Add(new CheckItem("Voice-VLAN", n.VoiceVlan));
-                if (n.ManagementIp != "") items.Add(new CheckItem("Management-IP", n.ManagementIp));
-                if (n.ChassisId != "") items.Add(new CheckItem("Chassis-ID", n.ChassisId));
-                if (n.Platform != "") items.Add(new CheckItem("Plattform", n.Platform));
-                if (n.Software != "") items.Add(new CheckItem("Systembeschreibung", n.Software.Length > 300 ? n.Software[..300] + " …" : n.Software));
-                if (n.Capabilities != "") items.Add(new CheckItem("Funktionen", n.Capabilities));
-                if (n.Duplex != "") items.Add(new CheckItem("Geschwindigkeit / Duplex", n.Duplex + (n.AutoNeg != "" ? L.F(" · Autonegotiation {0}", L.T(n.AutoNeg)) : "")));
-                if (n.MaxFrame != "") items.Add(new CheckItem("Max. Framegröße", n.MaxFrame + " Byte"));
-                if (n.Poe != "") items.Add(new CheckItem("PoE", n.Poe));
-                items.Add(new CheckItem("Absender-MAC", $"{n.SourceMac}  ({OuiDatabase.Lookup(n.SourceMac)})"));
-                ResultsPanel.Children.Add(UiFactory.Section($"{n.Protocol}: {n.DeviceName}", items));
-            }
+            foreach (var s in LldpReport.Sections(list)) ResultsPanel.Children.Add(UiFactory.Section(s));
             StatusText.Text = L.F("{0} Nachbar(n) gefunden", list.Count);
         }
         catch (OperationCanceledException) { StatusText.Text = L.T("Abgebrochen."); }

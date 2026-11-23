@@ -51,6 +51,9 @@ public static class Platform
     /// <summary>ICMP-Echo (Standard: .NET-Ping; iOS: eigene Umsetzung).</summary>
     public static Services.IIcmpSender Icmp { get; set; }
 
+    /// <summary>WLAN-Scan (Windows: wlanapi, macOS: CoreWLAN; iOS: nicht verfügbar).</summary>
+    public static Services.IWlanScanner Wlan { get; set; }
+
     public static INotifier Notifier { get; set; }
     public static IArpResolver Arp { get; set; }
     public static ILldpCaptureSource Lldp { get; set; }

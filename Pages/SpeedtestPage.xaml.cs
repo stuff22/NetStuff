@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows;
 using NetStuff.Controls;
 using NetStuff.Infrastructure;
@@ -23,7 +23,7 @@ public partial class SpeedtestPage : ToolPage
 
     public override void SetPrimaryTarget(string value) => IperfHost.Text = value;
 
-    private static string Mbps(double v) => v >= 100 ? v.ToString("0") : v.ToString("0.0");
+    private static string Mbps(double v) => SpeedReport.Mbps(v);
 
     private void Busy(bool b)
     {
@@ -75,9 +75,7 @@ public partial class SpeedtestPage : ToolPage
             UpText.Text = Mbps(ul);
             NetStatus.Text = L.F("Fertig – {0:HH:mm:ss}", DateTime.Now);
 
-            _results.Insert(0, new CheckItem(L.F("Internet {0:HH:mm}", DateTime.Now),
-                L.F("↓ {0} Mbit/s · ↑ {1} Mbit/s · Ping {2:0.0} ms · Jitter {3:0.0} ms · {4} ({5})", Mbps(dl), Mbps(ul), lat, jit, M("asOrganization"), M("colo")),
-                dl > 0 ? Level.Ok : Level.Warn));
+            _results.Insert(0, SpeedReport.Internet(dl, ul, lat, jit, M("asOrganization"), M("colo")));
         }
         catch (OperationCanceledException) { NetStatus.Text = L.T("Abgebrochen."); }
         catch (Exception ex) { NetStatus.Text = L.T("Fehler: ") + (ex.InnerException?.Message ?? ex.Message); }
@@ -119,33 +117,16 @@ public partial class SpeedtestPage : ToolPage
             int portIndex = 0;
             foreach (var reverse in dirs)
             {
-                IperfResult res = null;
-                while (res == null)
+                var res = await SpeedReport.IperfWithFallbackAsync(host, ports, seconds, streams, reverse, new Progress<SpeedSample>(s =>
                 {
-                    int port = ports[portIndex % ports.Count];
-                    IperfStatus.Text = L.F("{0} zu {1}:{2} läuft …", reverse ? "Download" : "Upload", host, port);
-                    try
-                    {
-                        res = await IperfClient.RunAsync(host, port, seconds, streams, reverse, new Progress<SpeedSample>(s =>
-                        {
-                            (reverse ? sd : su).Values.Add(s.Mbps);
-                            (reverse ? su : sd).Values.Add(null);
-                            (reverse ? IperfDown : IperfUp).Text = Mbps(s.Mbps);
-                            IperfChart.Refresh();
-                        }), ct);
-                    }
-                    catch (Exception busy) when (busy is IperfBusyException or System.Net.Sockets.SocketException && ports.Count > 1)
-                    {
-                        portIndex++;
-                        if (portIndex >= ports.Count * (dirs.Length)) throw new Exception(L.T("Kein Port des Servers verfügbar (belegt oder nicht erreichbar) – bitte später erneut versuchen oder anderen Server wählen."));
-                        await Task.Delay(500, ct);
-                    }
-                }
+                    (reverse ? sd : su).Values.Add(s.Mbps);
+                    (reverse ? su : sd).Values.Add(null);
+                    (reverse ? IperfDown : IperfUp).Text = Mbps(s.Mbps);
+                    IperfChart.Refresh();
+                }), t => IperfStatus.Text = t, () => portIndex, i => portIndex = i, ports.Count * dirs.Length, ct);
                 (reverse ? IperfDown : IperfUp).Text = Mbps(res.Mbps);
                 if (res.Retransmits >= 0) IperfRetr.Text = res.Retransmits.ToString("N0");
-                _results.Insert(0, new CheckItem(L.F("iPerf3 {0} {1:HH:mm}", L.T(res.Direction), DateTime.Now),
-                    L.F("{0} Mbit/s · {1} · {2} Streams, {3} s · Server {4}", Mbps(res.Mbps), NetUtil.FormatBytes(res.Bytes), streams, seconds, host)
-                    + (res.Retransmits >= 0 ? L.F(" · Retransmits {0}", res.Retransmits) : ""), Level.Ok));
+                _results.Insert(0, SpeedReport.Iperf(res, streams, seconds, host));
             }
             IperfStatus.Text = L.F("Fertig – {0:HH:mm:ss}", DateTime.Now);
         }

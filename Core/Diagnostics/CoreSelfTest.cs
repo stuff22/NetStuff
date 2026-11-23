@@ -221,6 +221,85 @@ public static class CoreSelfTest
             return $"offen: {string.Join(", ", open.Select(p => $"{p.Port}/{p.Service}"))} · 443: {https.Banner}";
         });
 
+        // Übersicht, Netzwerkscanner, Auswertungen
+        await T("Übersicht (Adapter)", () =>
+        {
+            var a = NetworkOverview.Adapters();
+            var up = a.Where(x => x.Up).ToList();
+            if (up.Count == 0) throw new Exception("kein aktiver Adapter");
+            var main = up.First();
+            return Task.FromResult($"{a.Count} Adapter, {up.Count} aktiv · {main.Name}: {string.Join(", ", main.Items.Where(i => i.Name is "IPv4" or "Gateway").Select(i => i.Value))}");
+        });
+        await T("Übersicht (öffentlich)", async () =>
+        {
+            var items = await NetworkOverview.PublicInfoAsync();
+            var v4 = items.First(i => i.Name == L.T("Öffentliche IPv4"));
+            if (v4.Level != Level.Ok) throw new Exception(v4.Value);
+            return string.Join(" · ", items.Where(i => i.Name != L.T("Reverse-DNS")).Select(i => i.Value));
+        });
+        await T("Netzwerkscanner (Gateway)", async () =>
+        {
+            var gw = NetUtil.ActiveIPv4().Select(x => x.Gateway).First(g => g != null);
+            using var cts = new CancellationTokenSource(30000);
+            var hosts = await NetworkScanner.ScanAsync(new[] { gw }, new NetScanSettings { CheckPorts = true }, null, null, null, cts.Token);
+            if (hosts.Count != 1) throw new Exception("Gateway nicht gefunden");
+            var h = hosts[0];
+            return $"{h.Ip} · {h.PingText} · MAC {(h.Mac == "" ? (Platform.HasArp ? "–" : "– (ARP auf dieser Plattform nicht verfügbar)") : h.Mac)} · {h.Vendor} · Typ „{h.Type}“ · Ports {h.Ports}";
+        });
+        await T("Geräteerkennung", () =>
+        {
+            ScanHost H(string vendor, string name, params int[] ports) { var h = new ScanHost { Address = System.Net.IPAddress.Parse("10.0.0.9"), Vendor = vendor, Hostname = name }; h.OpenPorts.AddRange(ports); return h; }
+            var cases = new (ScanHost Host, string Expect)[]
+            {
+                (H("Brother Industries", "", 80, 9100), "Drucker"), (H("Synology", "diskstation", 5000, 445), "NAS"),
+                (H("", "pc01.local", 135, 445, 3389), "Windows-PC/Server"), (H("Apple, Inc.", "christophs-iphone", 62078), "iPhone"),
+                (H("Espressif", "shelly1"), "IoT-Gerät"), (H("", "", 22), "Linux / Netzwerkgerät"),
+            };
+            var fails = cases.Where(c => DeviceClassifier.Classify(c.Host) != c.Expect).Select(c => $"{c.Host.Vendor}/{c.Host.Hostname} → {DeviceClassifier.Classify(c.Host)}").ToList();
+            if (fails.Count > 0) throw new Exception(string.Join("; ", fails));
+            return Task.FromResult($"{cases.Length} Fälle korrekt");
+        });
+        await T("DHCP-Auswertung", () =>
+        {
+            var one = DhcpCheck.Evaluate(new List<DhcpOffer> { new() { Server = "10.0.0.1", RelayOrSource = "10.0.0.1", OfferedIp = "10.0.0.50", SubnetMask = "255.255.255.0", Router = "10.0.0.1", Dns = "10.0.0.1", Lease = "1 Tage" } });
+            var two = DhcpCheck.Evaluate(new List<DhcpOffer> { new() { Server = "10.0.0.1", RelayOrSource = "10.0.0.1" }, new() { Server = "192.168.1.1", RelayOrSource = "192.168.1.1" } });
+            if (one[0].Items[0].Level != Level.Ok || two[0].Items[0].Level != Level.Bad || one.Count != 2 || two.Count != 3) throw new Exception("Bewertung falsch");
+            if (DhcpCheck.Evaluate(new()).Single().Items[0].Level != Level.Warn) throw new Exception("leere Antwort falsch");
+            var mac = DhcpCheck.RandomMac();
+            if ((mac[0] & 0x01) != 0 || (mac[0] & 0x02) == 0) throw new Exception("Zufalls-MAC nicht lokal/unicast");
+            return Task.FromResult("1 Server ✓, 2 Server ✗ (Rogue), keine Antwort ⚠, Zufalls-MAC korrekt");
+        });
+        await T("WLAN-Auswertung", () =>
+        {
+            WlanBss B(string ssid, int mhz, int rssi, int width = 20, bool conn = false)
+            {
+                var b = new WlanBss { Ssid = ssid, Bssid = $"00:11:22:33:44:{mhz % 100:00}", FrequencyMhz = mhz, Rssi = rssi, WidthMhz = width, CenterMhz = mhz, Connected = conn };
+                (b.Channel, b.Band) = WlanParser.ChannelOf(mhz);
+                return b;
+            }
+            var nets = new List<WlanBss> { B("A", 2412, -40), B("B", 2417, -55), B("C", 2437, -45, conn: true), B("D", 5180, -60, 80) };
+            var best = WlanAnalysis.BestChannels(nets, "2,4 GHz");
+            if (best[0] != 11) throw new Exception("beste Kanalwahl falsch: " + string.Join(",", best));
+            var advice = WlanAnalysis.ChannelAdvice(nets, "2,4 GHz");
+            if (!advice.Contains("11") || !advice.Contains("„C“")) throw new Exception(advice);
+            if (WlanAnalysis.ChannelAdvice(nets, "6 GHz") != "") throw new Exception("leeres Band");
+            var bss = new WlanBss { FrequencyMhz = 5500 };
+            (bss.Channel, bss.Band) = WlanParser.ChannelOf(5500);
+            // RSN mit SAE + PSK, VHT 80 MHz um Kanal 106
+            var ies = new byte[] { 48, 22, 1, 0, 0, 0x0F, 0xAC, 4, 1, 0, 0, 0x0F, 0xAC, 4, 2, 0, 0, 0x0F, 0xAC, 2, 0, 0x0F, 0xAC, 8, 192, 5, 1, 106, 0, 0, 0 };
+            WlanParser.ParseIes(bss, ies, 0x11, 8);
+            if (bss.Security != "WPA2/WPA3-Personal" || bss.WidthMhz != 80 || bss.Standard != "Wi-Fi 5 (ac)") throw new Exception($"{bss.Security} / {bss.WidthMhz} / {bss.Standard}");
+            return Task.FromResult($"Kanalempfehlung 2,4 GHz: {string.Join(", ", best)} · Beacon-Parser: {bss.Security}, {bss.WidthMhz} MHz, {bss.Standard} · WLAN-Scan {(Platform.Wlan != null ? "verfügbar" : "auf dieser Plattform nicht verfügbar")}");
+        });
+        await T("SNMP-/LLDP-Auswertung", () =>
+        {
+            var sup = SnmpReport.Supplies(new List<(string, int, int)> { ("Toner Schwarz", 5, 100), ("Toner Cyan", 60, 100), ("Resttonerbehälter", -3, -2) });
+            if (sup.Items[0].Level != Level.Bad || sup.Items[1].Level != Level.Ok || sup.Items[2].Level != Level.Info) throw new Exception("Tonerbewertung falsch");
+            var lldp = LldpReport.Sections(new List<NeighborInfo> { new() { Protocol = "LLDP", DeviceName = "core-sw01", PortId = "Gi1/0/12", Vlan = "20", SourceMac = "00:11:22:33:44:55" } });
+            if (lldp.Count != 1 || !lldp[0].Items.Any(i => i.Value == "20")) throw new Exception("LLDP-Bericht falsch");
+            return Task.FromResult("Toner 5 % ✗ / 60 % ✓ / nicht messbar ℹ · LLDP-Bericht korrekt");
+        });
+
         // Website-Kopierer: URL → lokaler Pfad
         await T("Kopierer Pfade", () =>
         {
