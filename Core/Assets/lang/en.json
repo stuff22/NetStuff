@@ -908,5 +908,9 @@
   "Ihr Standort": "Your location",
   "Starte einen Traceroute, um die Route auf der Karte zu sehen.": "Run a traceroute to see the route on the map.",
   "„{0}“ enthält bereits eine Kopie – zum Überschreiben nochmals „Kopieren“ klicken.": "“{0}” already contains a copy – click “Copy” again to overwrite.",
-  "⏸ Der Download ist pausiert und wartet auf Ihre Entscheidung zu den offenen Domains.": "⏸ The download is paused and waiting for your decision on the pending domains."
+  "⏸ Der Download ist pausiert und wartet auf Ihre Entscheidung zu den offenen Domains.": "⏸ The download is paused and waiting for your decision on the pending domains.",
+  "LLDP/CDP-Mitschnitt ist auf dieser Plattform nicht verfügbar.": "LLDP/CDP capture is not available on this platform.",
+  "Zeigt, an welchem Switch, Port und VLAN dieser Mac hängt – aus den LLDP- und CDP-Paketen, die Switches regelmäßig senden. Nutzt das Bordmittel tcpdump (macOS fragt einmal nach dem Administratorkennwort).": "Shows which switch, port and VLAN this Mac is connected to – from the LLDP and CDP packets that switches send regularly. Uses the built-in tcpdump (macOS asks once for the administrator password).",
+  "Keine aktive Netzwerkschnittstelle (en0, en1 …) gefunden.": "No active network interface (en0, en1 …) found.",
+  "Mitschnitt fehlgeschlagen: ": "Capture failed: "
 }

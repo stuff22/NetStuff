@@ -24,9 +24,9 @@ public static class Tools
         new("netscan", "Netzwerkscanner", "Lokales Netz", () => new NetScanView()),
         new("wlan", "WLAN-Scanner", "Lokales Netz", () => new WlanView()),
         new("survey", "WLAN-Ausleuchtung", "Lokales Netz", () => new SurveyView()),
-        new("lldp", "LLDP / CDP", "Lokales Netz", null),
-        new("dhcp", "DHCP-Test", "Lokales Netz", null),
-        new("snmp", "SNMP-Browser", "Lokales Netz", null),
+        new("lldp", "LLDP / CDP", "Lokales Netz", () => new LldpView()),
+        new("dhcp", "DHCP-Test", "Lokales Netz", () => new DhcpView()),
+        new("snmp", "SNMP-Browser", "Lokales Netz", () => new SnmpView()),
         new("wol", "Wake-on-LAN", "Lokales Netz", () => new WolView()),
         new("subnet", "Subnetzrechner", "Lokales Netz", () => new SubnetView()),
 

@@ -21,11 +21,12 @@
     <ProjectReference Include="..\Ui\NetStuff.Ui.csproj" />
   </ItemGroup>
 
-  <!-- Windows: dieselben WLAN- und ARP-Umsetzungen wie die WPF-App (nur zur Laufzeit unter Windows genutzt) -->
+  <!-- Windows: dieselben WLAN-, ARP- und LLDP-Umsetzungen wie die WPF-App (nur zur Laufzeit unter Windows genutzt) -->
   <ItemGroup>
     <Compile Include="..\Platform\Windows\WlanApi.cs" Link="Platform\Windows\WlanApi.cs" />
     <Compile Include="..\Platform\Windows\WindowsWlanScanner.cs" Link="Platform\Windows\WindowsWlanScanner.cs" />
     <Compile Include="..\Platform\Windows\SendArpResolver.cs" Link="Platform\Windows\SendArpResolver.cs" />
+    <Compile Include="..\Platform\Windows\PktmonLldpSource.cs" Link="Platform\Windows\PktmonLldpSource.cs" />
   </ItemGroup>
 
   <ItemGroup>

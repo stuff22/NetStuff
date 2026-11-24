@@ -10,6 +10,8 @@ public class DhcpAdapterChoice
     public string Label { get; init; }
     public IPAddress Ip { get; init; }
     public byte[] Mac { get; init; }
+    /// <summary>Schnittstellenindex (macOS: Bindung des Sockets an den Adapter).</summary>
+    public int InterfaceIndex { get; init; }
     public override string ToString() => Label;
 }
 
@@ -24,7 +26,14 @@ public static class DhcpCheck
             Label = $"{x.Nic.Name} – {x.Addr.Address}/{x.Addr.PrefixLength}",
             Ip = x.Addr.Address,
             Mac = x.Nic.GetPhysicalAddress().GetAddressBytes(),
+            InterfaceIndex = IndexOf(x.Nic),
         }).ToList();
+
+    private static int IndexOf(System.Net.NetworkInformation.NetworkInterface nic)
+    {
+        try { return nic.GetIPProperties().GetIPv4Properties()?.Index ?? 0; }
+        catch { return 0; }
+    }
 
     /// <summary>Zufällige, lokal verwaltete Unicast-MAC (damit der echte Lease nicht verändert wird).</summary>
     public static byte[] RandomMac()
@@ -40,7 +49,7 @@ public static class DhcpCheck
         _ = OuiDatabase.EnsureLoadedAsync();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(waitSeconds + 5));
-        var offers = await DhcpTester.DiscoverAsync(adapter.Ip, randomMac ? RandomMac() : adapter.Mac, waitSeconds * 1000, cts.Token);
+        var offers = await DhcpTester.DiscoverAsync(adapter.Ip, randomMac ? RandomMac() : adapter.Mac, waitSeconds * 1000, cts.Token, adapter.InterfaceIndex);
         return Evaluate(offers);
     }
 

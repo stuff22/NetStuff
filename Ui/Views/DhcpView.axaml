@@ -1,0 +1,29 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.DhcpView">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Classes="PageTitle" Text="{l:T 'DHCP-Test'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Sendet eine DHCP-Anfrage (DISCOVER) ins Netz und zeigt alle DHCP-Server, die antworten – inklusive angebotener Einstellungen. Findet auch fremde („rogue“) DHCP-Server. Es wird keine Adresse übernommen.'}" />
+            <Border Classes="Card">
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,8">
+                        <TextBlock Classes="Label" Text="{l:T 'Netzwerkadapter'}" />
+                        <ComboBox x:Name="AdapterBox" Width="380" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,8">
+                        <TextBlock Classes="Label" Text="{l:T 'Wartezeit (s)'}" />
+                        <NumericUpDown x:Name="WaitBox" Value="6" Minimum="2" Maximum="30" />
+                    </StackPanel>
+                    <CheckBox x:Name="RandomMacBox" Content="{l:T 'Zufällige MAC verwenden'}" VerticalAlignment="Bottom" Margin="0,0,16,10" />
+                    <Button x:Name="StartButton" Classes="accent" Content="{l:T 'DHCP-Server suchen'}" Click="Start_Click" VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                </WrapPanel>
+            </Border>
+            <TextBlock x:Name="StatusText" Classes="Status" Margin="2,0,0,10" />
+        </StackPanel>
+        <ScrollViewer>
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </DockPanel>
+</l:ToolView>

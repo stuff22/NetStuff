@@ -194,8 +194,15 @@ public static class LldpCapture
 /// <summary>Minimaler pcapng-Leser (Enhanced/Simple Packet Blocks).</summary>
 public static class PcapNg
 {
+    /// <summary>Liest Ethernet-Rahmen aus pcapng (Windows: pktmon) oder klassischem pcap (macOS/Linux: tcpdump -w).</summary>
     public static List<byte[]> ReadFrames(byte[] data)
     {
+        if (data.Length >= 24)
+        {
+            uint m = BinaryPrimitives.ReadUInt32LittleEndian(data);
+            if (m is 0xA1B2C3D4 or 0xA1B23C4D) return ReadClassic(data, true);
+            if (m is 0xD4C3B2A1 or 0x4D3CB2A1) return ReadClassic(data, false);
+        }
         var frames = new List<byte[]>();
         int i = 0;
         bool le = true;
@@ -223,6 +230,21 @@ public static class PcapNg
         }
         return frames;
     }
+
+    private static List<byte[]> ReadClassic(byte[] data, bool le)
+    {
+        uint U(int off) => le ? BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(off)) : BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(off));
+        var frames = new List<byte[]>();
+        int i = 24;                                  // globaler Kopf
+        while (i + 16 <= data.Length)
+        {
+            int cap = (int)U(i + 8);                 // ts_sec, ts_usec, incl_len, orig_len
+            if (cap < 0 || cap > 262144 || i + 16 + cap > data.Length) break;
+            frames.Add(data.AsSpan(i + 16, cap).ToArray());
+            i += 16 + cap;
+        }
+        return frames;
+    }
 }
 
 /* ====================================================================== DHCP */
@@ -247,11 +269,19 @@ public class DhcpOffer
 /// <summary>Sendet ein DHCPDISCOVER und sammelt alle Angebote (OFFER) – findet auch fremde DHCP-Server.</summary>
 public static class DhcpTester
 {
-    public static async Task<List<DhcpOffer>> DiscoverAsync(IPAddress localIp, byte[] mac, int waitMs, CancellationToken ct)
+    public static async Task<List<DhcpOffer>> DiscoverAsync(IPAddress localIp, byte[] mac, int waitMs, CancellationToken ct, int interfaceIndex = 0)
     {
         using var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         sock.EnableBroadcast = true;
+        if (!OperatingSystem.IsWindows())
+        {
+            // macOS/Linux: an eine Unicast-Adresse gebundene Sockets empfangen keine Broadcast-Antworten –
+            // daher an alle Adressen binden und unter macOS per IP_BOUND_IF an den gewählten Adapter koppeln.
+            localIp = null;
+            if (OperatingSystem.IsMacOS() && interfaceIndex > 0)
+                try { sock.SetRawSocketOption(0 /* IPPROTO_IP */, 25 /* IP_BOUND_IF */, BitConverter.GetBytes(interfaceIndex)); } catch { }
+        }
         try { sock.Bind(new IPEndPoint(localIp ?? IPAddress.Any, 68)); }
         catch (SocketException)
         {

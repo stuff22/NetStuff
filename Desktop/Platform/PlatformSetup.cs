@@ -12,12 +12,14 @@ internal static class PlatformSetup
             NetStuff.Platform.Arp = new MacArpResolver();
             NetStuff.Platform.Wlan = new MacWlanScanner();
             NetStuff.Platform.Notifier = new MacNotifier();
+            NetStuff.Platform.Lldp = new TcpdumpLldpSource();
         }
         else if (OperatingSystem.IsWindows())
         {
             // dieselben Umsetzungen wie in der WPF-App (Dateien aus Platform\Windows verlinkt)
             NetStuff.Platform.Arp = new NetStuff.Platforms.Windows.SendArpResolver();
             NetStuff.Platform.Wlan = new NetStuff.Platforms.Windows.WindowsWlanScanner();
+            NetStuff.Platform.Lldp = new NetStuff.Platforms.Windows.PktmonLldpSource();
         }
     }
 }

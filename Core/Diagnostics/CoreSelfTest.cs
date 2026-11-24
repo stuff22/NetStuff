@@ -36,7 +36,21 @@ public static class CoreSelfTest
             Tlv(0, Array.Empty<byte>());
             var n = LldpCapture.Parse(f.ToArray());
             if (n?.DeviceName != "core-sw01" || n.PortId != "Gi1/0/12" || n.Vlan != "20") throw new Exception($"falsch: {n?.DeviceName}/{n?.PortId}/{n?.Vlan}");
-            return Task.FromResult($"{n.DeviceName} {n.PortId} VLAN {n.Vlan}");
+
+            // Derselbe Rahmen in einer klassischen pcap-Datei (macOS: tcpdump -w), zweimal hintereinander
+            var pcap = new List<byte>();
+            pcap.AddRange(new byte[] { 0xD4, 0xC3, 0xB2, 0xA1, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 1, 0, 0, 0 });
+            for (int k = 0; k < 2; k++)
+            {
+                pcap.AddRange(new byte[8]);
+                pcap.AddRange(BitConverter.GetBytes(f.Count));
+                pcap.AddRange(BitConverter.GetBytes(f.Count));
+                pcap.AddRange(f);
+            }
+            var frames = PcapNg.ReadFrames(pcap.ToArray());
+            var decoded = LldpCapture.Decode(frames);
+            if (frames.Count != 2 || decoded.Count != 1 || decoded[0].DeviceName != "core-sw01") throw new Exception($"pcap: {frames.Count} Rahmen, {decoded.Count} Nachbarn");
+            return Task.FromResult($"{n.DeviceName} {n.PortId} VLAN {n.Vlan} · pcap ✓");
         });
 
         // CDP-Parser
