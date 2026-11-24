@@ -10,6 +10,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         Platforms.PlatformSetup.Register();
+        if (args.Contains("--diag")) { Platforms.NetDiag.Run(); return; }
         Startup.Init(args);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

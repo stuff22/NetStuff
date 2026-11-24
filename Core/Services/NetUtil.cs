@@ -67,7 +67,13 @@ public static class NetUtil
             if (!string.IsNullOrEmpty(ptr)) return ptr;
         }
         catch { }
-        // 2. Windows-Namensauflösung (inkl. LLMNR/NetBIOS im LAN)
+        // 2. mDNS/Bonjour direkt beim Gerät (Apple-Geräte, Drucker, Linux/Avahi, viele IoT-Geräte)
+        if (IsPrivate(ip) && ip.AddressFamily == AddressFamily.InterNetwork)
+        {
+            var mdns = await MdnsReverseAsync(ip, Math.Min(timeoutMs, 1200));
+            if (mdns != "") return mdns;
+        }
+        // 3. Namensauflösung des Systems (Windows inkl. LLMNR/NetBIOS im LAN)
         try
         {
             var task = Dns.GetHostEntryAsync(ip);
@@ -79,6 +85,87 @@ public static class NetUtil
         }
         catch { }
         return "";
+    }
+
+    /// <summary>
+    /// PTR-Abfrage per mDNS als „Legacy Unicast“ direkt an Port 5353 des Geräts (RFC 6762 6.7) –
+    /// der Responder antwortet per Unicast an den Absenderport. Liefert z. B. „MacBook-Pro.local“.
+    /// </summary>
+    public static async Task<string> MdnsReverseAsync(IPAddress ip, int timeoutMs = 1200)
+    {
+        try
+        {
+            var b = ip.GetAddressBytes();
+            var name = $"{b[3]}.{b[2]}.{b[1]}.{b[0]}.in-addr.arpa";
+            var q = new List<byte> { (byte)Random.Shared.Next(256), (byte)Random.Shared.Next(256), 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
+            foreach (var label in name.Split('.')) { q.Add((byte)label.Length); q.AddRange(System.Text.Encoding.ASCII.GetBytes(label)); }
+            q.AddRange(new byte[] { 0, 0, 12, 0, 1 }); // PTR, IN
+
+            using var udp = new UdpClient(AddressFamily.InterNetwork);
+            await udp.SendAsync(q.ToArray(), q.Count, new IPEndPoint(ip, 5353));
+            using var cts = new CancellationTokenSource(timeoutMs);
+            while (true)
+            {
+                var r = await udp.ReceiveAsync(cts.Token);
+                var d = r.Buffer;
+                if (d.Length < 12 || d[0] != q[0] || d[1] != q[1] || (d[2] & 0x80) == 0) continue;
+                int qd = d[4] << 8 | d[5], an = d[6] << 8 | d[7];
+                int off = 12;
+                for (int i = 0; i < qd; i++) { SkipName(d, ref off); off += 4; }
+                for (int i = 0; i < an && off + 10 <= d.Length; i++)
+                {
+                    SkipName(d, ref off);
+                    int type = d[off] << 8 | d[off + 1];
+                    int len = d[off + 8] << 8 | d[off + 9];
+                    off += 10;
+                    if (type == 12)
+                    {
+                        int p = off;
+                        var host = ReadName(d, ref p).TrimEnd('.');
+                        if (host != "") return host;
+                    }
+                    off += len;
+                }
+                return "";
+            }
+        }
+        catch { return ""; }
+    }
+
+    private static void SkipName(byte[] d, ref int off)
+    {
+        while (off < d.Length)
+        {
+            int l = d[off];
+            if (l == 0) { off++; return; }
+            if ((l & 0xC0) == 0xC0) { off += 2; return; }
+            off += l + 1;
+        }
+    }
+
+    private static string ReadName(byte[] d, ref int off)
+    {
+        var parts = new List<string>();
+        int pos = off, jumps = 0;
+        bool jumped = false;
+        while (pos < d.Length && jumps < 20)
+        {
+            int l = d[pos];
+            if (l == 0) { pos++; break; }
+            if ((l & 0xC0) == 0xC0)
+            {
+                if (pos + 1 >= d.Length) break;
+                if (!jumped) off = pos + 2;
+                jumped = true; jumps++;
+                pos = (l & 0x3F) << 8 | d[pos + 1];
+                continue;
+            }
+            if (pos + 1 + l > d.Length) break;
+            parts.Add(System.Text.Encoding.UTF8.GetString(d, pos + 1, l));
+            pos += l + 1;
+        }
+        if (!jumped) off = pos;
+        return string.Join(".", parts);
     }
 
     public static bool IsPrivate(IPAddress ip)
