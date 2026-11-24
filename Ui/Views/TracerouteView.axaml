@@ -2,6 +2,7 @@
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             xmlns:l="using:NetStuff.Ui.Infrastructure"
             xmlns:s="using:NetStuff.Services"
+            xmlns:c="using:NetStuff.Ui.Controls"
             x:Class="NetStuff.Ui.Views.TracerouteView">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
         <StackPanel>
@@ -34,18 +35,23 @@
 
         <TextBlock Grid.Row="2" x:Name="StatusText" Classes="Status" />
 
-        <DataGrid Grid.Row="3" x:Name="HopGrid" x:DataType="s:TraceHop" HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="50" />
-                <DataGridTextColumn Header="{l:T 'IP-Adresse'}" Binding="{Binding Ip}" Width="150" />
-                <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="140" />
-                <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="*" MinWidth="180" />
-                <DataGridTextColumn Header="{l:T 'Ort'}" Binding="{Binding Place}" Width="170" />
-                <DataGridTextColumn Header="{l:T 'Provider / AS'}" Binding="{Binding Isp}" Width="220" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <Grid Grid.Row="3" ColumnDefinitions="3*,12,2*">
+            <DataGrid x:Name="HopGrid" x:DataType="s:TraceHop" HeadersVisibility="Column">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="50" />
+                    <DataGridTextColumn Header="{l:T 'IP-Adresse'}" Binding="{Binding Ip}" Width="150" />
+                    <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="140" />
+                    <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="*" MinWidth="180" />
+                    <DataGridTextColumn Header="{l:T 'Ort'}" Binding="{Binding Place}" Width="170" />
+                    <DataGridTextColumn Header="{l:T 'Provider / AS'}" Binding="{Binding Isp}" Width="220" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <Border Grid.Column="2" Classes="Card" Margin="0" Padding="0" ClipToBounds="True">
+                <c:WorldMap x:Name="Map" />
+            </Border>
+        </Grid>
 
         <TextBlock Grid.Row="4" Classes="Status" Margin="2,8,0,0" FontSize="11"
-                   Text="{l:T 'Geodaten: ip-api.com · Standorte von Routern sind Näherungswerte. Die Weltkarte folgt in der Mac-Version.'}" />
+                   Text="{l:T 'Geodaten: ip-api.com · Karte: © OpenStreetMap-Mitwirkende · Standorte von Routern sind Näherungswerte. Mausrad: Zoom, Ziehen: verschieben.'}" />
     </Grid>
 </l:ToolView>

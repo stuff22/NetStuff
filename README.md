@@ -44,7 +44,7 @@ Deutsch und Englisch, läuft ohne Administratorrechte (nur LLDP/CDP fragt einmal
 | `CoreTests\` | Selbsttest des Kerns als Konsolenprogramm – läuft auf jedem System: `dotnet run --project CoreTests` (zusätzlich `-- --live` für eine echte Website-Kopie) |
 | `Platform\Windows\` | Windows-Umsetzungen: Toasts, SendARP, pktmon, WLAN-API |
 | `Pages\`, `Controls\`, `Infrastructure\` | WPF-Oberfläche (nur Windows) |
-| `Ui\` (NetStuff.Ui, Avalonia 12) | neue plattformübergreifende Oberfläche für macOS, Windows und später iPhone/iPad – im Aufbau (fertig: Ping, Traceroute, Path-MTU, Port-Scanner, DNS & Domains, Web-Prüfungen, Netzwerkscanner, WLAN, Wake-on-LAN) |
+| `Ui\` (NetStuff.Ui, Avalonia 12) | neue plattformübergreifende Oberfläche für macOS, Windows und später iPhone/iPad – im Aufbau (alle Werkzeuge außer LLDP/CDP, DHCP-Test und SNMP-Browser; Berichts-PDF über Edge/Chrome/Brave im Hintergrund) |
 | `Desktop\` | Desktop-Start der Avalonia-Oberfläche (macOS/Windows): `dotnet run --project Desktop`. `Desktop\Platform\Mac\`: macOS-Umsetzungen (ARP-Tabelle, CoreWLAN, Mitteilungen); unter Windows werden die Dateien aus `Platform\Windows\` mitverwendet |
 | `Desktop\macos\` | `build-app.sh` baut `Net-Stuff.app` (nötig für die Standortfreigabe – ohne sie zeigt macOS keine WLAN-Namen/BSSIDs) |
 

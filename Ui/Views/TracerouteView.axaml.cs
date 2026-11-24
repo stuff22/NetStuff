@@ -10,6 +10,7 @@ public partial class TracerouteView : ToolView
 {
     private readonly ObservableCollection<TraceHop> _hops = new();
     private CancellationTokenSource _cts;
+    private GeoInfo _self;
 
     public TracerouteView()
     {
@@ -38,6 +39,7 @@ public partial class TracerouteView : ToolView
         StartButton.IsEnabled = false;
         StopButton.IsEnabled = true;
         _hops.Clear();
+        Map.SetPoints(null);
 
         try
         {
@@ -48,11 +50,17 @@ public partial class TracerouteView : ToolView
             await Traceroute.RunAsync(ip, maxHops, timeout, _hops, row => HopGrid.ScrollIntoView(row, null), ct);
 
             StatusText.Text = L.T("Standorte werden ermittelt …");
-            try { await Traceroute.AddGeoAsync(_hops, ct); }
+            try
+            {
+                var selfTask = _self == null ? GeoIpService.SelfAsync(ct) : Task.FromResult(_self);
+                await Traceroute.AddGeoAsync(_hops, ct);
+                try { _self = await selfTask; } catch (Exception ex) when (ex is not OperationCanceledException) { }
+            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 StatusText.Text = L.T("Geodaten nicht verfügbar: ") + ex.Message;
             }
+            Map.SetPoints(Traceroute.MapPoints(_self, _hops));
             var last = _hops.LastOrDefault();
             StatusText.Text = last?.Reached == true
                 ? L.F("Ziel {0} nach {1} Hops erreicht.", ip, last.Hop)

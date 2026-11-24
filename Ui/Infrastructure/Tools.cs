@@ -39,7 +39,7 @@ public static class Tools
         new("ssl", "SSL/TLS-Checker", "Web", () => new SslView()),
         new("http", "HTTP-Header", "Web", () => new HttpHeaderView()),
         new("cms", "CMS-Checker", "Web", () => new CmsView()),
-        new("sitecopy", "Website-Kopierer", "Web", null),
+        new("sitecopy", "Website-Kopierer", "Web", () => new SiteCopyView()),
 
         new("settings", "Einstellungen", "App", () => new SettingsView()),
     };

@@ -38,9 +38,9 @@ public static class ReportCapture
                     var table = Table(dg);
                     if (table != null) entry.Blocks.Add(table);
                     return;
-                case LineChart or SpectrumChart:
+                case LineChart or SpectrumChart or WorldMap:
                     var img = Render((Control)node);
-                    if (img != null) entry.Blocks.Add(new ReportBlock { Kind = "image", ImageBase64 = img });
+                    if (img != null) entry.Blocks.Add(new ReportBlock { Kind = "image", Title = node is WorldMap ? L.T("Karte") : null, ImageBase64 = img });
                     return;
                 case TextBox { IsReadOnly: true, AcceptsReturn: true } box when !string.IsNullOrWhiteSpace(box.Text):
                     var t = box.Text.Length > 30000 ? box.Text[..30000] + "\n…" : box.Text;

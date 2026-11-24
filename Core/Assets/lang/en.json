@@ -902,5 +902,11 @@
   "Zum Löschen des gesamten Verlaufs nochmals „Verlauf leeren“ klicken.": "Click “Clear history” again to delete the entire history.",
   "Download": "Download",
   "Upload": "Upload",
-  "Prüft Hosts und Dienste dauerhaft im Hintergrund (Ping, TCP-Port, HTTP, DNS, TLS-Zertifikat) und meldet Ausfälle als Mitteilung – auch wenn ein anderes Werkzeug geöffnet ist.": "Continuously checks hosts and services in the background (ping, TCP port, HTTP, DNS, TLS certificate) and reports outages as notifications – even while another tool is open."
+  "Prüft Hosts und Dienste dauerhaft im Hintergrund (Ping, TCP-Port, HTTP, DNS, TLS-Zertifikat) und meldet Ausfälle als Mitteilung – auch wenn ein anderes Werkzeug geöffnet ist.": "Continuously checks hosts and services in the background (ping, TCP port, HTTP, DNS, TLS certificate) and reports outages as notifications – even while another tool is open.",
+  "Geodaten: ip-api.com · Karte: © OpenStreetMap-Mitwirkende · Standorte von Routern sind Näherungswerte. Mausrad: Zoom, Ziehen: verschieben.": "Geo data: ip-api.com · Map: © OpenStreetMap contributors · Router locations are approximate. Mouse wheel: zoom, drag: pan.",
+  "Hop {0}": "Hop {0}",
+  "Ihr Standort": "Your location",
+  "Starte einen Traceroute, um die Route auf der Karte zu sehen.": "Run a traceroute to see the route on the map.",
+  "„{0}“ enthält bereits eine Kopie – zum Überschreiben nochmals „Kopieren“ klicken.": "“{0}” already contains a copy – click “Copy” again to overwrite.",
+  "⏸ Der Download ist pausiert und wartet auf Ihre Entscheidung zu den offenen Domains.": "⏸ The download is paused and waiting for your decision on the pending domains."
 }

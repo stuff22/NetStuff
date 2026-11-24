@@ -318,23 +318,20 @@ public static class Traceroute
         }
     }
 
-    /// <summary>Punkte für die Karte (Assets/map.html, Funktion setPoints). Gleiche Orte hintereinander werden zusammengefasst.</summary>
-    public static List<object> MapPoints(GeoInfo self, IList<TraceHop> hops)
+    /// <summary>Punkte für die Karte (WPF: Assets/map.html, Funktion setPoints; Avalonia: WorldMap). Gleiche Orte hintereinander werden zusammengefasst.</summary>
+    public static List<MapPoint> MapPoints(GeoInfo self, IList<TraceHop> hops)
     {
-        var points = new List<object>();
+        var points = new List<MapPoint>();
         if (self?.Ok == true && hops.Any(h => h.Geo != null))
-            points.Add(new { hop = 0, ip = self.Ip, host = "", lat = self.Lat, lon = self.Lon, place = self.Location, isp = self.Isp, rtt = "", kind = "start" });
+            points.Add(new MapPoint(0, self.Ip, "", self.Lat, self.Lon, self.Location, self.Isp, "", "start"));
 
         var withGeo = hops.Where(h => h.Geo != null).ToList();
         for (int i = 0; i < withGeo.Count; i++)
         {
             var h = withGeo[i];
             if (i > 0 && withGeo[i - 1].Geo.Lat == h.Geo.Lat && withGeo[i - 1].Geo.Lon == h.Geo.Lon && i < withGeo.Count - 1) continue;
-            points.Add(new
-            {
-                hop = h.Hop, ip = h.Ip, host = h.Host, lat = h.Geo.Lat, lon = h.Geo.Lon, place = h.Place, isp = h.Isp, rtt = h.Rtt,
-                kind = i == withGeo.Count - 1 && h.Reached ? "end" : "hop",
-            });
+            points.Add(new MapPoint(h.Hop, h.Ip, h.Host, h.Geo.Lat, h.Geo.Lon, h.Place, h.Isp, h.Rtt,
+                i == withGeo.Count - 1 && h.Reached ? "end" : "hop"));
         }
         return points;
     }
@@ -342,3 +339,15 @@ public static class Traceroute
     public static string ToText(IEnumerable<TraceHop> hops) =>
         string.Join("\n", hops.Select(h => $"{h.Hop,3}  {h.Ip,-40} {h.Rtt,-22} {h.Host}  {h.Place}  {h.Isp}"));
 }
+
+/// <summary>Ein Punkt der Traceroute-Karte (JSON-Namen wie in Assets/map.html erwartet).</summary>
+public record MapPoint(
+    [property: System.Text.Json.Serialization.JsonPropertyName("hop")] int Hop,
+    [property: System.Text.Json.Serialization.JsonPropertyName("ip")] string Ip,
+    [property: System.Text.Json.Serialization.JsonPropertyName("host")] string Host,
+    [property: System.Text.Json.Serialization.JsonPropertyName("lat")] double Lat,
+    [property: System.Text.Json.Serialization.JsonPropertyName("lon")] double Lon,
+    [property: System.Text.Json.Serialization.JsonPropertyName("place")] string Place,
+    [property: System.Text.Json.Serialization.JsonPropertyName("isp")] string Isp,
+    [property: System.Text.Json.Serialization.JsonPropertyName("rtt")] string Rtt,
+    [property: System.Text.Json.Serialization.JsonPropertyName("kind")] string Kind);

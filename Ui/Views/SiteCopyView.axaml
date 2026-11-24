@@ -1,0 +1,142 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.SiteCopyView">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Website-Kopierer'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Lädt eine Website komplett herunter, behält die Ordnerstruktur des Webservers bei und schreibt die Links um, sodass die Kopie offline im Browser funktioniert. Fremde Domains werden nur nach Rückfrage geladen. Bitte nur eigene oder freigegebene Websites kopieren.'}" />
+        </StackPanel>
+
+        <!-- Eingabe -->
+        <Border Grid.Row="1" Classes="Card">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,8">
+                        <TextBlock Classes="Label" Text="{l:T 'Start-URL'}" />
+                        <TextBox x:Name="UrlBox" Width="360" PlaceholderText="https://www.example.com" KeyDown="UrlBox_KeyDown" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,8">
+                        <TextBlock Classes="Label" Text="{l:T 'Zielordner (je Website ein Unterordner)'}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBox x:Name="FolderBox" Width="320" />
+                            <Button Content="…" ToolTip.Tip="{l:T 'Ordner wählen'}" Click="Browse_Click" MinWidth="36" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8" Margin="0,0,0,8">
+                        <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Kopieren'}" Click="Start_Click" />
+                        <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
+                        <Button x:Name="OpenOfflineButton" Content="{l:T 'Offline öffnen'}" IsEnabled="False" Click="OpenOffline_Click" />
+                        <Button x:Name="OpenFolderButton" Content="{l:T 'Ordner öffnen'}" IsEnabled="False" Click="OpenFolder_Click" />
+                    </StackPanel>
+                </WrapPanel>
+
+                <Expander Header="{l:T 'Optionen'}" Margin="0,2,0,0" HorizontalAlignment="Stretch">
+                    <WrapPanel Margin="0,8,0,0">
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Linktiefe'}" />
+                            <NumericUpDown x:Name="DepthBox" Value="5" Minimum="0" Maximum="50" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Max. Dateien (0 = alle)'}" />
+                            <NumericUpDown x:Name="MaxFilesBox" Value="5000" Minimum="0" Maximum="1000000" Increment="500" Width="160" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Max. Dateigröße MB (0 = ∞)'}" />
+                            <NumericUpDown x:Name="MaxSizeBox" Value="100" Minimum="0" Maximum="100000" Increment="10" Width="160" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="Parallel" />
+                            <NumericUpDown x:Name="ParallelBox" Value="4" Minimum="1" Maximum="16" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Pause je Anfrage (ms)'}" />
+                            <NumericUpDown x:Name="DelayBox" Value="0" Minimum="0" Maximum="10000" Increment="100" Width="150" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Fremde Domains'}" />
+                            <ComboBox x:Name="ForeignBox" Width="320" SelectedIndex="0">
+                                <ComboBoxItem Content="{l:T 'Immer nachfragen'}" />
+                                <ComboBoxItem Content="{l:T 'Ressourcen automatisch, Seiten nachfragen'}" />
+                                <ComboBoxItem Content="{l:T 'Nie laden'}" />
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,8">
+                            <TextBlock Classes="Label" Text="{l:T 'Ausschließen (Endungen, z. B. mp4,zip,iso)'}" />
+                            <TextBox x:Name="ExcludeBox" Width="260" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8" VerticalAlignment="Bottom">
+                            <CheckBox x:Name="SubdomainsBox" Content="{l:T 'Subdomains der Start-Domain einbeziehen'}" IsChecked="True" />
+                            <CheckBox x:Name="BelowBox" Content="{l:T 'Nur unterhalb des Start-Verzeichnisses'}" />
+                            <CheckBox x:Name="RobotsBox" Content="{l:T 'robots.txt beachten'}" IsChecked="True" />
+                        </StackPanel>
+                    </WrapPanel>
+                </Expander>
+            </StackPanel>
+        </Border>
+
+        <!-- Fortschritt -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+            <ProgressBar x:Name="Progress" Height="4" MinWidth="0" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" x:Name="StatusText" Classes="Status" Margin="12,0,0,0" VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Rückfrage fremde Domains -->
+        <Border Grid.Row="3" x:Name="ForeignCard" Classes="Card" IsVisible="False">
+            <StackPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="{l:T 'Fremde Domains'}" FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock Classes="Status" TextWrapping="Wrap"
+                                   Text="{l:T 'Die Website verweist auf andere Domains. Sollen Inhalte von dort mitgeladen werden? Erlaubt werden Ressourcen (Bilder, CSS, Skripte, Schriften) und direkt verlinkte Seiten geladen – fremde Seiten werden nicht weiterverfolgt.'}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+                        <Button Content="{l:T 'Alle erlauben'}" Click="AllowAll_Click" />
+                        <Button Content="{l:T 'Alle ablehnen'}" Click="DenyAll_Click" />
+                    </StackPanel>
+                </Grid>
+                <Border x:Name="WaitBanner" IsVisible="False" CornerRadius="6" Padding="10,6" Margin="0,8,0,0" Background="#33D29922">
+                    <TextBlock Text="{l:T '⏸ Der Download ist pausiert und wartet auf Ihre Entscheidung zu den offenen Domains.'}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                </Border>
+                <ScrollViewer MaxHeight="190" Margin="0,8,0,0">
+                    <ItemsControl x:Name="ForeignList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="s:ForeignHost">
+                                <Grid ColumnDefinitions="300,190,*,Auto" Margin="0,2">
+                                    <TextBlock Text="{Binding Host}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Summary}" Classes="Status" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding DecisionText}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPending}">
+                                        <Button Content="{l:T 'Erlauben'}" Tag="{Binding Host}" Click="Allow_Click" />
+                                        <Button Content="{l:T 'Ablehnen'}" Tag="{Binding Host}" Click="Deny_Click" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+
+        <!-- Zusammenfassung -->
+        <StackPanel Grid.Row="4" x:Name="SummaryPanel" />
+
+        <!-- Protokoll -->
+        <DockPanel Grid.Row="5">
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                <TextBlock Text="{l:T 'Protokoll'}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <CheckBox Grid.Column="1" x:Name="ErrorsOnlyBox" Content="{l:T 'Nur Fehler anzeigen'}" IsCheckedChanged="ErrorsOnly_Changed" />
+            </Grid>
+            <DataGrid x:Name="LogGrid" x:DataType="s:CopyLogEntry" HeadersVisibility="Column" MinHeight="120">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="95" />
+                    <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding Kind}" Width="95" />
+                    <DataGridTextColumn Header="{l:T 'Größe'}" Binding="{Binding Size}" Width="90" />
+                    <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="2*" MinWidth="200" />
+                    <DataGridTextColumn Header="{l:T 'Lokale Datei / Hinweis'}" Binding="{Binding LocalFile}" Width="*" MinWidth="160" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</l:ToolView>
