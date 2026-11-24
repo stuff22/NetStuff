@@ -5,13 +5,24 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using NetStuff.Services;
 using NetStuff.Ui.Infrastructure;
 
 namespace NetStuff.Ui.Views;
 
+/// <summary>Listeneintrag für ein Projekt – meldet Namensänderungen, ohne dass die Liste neu aufgebaut werden muss.</summary>
+public sealed class ProjectItem : Bindable
+{
+    public ProjectItem(Project p) { Project = p; }
+    public Project Project { get; }
+    public string Display => Project.Display;
+    public void Refresh() => Raise(nameof(Display));
+}
+
 public partial class ProjectsView : ToolView
 {
+    private readonly System.Collections.ObjectModel.ObservableCollection<ProjectItem> _items = new();
     private Project _current;
     private bool _loading, _refreshing;
     private DateTime _deleteArmed = DateTime.MinValue;
@@ -19,10 +30,18 @@ public partial class ProjectsView : ToolView
     public ProjectsView()
     {
         InitializeComponent();
-        ProjectList.ItemsSource = ProjectStore.Projects;
-        ProjectList.DisplayMemberBinding = new Avalonia.Data.Binding(nameof(Project.Display));
+        SyncItems();
+        ProjectStore.Projects.CollectionChanged += (_, _) => SyncItems();
+        // Auswahl in der Werkzeugleiste übernehmen, wenn diese Seite gerade offen ist
+        ProjectStore.ActiveChanged += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            var active = ProjectStore.Active;
+            if (active != null && active != _current) SelectInList(active);
+        });
+        ProjectList.ItemsSource = _items;
+        ProjectList.DisplayMemberBinding = new Avalonia.Data.Binding(nameof(ProjectItem.Display));
         EntryList.DisplayMemberBinding = new Avalonia.Data.Binding(nameof(ReportEntry.Summary));
-        ProjectList.SelectionChanged += (_, _) => { if (!_refreshing) SelectProject(ProjectList.SelectedItem as Project); };
+        ProjectList.SelectionChanged += (_, _) => { if (!_refreshing) SelectProject((ProjectList.SelectedItem as ProjectItem)?.Project); };
         EntryList.SelectionChanged += (_, _) => CommentBox.Text = SelectedEntry?.Comment ?? "";
         foreach (var box in new[] { CustomerBox, SiteBox, AddressBox, ContactBox, NotesBox }) box.LostFocus += (_, _) => FieldsChanged();
         CommentBox.LostFocus += (_, _) => CommentChanged();
@@ -34,9 +53,31 @@ public partial class ProjectsView : ToolView
     public override void OnShown()
     {
         var want = _current ?? ProjectStore.Active ?? ProjectStore.Projects.FirstOrDefault();
-        if (ProjectList.SelectedItem != want) ProjectList.SelectedItem = want;
+        if ((ProjectList.SelectedItem as ProjectItem)?.Project != want) SelectInList(want);
         else { RefreshEntries(); ShowPreview(); }
     }
+
+    /// <summary>Listeneinträge an ProjectStore.Projects angleichen (vorhandene Einträge bleiben erhalten).</summary>
+    private void SyncItems()
+    {
+        _refreshing = true;
+        try
+        {
+            for (int i = _items.Count - 1; i >= 0; i--)
+                if (!ProjectStore.Projects.Contains(_items[i].Project)) _items.RemoveAt(i);
+            for (int i = 0; i < ProjectStore.Projects.Count; i++)
+            {
+                var p = ProjectStore.Projects[i];
+                int at = -1;
+                for (int k = 0; k < _items.Count; k++) if (_items[k].Project == p) { at = k; break; }
+                if (at < 0) _items.Insert(i, new ProjectItem(p));
+                else if (at != i) _items.Move(at, i);
+            }
+        }
+        finally { _refreshing = false; }
+    }
+
+    private void SelectInList(Project p) => ProjectList.SelectedItem = _items.FirstOrDefault(i => i.Project == p);
 
     private ReportEntry SelectedEntry => EntryList.SelectedItem as ReportEntry;
 
@@ -77,13 +118,16 @@ public partial class ProjectsView : ToolView
 
     private void FieldsChanged()
     {
+        var before = _current?.Display;
         SaveFields();
-        // Anzeige der Projektliste aktualisieren (Name kann sich geändert haben)
-        _refreshing = true;
-        ProjectList.ItemsSource = null;
-        ProjectList.ItemsSource = ProjectStore.Projects;
-        ProjectList.SelectedItem = _current;
-        _refreshing = false;
+        // Nur den Namen in den Listen aktualisieren – die Liste bleibt stehen, damit ein gleichzeitiger Klick
+        // auf ein anderes Projekt (Fokuswechsel löst dieses Speichern aus) nicht verloren geht.
+        if (_current != null && _current.Display != before)
+        {
+            _items.FirstOrDefault(i => i.Project == _current)?.Refresh();
+            var main = this.FindAncestorOfType<MainView>();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => main?.RefreshProjects(), Avalonia.Threading.DispatcherPriority.Background);
+        }
         ShowPreview();
     }
 
@@ -98,7 +142,7 @@ public partial class ProjectsView : ToolView
     private void New_Click(object sender, RoutedEventArgs e)
     {
         var p = ProjectStore.Create(L.T("Neuer Kunde"));
-        ProjectList.SelectedItem = p;
+        SelectInList(p);
         CustomerBox.Focus();
         CustomerBox.SelectAll();
     }
@@ -117,7 +161,7 @@ public partial class ProjectsView : ToolView
         var p = _current;
         _current = null;
         ProjectStore.Delete(p);
-        ProjectList.SelectedItem = ProjectStore.Projects.FirstOrDefault();
+        SelectInList(ProjectStore.Projects.FirstOrDefault());
         StatusText.Text = "";
     }
 

@@ -91,6 +91,9 @@ public partial class MainView : UserControl
 
     /* ------------------------------------------------------------------ Werkzeugleiste */
 
+    /// <summary>Projektauswahl neu laden (z. B. nach dem Umbenennen eines Kunden).</summary>
+    public void RefreshProjects() => LoadProjects();
+
     private void LoadProjects()
     {
         _building = true;
