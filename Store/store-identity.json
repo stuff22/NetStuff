@@ -1,0 +1,8 @@
+{
+  "_hinweis": "Werte aus dem Partner Center: App → Produktverwaltung → Produktidentität. Müssen exakt übereinstimmen.",
+  "IdentityName": "PLATZHALTER.NetStuff",
+  "Publisher": "CN=00000000-0000-0000-0000-000000000000",
+  "PublisherDisplayName": "iT-Stuff",
+  "DisplayName": "Net-Stuff",
+  "Description": "Netzwerk-Werkzeugkasten: Ping, Traceroute, DNS, Mail, SSL, WLAN, Netzwerkscanner, Berichte."
+}
