@@ -41,7 +41,7 @@ public partial class DashboardView : ToolView
         catch (Exception ex)
         {
             PublicPanel.Children.Clear();
-            PublicPanel.Children.Add(UiFactory.Section(new CheckSection("Internetverbindung", new[] { new CheckItem("Fehler", ex.Message, Level.Bad) })));
+            PublicPanel.Children.Add(UiFactory.Section(new CheckSection("Internetverbindung", new[] { new CheckItem("Fehler", NetUtil.ErrorText(ex), Level.Bad) })));
         }
         finally { RefreshButton.IsEnabled = true; }
     }

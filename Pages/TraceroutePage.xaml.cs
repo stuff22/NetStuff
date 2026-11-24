@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -53,7 +53,7 @@ public partial class TraceroutePage : ToolPage
         {
             Map.Visibility = Visibility.Collapsed;
             MapError.Visibility = Visibility.Visible;
-            MapError.Text = "Karte nicht verfügbar – WebView2-Laufzeit fehlt?\n" + ex.Message;
+            MapError.Text = "Karte nicht verfügbar – WebView2-Laufzeit fehlt?\n" + NetUtil.ErrorText(ex);
         }
     }
 
@@ -90,7 +90,7 @@ public partial class TraceroutePage : ToolPage
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                StatusText.Text = "Geodaten nicht verfügbar: " + ex.Message;
+                StatusText.Text = "Geodaten nicht verfügbar: " + NetUtil.ErrorText(ex);
             }
             await UpdateMap();
             var last = _hops.LastOrDefault();
@@ -104,7 +104,7 @@ public partial class TraceroutePage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Fehler: " + ex.Message;
+            StatusText.Text = "Fehler: " + NetUtil.ErrorText(ex);
         }
         finally
         {

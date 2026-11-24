@@ -36,7 +36,7 @@ public partial class DomainCheckView : ToolView
         }
         catch (Exception ex)
         {
-            _sink.Error(ex.Message);
+            _sink.Error(NetUtil.ErrorText(ex));
         }
         finally
         {

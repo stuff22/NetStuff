@@ -44,7 +44,7 @@ public partial class LldpPage : ToolPage
         catch (OperationCanceledException) { StatusText.Text = L.T("Abgebrochen."); }
         catch (Exception ex)
         {
-            ResultsPanel.Children.Add(UiFactory.Message(ex.Message, Level.Bad));
+            ResultsPanel.Children.Add(UiFactory.Message(NetUtil.ErrorText(ex), Level.Bad));
             StatusText.Text = "";
         }
         finally

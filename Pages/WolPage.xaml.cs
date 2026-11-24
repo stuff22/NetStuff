@@ -38,7 +38,7 @@ public partial class WolPage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Fehler: " + ex.Message;
+            StatusText.Text = "Fehler: " + NetUtil.ErrorText(ex);
         }
     }
 
@@ -48,7 +48,7 @@ public partial class WolPage : ToolPage
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         try { WakeOnLan.ParseMac(MacBox.Text); }
-        catch (Exception ex) { StatusText.Text = ex.Message; return; }
+        catch (Exception ex) { StatusText.Text = NetUtil.ErrorText(ex); return; }
         var dev = new WolDevice
         {
             Name = NameBox.Text.Trim() == "" ? MacBox.Text.Trim() : NameBox.Text.Trim(),

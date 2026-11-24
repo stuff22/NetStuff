@@ -75,7 +75,7 @@ public partial class PortScanPage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Fehler: " + ex.Message;
+            StatusText.Text = "Fehler: " + NetUtil.ErrorText(ex);
         }
         finally
         {

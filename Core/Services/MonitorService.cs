@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
@@ -107,7 +107,7 @@ public static class MonitorService
         t.NextRun = DateTime.Now.AddSeconds(Math.Max(5, t.IntervalSec));
         (bool ok, double? ms, string value, bool warn) r;
         try { r = await RunCheck(t, ct); }
-        catch (Exception ex) { r = (false, null, ex.InnerException?.Message ?? ex.Message, false); }
+        catch (Exception ex) { r = (false, null, NetUtil.ErrorText(ex), false); }
         if (ct.IsCancellationRequested) { t.Running = false; return; }
 
         t.Checks++;

@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -157,7 +157,7 @@ public partial class SiteCopyPage : ToolPage
         }
         catch (Exception ex)
         {
-            outcome = L.T("Fehler: ") + ex.Message;
+            outcome = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
         finally
         {

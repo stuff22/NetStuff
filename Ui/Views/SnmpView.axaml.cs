@@ -118,7 +118,7 @@ public partial class SnmpView : ToolView
             }, ct);
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         StopButton.IsEnabled = false;
     }
 

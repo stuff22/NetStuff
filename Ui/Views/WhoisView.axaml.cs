@@ -39,7 +39,7 @@ public partial class WhoisView : ToolView
     {
         if ((QueryBox.Text ?? "").Trim() == "" || !Busy(true)) return;
         try { Show(await WhoisLookup.WhoisAsync(QueryBox.Text, ServerBox.Text ?? "", FollowBox.IsChecked == true)); }
-        catch (Exception ex) { RawBox.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { RawBox.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally { Busy(false); }
     }
 
@@ -47,7 +47,7 @@ public partial class WhoisView : ToolView
     {
         if ((QueryBox.Text ?? "").Trim() == "" || !Busy(true)) return;
         try { Show(await WhoisLookup.RdapAsync(QueryBox.Text)); }
-        catch (Exception ex) { RawBox.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { RawBox.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally { Busy(false); }
     }
 

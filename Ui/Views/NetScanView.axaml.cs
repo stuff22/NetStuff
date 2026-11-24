@@ -44,7 +44,7 @@ public partial class NetScanView : ToolView
         if (!StartButton.IsEnabled) return;
         List<IPAddress> ips;
         try { ips = NetUtil.ParseRange(RangeBox.Text ?? "", 4096); }
-        catch (Exception ex) { StatusText.Text = ex.Message; return; }
+        catch (Exception ex) { StatusText.Text = NetUtil.ErrorText(ex); return; }
 
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
@@ -73,7 +73,7 @@ public partial class NetScanView : ToolView
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.T("Fehler: ") + ex.Message;
+            StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
         finally
         {
@@ -122,7 +122,7 @@ public partial class NetScanView : ToolView
             await OuiDatabase.EnsureLoadedAsync(forceDownload: true);
             foreach (var h in _hosts) h.Vendor = OuiDatabase.Lookup(h.Mac);
         }
-        catch (Exception ex) { OuiText.Text = L.T("Fehler: ") + ex.Message; return; }
+        catch (Exception ex) { OuiText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); return; }
         OuiText.Text = NetworkScanner.OuiStatus();
     }
 
@@ -130,7 +130,7 @@ public partial class NetScanView : ToolView
     {
         if (_hosts.Count == 0) return;
         try { await SaveTextAsync($"netzwerkscan-{DateTime.Now:yyyy-MM-dd-HHmm}.csv", L.T("CSV-Datei"), "csv", NetworkScanner.ToCsv(_hosts)); }
-        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
     }
 
     private void Stop_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();

@@ -43,7 +43,7 @@ public partial class SurveyView : ToolView
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.T("Fehler: ") + ex.Message;
+            StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
         finally
         {

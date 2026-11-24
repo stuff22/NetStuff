@@ -106,6 +106,6 @@ public partial class SettingsPage : ToolPage
             await OuiDatabase.EnsureLoadedAsync(true);
             StatusText.Text = L.F("{0:N0} Einträge geladen", OuiDatabase.Count);
         }
-        catch (Exception ex) { StatusText.Text = ex.Message; }
+        catch (Exception ex) { StatusText.Text = NetUtil.ErrorText(ex); }
     }
 }

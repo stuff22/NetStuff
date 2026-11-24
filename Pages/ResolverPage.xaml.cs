@@ -43,7 +43,7 @@ public partial class ResolverPage : ToolPage
         }
         catch (Exception ex)
         {
-            InfoText.Text = "Fehler: " + ex.Message;
+            InfoText.Text = "Fehler: " + NetUtil.ErrorText(ex);
         }
         finally
         {

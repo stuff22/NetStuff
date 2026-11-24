@@ -66,7 +66,7 @@ public partial class WlanView : ToolView
         }
         catch (Exception ex)
         {
-            StatusText.Text = ex.Message;
+            StatusText.Text = NetUtil.ErrorText(ex);
             StartButton.IsEnabled = false;
         }
     }
@@ -98,11 +98,11 @@ public partial class WlanView : ToolView
             catch (WlanException ex) when (ex.LocationDenied)
             {
                 ShowPermission(L.T("Windows 11 gibt WLAN-Scanergebnisse nur frei, wenn die Standortdienste aktiv sind und Desktop-Apps darauf zugreifen dürfen: Einstellungen → Datenschutz und Sicherheit → Standort → „Standortdienste“ und „Desktop-Apps Zugriff auf Ihren Standort erlauben“ einschalten."));
-                StatusText.Text = ex.Message;
+                StatusText.Text = NetUtil.ErrorText(ex);
             }
             catch (Exception ex)
             {
-                StatusText.Text = L.T("Fehler: ") + ex.Message;
+                StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex);
             }
             try { await Task.Delay(3500, ct); } catch { break; }
         }

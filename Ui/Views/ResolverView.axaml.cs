@@ -40,7 +40,7 @@ public partial class ResolverView : ToolView
         {
             InfoText.Text = await ResolverBench.RunAsync(_rows, NameBox.Text, Enum.Parse<QueryType>(typeName), (int)(RoundsBox.Value ?? 3));
         }
-        catch (Exception ex) { InfoText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { InfoText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally { StartButton.IsEnabled = true; }
     }
 }

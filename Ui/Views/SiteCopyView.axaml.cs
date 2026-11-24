@@ -146,7 +146,7 @@ public partial class SiteCopyView : ToolView
         }
         catch (Exception ex)
         {
-            outcome = L.T("Fehler: ") + ex.Message;
+            outcome = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
         finally
         {

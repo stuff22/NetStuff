@@ -37,7 +37,7 @@ public partial class WlanSurveyPage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.T("Fehler: ") + ex.Message;
+            StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
         finally
         {

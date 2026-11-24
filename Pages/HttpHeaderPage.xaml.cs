@@ -44,7 +44,7 @@ public partial class HttpHeaderPage : ToolPage
         }
         catch (Exception ex)
         {
-            _sink.Error(L.T("Anfrage fehlgeschlagen: ") + (ex.InnerException?.Message ?? ex.Message));
+            _sink.Error(L.T("Anfrage fehlgeschlagen: ") + NetUtil.ErrorText(ex));
         }
         finally
         {

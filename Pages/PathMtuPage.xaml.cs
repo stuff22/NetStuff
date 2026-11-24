@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Windows;
@@ -46,7 +46,7 @@ public partial class PathMtuPage : ToolPage
         catch (Exception ex)
         {
             ResultText.Text = "–";
-            Log("Fehler: " + ex.Message);
+            Log("Fehler: " + NetUtil.ErrorText(ex));
         }
         finally
         {

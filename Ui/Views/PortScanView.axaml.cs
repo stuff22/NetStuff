@@ -79,7 +79,7 @@ public partial class PortScanView : ToolView
             StatusText.Text = L.F("Fertig: {0} offene von {1} Ports auf {2} in {3:0.0} s", _rows.Count, ports.Count, ip, sw.Elapsed.TotalSeconds);
         }
         catch (OperationCanceledException) { StatusText.Text = L.F("Abgebrochen – {0} offene Ports gefunden.", _rows.Count); }
-        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally
         {
             StartButton.IsEnabled = true;

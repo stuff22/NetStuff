@@ -38,7 +38,7 @@ public partial class DomainCheckPage : ToolPage
         }
         catch (Exception ex)
         {
-            _sink.Error(ex.Message);
+            _sink.Error(NetUtil.ErrorText(ex));
         }
         finally
         {

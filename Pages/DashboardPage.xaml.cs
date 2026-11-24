@@ -50,7 +50,7 @@ public partial class DashboardPage : ToolPage
         }
         catch (Exception ex)
         {
-            PublicList.ItemsSource = new[] { new CheckItem("Fehler", ex.Message, Level.Bad) };
+            PublicList.ItemsSource = new[] { new CheckItem("Fehler", NetUtil.ErrorText(ex), Level.Bad) };
         }
     }
 }

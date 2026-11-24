@@ -40,7 +40,7 @@ public partial class WolView : ToolView
         }
         catch (Exception ex)
         {
-            StatusText.Text = L.T("Fehler: ") + ex.Message;
+            StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex);
         }
     }
 
@@ -53,7 +53,7 @@ public partial class WolView : ToolView
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         try { WakeOnLan.ParseMac(MacBox.Text ?? ""); }
-        catch (Exception ex) { StatusText.Text = ex.Message; return; }
+        catch (Exception ex) { StatusText.Text = NetUtil.ErrorText(ex); return; }
         var mac = (MacBox.Text ?? "").Trim().ToUpperInvariant();
         var name = (NameBox.Text ?? "").Trim();
         var dev = new WolDevice

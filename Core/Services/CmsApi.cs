@@ -613,7 +613,7 @@ public static class CmsApi
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
-                return new Resp(0, ex.InnerException?.Message ?? ex.Message, new Dictionary<string, string>());
+                return new Resp(0, NetUtil.ErrorText(ex), new Dictionary<string, string>());
             }
         }
 

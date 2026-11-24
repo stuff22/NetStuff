@@ -39,7 +39,7 @@ public partial class MailView : ToolView
         }
         catch (Exception ex)
         {
-            _sink.Error(ex.Message);
+            _sink.Error(NetUtil.ErrorText(ex));
         }
         finally
         {

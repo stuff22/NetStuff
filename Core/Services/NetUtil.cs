@@ -1,8 +1,9 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using NetStuff.Infrastructure;
 
 namespace NetStuff.Services;
 
@@ -167,6 +168,49 @@ public static class NetUtil
         if (!jumped) off = pos;
         return string.Join(".", parts);
     }
+
+    /// <summary>
+    /// Verständliche (übersetzte) Fehlermeldung statt der Systemtexte von Windows/macOS,
+    /// z. B. „nodename nor servname provided, or not known“ → „Name konnte nicht aufgelöst werden …“.
+    /// </summary>
+    public static string ErrorText(Exception ex)
+    {
+        if (ex == null) return "";
+        if (ex is AggregateException ag && ag.InnerExceptions.Count == 1) return ErrorText(ag.InnerException);
+
+        // innerste Netzwerk-Ursache suchen
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            if (e is SocketException se) return L.T(SocketText(se.SocketErrorCode)) is { Length: > 0 } t ? t : L.T(se.Message);
+            if (e is TimeoutException) return L.T("Zeitüberschreitung – keine Antwort.");
+            if (e is System.Security.Authentication.AuthenticationException ae)
+                return L.T("TLS-Aushandlung fehlgeschlagen: ") + L.T(ae.InnerException?.Message ?? ae.Message);
+        }
+        if (ex is TaskCanceledException or OperationCanceledException) return L.T("Zeitüberschreitung – keine Antwort.");
+        if (ex is HttpRequestException { StatusCode: { } code }) return $"HTTP {(int)code} {code}";
+
+        var msg = ex.InnerException?.Message ?? ex.Message;
+        if (msg.Contains("nodename nor servname", StringComparison.OrdinalIgnoreCase) || msg.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("No such host is known", StringComparison.OrdinalIgnoreCase))
+            return L.T(SocketText(SocketError.HostNotFound));
+        return L.T(msg);
+    }
+
+    private static string SocketText(SocketError code) => code switch
+    {
+        SocketError.HostNotFound or SocketError.NoData => "Name konnte nicht aufgelöst werden – unbekannter Hostname oder DNS-Problem.",
+        SocketError.TryAgain => "DNS-Server antwortet nicht (vorübergehender Fehler).",
+        SocketError.ConnectionRefused => "Verbindung abgelehnt – der Port ist geschlossen.",
+        SocketError.TimedOut => "Zeitüberschreitung – keine Antwort.",
+        SocketError.HostUnreachable or SocketError.HostDown => "Host nicht erreichbar.",
+        SocketError.NetworkUnreachable or SocketError.NetworkDown => "Netzwerk nicht erreichbar – besteht eine Verbindung?",
+        SocketError.ConnectionReset => "Verbindung von der Gegenstelle zurückgesetzt.",
+        SocketError.ConnectionAborted => "Verbindung abgebrochen.",
+        SocketError.AccessDenied => "Zugriff verweigert – fehlende Berechtigung.",
+        SocketError.AddressNotAvailable => "Adresse auf diesem Gerät nicht verfügbar.",
+        SocketError.AddressAlreadyInUse => "Port wird bereits verwendet.",
+        _ => "",
+    };
 
     public static bool IsPrivate(IPAddress ip)
     {

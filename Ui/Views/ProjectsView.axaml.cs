@@ -212,7 +212,7 @@ public partial class ProjectsView : ToolView
             var path = await SaveTextAsync(FileName(".html"), "HTML", "html", ReportRenderer.Html(_current), bom: false);
             if (path != null) StatusText.Text = L.F("Gespeichert: {0}", path);
         }
-        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
     }
 
     private void Browser_Click(object sender, RoutedEventArgs e)

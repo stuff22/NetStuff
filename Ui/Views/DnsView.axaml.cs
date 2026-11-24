@@ -51,7 +51,7 @@ public partial class DnsView : ToolView
             ResultGrid.ItemsSource = _last.Rows;
             InfoText.Text = _last.Summary;
         }
-        catch (Exception ex) { InfoText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { InfoText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally { QueryButton.IsEnabled = true; }
     }
 

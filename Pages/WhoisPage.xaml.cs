@@ -40,7 +40,7 @@ public partial class WhoisPage : ToolPage
         if (QueryBox.Text.Trim() == "") return;
         Busy(true);
         try { Show(await WhoisLookup.WhoisAsync(QueryBox.Text, ServerBox.Text, FollowBox.IsChecked == true)); }
-        catch (Exception ex) { RawBox.Text = "Fehler: " + ex.Message; }
+        catch (Exception ex) { RawBox.Text = "Fehler: " + NetUtil.ErrorText(ex); }
         finally { Busy(false); }
     }
 
@@ -49,7 +49,7 @@ public partial class WhoisPage : ToolPage
         if (QueryBox.Text.Trim() == "") return;
         Busy(true);
         try { Show(await WhoisLookup.RdapAsync(QueryBox.Text)); }
-        catch (Exception ex) { RawBox.Text = "Fehler: " + ex.Message; }
+        catch (Exception ex) { RawBox.Text = "Fehler: " + NetUtil.ErrorText(ex); }
         finally { Busy(false); }
     }
 

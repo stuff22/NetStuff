@@ -36,7 +36,7 @@ public partial class SubnetPage : ToolPage
             }
             catch (Exception ex)
             {
-                ResultsPanel.Children.Add(UiFactory.Message(ex.Message, Level.Warn));
+                ResultsPanel.Children.Add(UiFactory.Message(NetUtil.ErrorText(ex), Level.Warn));
             }
         }
         UpdateSplit();

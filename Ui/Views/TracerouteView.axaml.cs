@@ -58,7 +58,7 @@ public partial class TracerouteView : ToolView
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                StatusText.Text = L.T("Geodaten nicht verfügbar: ") + ex.Message;
+                StatusText.Text = L.T("Geodaten nicht verfügbar: ") + NetUtil.ErrorText(ex);
             }
             Map.SetPoints(Traceroute.MapPoints(_self, _hops));
             var last = _hops.LastOrDefault();
@@ -67,7 +67,7 @@ public partial class TracerouteView : ToolView
                 : L.F("Ziel nach {0} Hops nicht erreicht (ICMP evtl. gefiltert).", _hops.Count);
         }
         catch (OperationCanceledException) { StatusText.Text = L.T("Abgebrochen."); }
-        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally
         {
             StartButton.IsEnabled = true;

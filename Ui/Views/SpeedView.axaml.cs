@@ -84,7 +84,7 @@ public partial class SpeedView : ToolView
             AddResult(SpeedReport.Internet(dl, ul, lat, jit, M("asOrganization"), M("colo")));
         }
         catch (OperationCanceledException) { NetStatus.Text = L.T("Abgebrochen."); }
-        catch (Exception ex) { NetStatus.Text = L.T("Fehler: ") + (ex.InnerException?.Message ?? ex.Message); }
+        catch (Exception ex) { NetStatus.Text = L.T("Fehler: ") + NetUtil.ErrorText(ex); }
         finally
         {
             Busy(false);
@@ -139,7 +139,7 @@ public partial class SpeedView : ToolView
         catch (OperationCanceledException) { IperfStatus.Text = L.T("Abgebrochen."); }
         catch (Exception ex)
         {
-            IperfStatus.Text = L.T("Fehler: ") + (ex is System.Net.Sockets.SocketException ? L.T("Server nicht erreichbar (Firewall? iperf3 -s gestartet?)") : ex.Message);
+            IperfStatus.Text = L.T("Fehler: ") + (ex is System.Net.Sockets.SocketException ? L.T("Server nicht erreichbar (Firewall? iperf3 -s gestartet?)") : NetUtil.ErrorText(ex));
         }
         finally
         {

@@ -56,7 +56,7 @@ public partial class PathMtuView : ToolView
         catch (Exception ex)
         {
             ResultText.Text = "–";
-            Log(L.T("Fehler: ") + ex.Message);
+            Log(L.T("Fehler: ") + NetUtil.ErrorText(ex));
         }
         finally
         {

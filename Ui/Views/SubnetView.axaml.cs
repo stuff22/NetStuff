@@ -30,7 +30,7 @@ public partial class SubnetView : ToolView
             }
             catch (Exception ex)
             {
-                ResultsPanel.Children.Add(UiFactory.Message(ex.Message, Level.Warn));
+                ResultsPanel.Children.Add(UiFactory.Message(NetUtil.ErrorText(ex), Level.Warn));
             }
         }
         UpdateSplit();

@@ -55,7 +55,7 @@ public partial class LldpView : ToolView
         catch (OperationCanceledException) { StatusText.Text = L.T("Abgebrochen."); }
         catch (Exception ex)
         {
-            ResultsPanel.Children.Add(UiFactory.Message(L.T(ex.Message), Level.Bad));
+            ResultsPanel.Children.Add(UiFactory.Message(NetUtil.ErrorText(ex), Level.Bad));
             StatusText.Text = "";
         }
         finally

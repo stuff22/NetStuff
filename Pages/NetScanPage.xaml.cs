@@ -36,7 +36,7 @@ public partial class NetScanPage : ToolPage
     {
         List<IPAddress> ips;
         try { ips = NetUtil.ParseRange(RangeBox.Text, 4096); }
-        catch (Exception ex) { StatusText.Text = ex.Message; return; }
+        catch (Exception ex) { StatusText.Text = NetUtil.ErrorText(ex); return; }
 
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
@@ -65,7 +65,7 @@ public partial class NetScanPage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Fehler: " + ex.Message;
+            StatusText.Text = "Fehler: " + NetUtil.ErrorText(ex);
         }
         finally
         {
@@ -111,7 +111,7 @@ public partial class NetScanPage : ToolPage
             await OuiDatabase.EnsureLoadedAsync(forceDownload: true);
             foreach (var h in _hosts) h.Vendor = OuiDatabase.Lookup(h.Mac);
         }
-        catch (Exception ex) { OuiText.Text = "Fehler: " + ex.Message; return; }
+        catch (Exception ex) { OuiText.Text = "Fehler: " + NetUtil.ErrorText(ex); return; }
         OuiText.Text = NetworkScanner.OuiStatus();
     }
 

@@ -82,7 +82,7 @@ public partial class CmsView : ToolView
         catch (Exception ex)
         {
             MainText.Text = L.T("Fehler");
-            MainSub.Text = ex.InnerException?.Message ?? ex.Message;
+            MainSub.Text = NetUtil.ErrorText(ex);
         }
         finally
         {
@@ -109,7 +109,7 @@ public partial class CmsView : ToolView
         catch (Exception ex)
         {
             WpPanel.Children.Clear();
-            WpPanel.Children.Add(UiFactory.Message(L.T("Fehler: ") + (ex.InnerException?.Message ?? ex.Message), Level.Bad));
+            WpPanel.Children.Add(UiFactory.Message(L.T("Fehler: ") + NetUtil.ErrorText(ex), Level.Bad));
             WpButton.IsEnabled = true;
         }
     }

@@ -32,7 +32,7 @@ public partial class DhcpView : ToolView
         }
         catch (Exception ex)
         {
-            ResultsPanel.Children.Add(UiFactory.Message(L.T(ex.Message), Level.Bad));
+            ResultsPanel.Children.Add(UiFactory.Message(NetUtil.ErrorText(ex), Level.Bad));
             StatusText.Text = "";
         }
         finally

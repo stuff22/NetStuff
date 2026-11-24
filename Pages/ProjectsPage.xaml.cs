@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using NetStuff.Infrastructure;
+using NetStuff.Services;
 
 namespace NetStuff.Pages;
 
@@ -42,7 +43,7 @@ public partial class ProjectsPage : ToolPage
             Preview.CoreWebView2.Settings.AreDevToolsEnabled = false;
             _webReady = true;
         }
-        catch (Exception ex) { StatusText.Text = L.T("Vorschau nicht verfügbar: ") + ex.Message; }
+        catch (Exception ex) { StatusText.Text = L.T("Vorschau nicht verfügbar: ") + NetUtil.ErrorText(ex); }
     }
 
     private void ProjectList_SelectionChanged(object sender, SelectionChangedEventArgs e)

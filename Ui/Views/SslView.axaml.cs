@@ -34,7 +34,7 @@ public partial class SslView : ToolView
         }
         catch (Exception ex)
         {
-            _sink.Error(L.T("TLS-Verbindung fehlgeschlagen: ") + (ex.InnerException?.Message ?? ex.Message));
+            _sink.Error(L.T("TLS-Verbindung fehlgeschlagen: ") + NetUtil.ErrorText(ex));
         }
         finally
         {

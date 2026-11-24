@@ -41,7 +41,7 @@ public partial class MailPage : ToolPage
         }
         catch (Exception ex)
         {
-            _sink.Error(ex.Message);
+            _sink.Error(NetUtil.ErrorText(ex));
         }
         finally
         {

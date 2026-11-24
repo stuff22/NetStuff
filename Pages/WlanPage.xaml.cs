@@ -63,7 +63,7 @@ public partial class WlanPage : ToolPage
         }
         catch (Exception ex)
         {
-            StatusText.Text = ex.Message;
+            StatusText.Text = NetUtil.ErrorText(ex);
             StartButton.IsEnabled = false;
         }
     }
@@ -91,11 +91,11 @@ public partial class WlanPage : ToolPage
             catch (WlanException ex) when (ex.LocationDenied)
             {
                 PermissionPanel.Visibility = Visibility.Visible;
-                StatusText.Text = ex.Message;
+                StatusText.Text = NetUtil.ErrorText(ex);
             }
             catch (Exception ex)
             {
-                StatusText.Text = "Fehler: " + ex.Message;
+                StatusText.Text = "Fehler: " + NetUtil.ErrorText(ex);
             }
             try { await Task.Delay(3500, ct); } catch { break; }
         }

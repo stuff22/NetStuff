@@ -1116,5 +1116,17 @@
   "Menüs": "Menus",
   "Blöcke": "Blocks",
   "ja": "yes",
-  "nein": "no"
+  "nein": "no",
+  "Zeitüberschreitung – keine Antwort.": "Timeout – no response.",
+  "TLS-Aushandlung fehlgeschlagen: ": "TLS handshake failed: ",
+  "Name konnte nicht aufgelöst werden – unbekannter Hostname oder DNS-Problem.": "Name could not be resolved – unknown host name or DNS problem.",
+  "DNS-Server antwortet nicht (vorübergehender Fehler).": "DNS server not responding (temporary error).",
+  "Verbindung abgelehnt – der Port ist geschlossen.": "Connection refused – the port is closed.",
+  "Host nicht erreichbar.": "Host unreachable.",
+  "Netzwerk nicht erreichbar – besteht eine Verbindung?": "Network unreachable – are you connected?",
+  "Verbindung von der Gegenstelle zurückgesetzt.": "Connection reset by the remote side.",
+  "Verbindung abgebrochen.": "Connection aborted.",
+  "Zugriff verweigert – fehlende Berechtigung.": "Access denied – missing permission.",
+  "Adresse auf diesem Gerät nicht verfügbar.": "Address not available on this device.",
+  "Port wird bereits verwendet.": "Port already in use."
 }
