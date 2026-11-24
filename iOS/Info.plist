@@ -28,6 +28,13 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <!-- UIKit-Scene-Lebenszyklus (Pflicht ab iOS-SDK 27). Die Scene-Konfiguration liefert Avalonia
+         (AvaloniaAppDelegate → AvaloniaSceneDelegate), hier genügt das Manifest selbst. -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
     <!-- Ohne Startbildschirm-Angabe läuft die App im Kompatibilitätsmodus (schwarze Ränder) -->
     <key>UILaunchScreen</key>
     <dict/>
