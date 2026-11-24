@@ -43,7 +43,11 @@ internal static class NetDiag
                 foreach (var line in output.Split('\n').Take(15)) Console.WriteLine("  " + line);
                 if (err != "") Console.WriteLine("  stderr: " + err);
                 Console.WriteLine($"  Exit-Code {p.ExitCode}, {output.Split('\n').Length} Zeilen");
-                if (OperatingSystem.IsMacOS()) Console.WriteLine($"  erkannte Einträge: {Mac.MacArpResolver.Parse(output).Count}");
+                if (OperatingSystem.IsMacOS())
+                {
+                    Console.WriteLine($"  erkannte Einträge: {Mac.MacArpResolver.Parse(output).Count}");
+                    Console.WriteLine($"  über den ARP-Dienst: {NetStuff.Platform.Arp?.Table()?.Count.ToString() ?? "-"} {Mac.MacArpResolver.LastError}");
+                }
             }
             catch (Exception ex) { Console.WriteLine("  Fehler: " + ex.Message); }
         }

@@ -73,7 +73,7 @@
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="140" />
                     <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding Type}" Width="70" />
                     <DataGridTextColumn Header="{l:T 'Ziel'}" Binding="{Binding Display}" Width="170" />
-                    <DataGridTextColumn Header="{l:T 'Letztes Ergebnis'}" Binding="{Binding LastValue}" Width="*" MinWidth="180" />
+                    <DataGridTextColumn Header="{l:T 'Letztes Ergebnis'}" Binding="{Binding LastValue}" Width="260" />
                     <DataGridTextColumn Header="{l:T 'Verfügbarkeit'}" Binding="{Binding Availability}" Width="115" />
                     <DataGridTextColumn Header="{l:T 'Geprüft'}" Binding="{Binding LastCheck}" Width="90" />
                     <DataGridTextColumn Header="{l:T 'Seit'}" Binding="{Binding Since}" Width="110" />

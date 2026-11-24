@@ -41,7 +41,7 @@
                     <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="50" />
                     <DataGridTextColumn Header="{l:T 'IP-Adresse'}" Binding="{Binding Ip}" Width="150" />
                     <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="140" />
-                    <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="*" MinWidth="180" />
+                    <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="260" />
                     <DataGridTextColumn Header="{l:T 'Ort'}" Binding="{Binding Place}" Width="170" />
                     <DataGridTextColumn Header="{l:T 'Provider / AS'}" Binding="{Binding Isp}" Width="220" />
                 </DataGrid.Columns>

@@ -116,6 +116,32 @@ public static class NetworkScanner
         await Task.WhenAll(tasks);
         ct.ThrowIfCancellationRequested();
 
+        // ARP-Tabelle nachlesen (macOS): fehlende MACs ergänzen und Geräte aufnehmen, die nicht auf Ping antworten
+        IReadOnlyDictionary<string, byte[]> table = null;
+        try { table = Platform.Arp?.Table(); } catch { }
+        if (table != null)
+        {
+            var known = hosts.ToDictionary(h => h.Ip);
+            foreach (var ip in ips)
+            {
+                if (!table.TryGetValue(ip.ToString(), out var mac) || !IsLocalSubnet(ip)) continue;
+                if (known.TryGetValue(ip.ToString(), out var h))
+                {
+                    if (h.Mac != "") continue;
+                    h.Mac = NetUtil.FormatMac(mac);
+                    h.Vendor = OuiDatabase.Lookup(h.Mac);
+                }
+                else
+                {
+                    h = new ScanHost { Address = ip, IsGateway = gateways.Contains(ip.ToString()), Mac = NetUtil.FormatMac(mac) };
+                    h.Vendor = OuiDatabase.Lookup(h.Mac);
+                    hosts.Add(h);
+                    found?.Invoke(h);
+                    detailTasks.Add(DetailsAsync(h, s.CheckPorts, ct));
+                }
+            }
+        }
+
         status?.Invoke(L.F("{0} Geräte gefunden – ermittle Details …", hosts.Count));
         Task[] dt;
         lock (detailTasks) dt = detailTasks.ToArray();

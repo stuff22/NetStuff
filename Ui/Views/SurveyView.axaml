@@ -51,7 +51,7 @@
                 <DataGridTextColumn Header="{l:T 'Durchsatz'}" Binding="{Binding Speed}" Width="110" />
                 <DataGridTextColumn Header="{l:T 'APs gleiche SSID'}" Binding="{Binding SameSsid}" Width="140" />
                 <DataGridTextColumn Header="{l:T 'Zeit'}" Binding="{Binding Time}" Width="70" />
-                <DataGridTextColumn Header="{l:T 'Notiz'}" Binding="{Binding Note}" Width="*" MinWidth="120" />
+                <DataGridTextColumn Header="{l:T 'Notiz'}" Binding="{Binding Note}" Width="260" />
             </DataGrid.Columns>
         </DataGrid>
 

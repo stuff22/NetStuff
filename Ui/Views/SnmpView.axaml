@@ -60,7 +60,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Index" Binding="{Binding Index}" Width="70" />
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="150" />
-                    <DataGridTextColumn Header="{l:T 'Beschreibung'}" Binding="{Binding Alias}" Width="*" MinWidth="160" />
+                    <DataGridTextColumn Header="{l:T 'Beschreibung'}" Binding="{Binding Alias}" Width="260" />
                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90" />
                     <DataGridTextColumn Header="{l:T 'Geschwindigkeit'}" Binding="{Binding Speed}" Width="140" />
                     <DataGridTextColumn Header="VLAN" Binding="{Binding Vlan}" Width="70" />

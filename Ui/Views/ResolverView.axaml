@@ -67,7 +67,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="{l:T 'Antwort'}" Width="*" MinWidth="200">
+                <DataGridTemplateColumn Header="{l:T 'Antwort'}" Width="260">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate x:DataType="s:ResolverRow">
                             <TextBlock Text="{Binding Answer}" TextWrapping="Wrap" FontFamily="Menlo, Consolas, monospace" FontSize="12" Margin="12,4" VerticalAlignment="Center" />

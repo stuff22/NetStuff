@@ -61,7 +61,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="SSID" Binding="{Binding Ssid}" Width="170" />
-                <DataGridTextColumn Header="BSSID" Binding="{Binding Bssid}" Width="150" />
+                <DataGridTextColumn Header="BSSID" Binding="{Binding Bssid}" Width="170" />
                 <DataGridTextColumn Header="{l:T 'Hersteller'}" Binding="{Binding Vendor}" Width="150" />
                 <DataGridTextColumn Header="Signal" Binding="{Binding RssiText}" SortMemberPath="Rssi" Width="90" />
                 <DataGridTemplateColumn Header="{l:T 'Qualität'}" Width="100" SortMemberPath="Quality">
@@ -71,13 +71,13 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="{l:T 'Kanal'}" Binding="{Binding Channel}" Width="75" />
+                <DataGridTextColumn Header="{l:T 'Kanal'}" Binding="{Binding Channel}" Width="85" />
                 <DataGridTextColumn Header="{l:T 'Breite'}" Binding="{Binding WidthText}" SortMemberPath="Width" Width="90" />
                 <DataGridTextColumn Header="Band" Binding="{Binding Band}" Width="85" />
                 <DataGridTextColumn Header="Standard" Binding="{Binding Standard}" Width="125" />
                 <DataGridTextColumn Header="{l:T 'Sicherheit'}" Binding="{Binding Security}" Width="170" />
                 <DataGridTextColumn Header="{l:T 'Basisrate'}" Binding="{Binding RateText}" Width="100" />
-                <DataGridTextColumn Header="" Binding="{Binding ConnectedText}" Width="*" MinWidth="90" />
+                <DataGridTextColumn Header="" Binding="{Binding ConnectedText}" Width="260" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

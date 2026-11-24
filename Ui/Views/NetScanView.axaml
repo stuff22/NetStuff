@@ -42,7 +42,7 @@
                 <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding Type}" Width="170" />
                 <DataGridTextColumn Header="Ping" Binding="{Binding PingText}" SortMemberPath="PingSort" Width="80" />
                 <DataGridTextColumn Header="{l:T 'Offene Ports'}" Binding="{Binding Ports}" Width="200" />
-                <DataGridTextColumn Header="{l:T 'Info (UPnP / NetBIOS)'}" Binding="{Binding Info}" Width="*" MinWidth="220" />
+                <DataGridTextColumn Header="{l:T 'Info (UPnP / NetBIOS)'}" Binding="{Binding Info}" Width="320" />
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu>

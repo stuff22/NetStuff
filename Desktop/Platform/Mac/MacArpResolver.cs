@@ -11,7 +11,7 @@ namespace NetStuff.Desktop.Platforms.Mac;
 /// </summary>
 public sealed partial class MacArpResolver : IArpResolver
 {
-    [GeneratedRegex(@"\((\d+\.\d+\.\d+\.\d+)\) at ([0-9a-fA-F]{1,2}(?::[0-9a-fA-F]{1,2}){5})\b")]
+    [GeneratedRegex(@"\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F]{1,2}(?:[:-][0-9a-fA-F]{1,2}){5})(?![0-9a-fA-F:])", RegexOptions.IgnoreCase)]
     private static partial Regex Entry();
 
     private readonly object _lock = new();
@@ -23,6 +23,19 @@ public sealed partial class MacArpResolver : IArpResolver
         // Der Netzwerkscanner fragt viele Adressen parallel (blockierend) ab
         ThreadPool.GetMinThreads(out var worker, out var io);
         if (worker < 64) ThreadPool.SetMinThreads(64, io);
+    }
+
+    /// <summary>Letzter Fehler beim Lesen der Tabelle (für „--diag“).</summary>
+    public static string LastError { get; private set; } = "";
+
+    public IReadOnlyDictionary<string, byte[]> Table()
+    {
+        lock (_lock)
+        {
+            _table = ReadTable();
+            _read = DateTime.UtcNow;
+            return _table;
+        }
     }
 
     public byte[] Resolve(IPAddress ip)
@@ -70,7 +83,7 @@ public sealed partial class MacArpResolver : IArpResolver
         var t = new Dictionary<string, byte[]>();
         foreach (Match m in Entry().Matches(output))
         {
-            var bytes = m.Groups[2].Value.Split(':').Select(p => Convert.ToByte(p, 16)).ToArray();
+            var bytes = m.Groups[2].Value.Split(':', '-').Select(p => Convert.ToByte(p, 16)).ToArray();
             if (bytes.All(b => b == 0xFF) || bytes.All(b => b == 0)) continue;
             t[m.Groups[1].Value] = bytes;
         }
@@ -81,12 +94,20 @@ public sealed partial class MacArpResolver : IArpResolver
     {
         try
         {
-            var psi = new ProcessStartInfo("/usr/sbin/arp", "-an") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
+            var exe = File.Exists("/usr/sbin/arp") ? "/usr/sbin/arp" : "arp";
+            var psi = new ProcessStartInfo(exe, "-an") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
             using var p = Process.Start(psi);
+            var errTask = p.StandardError.ReadToEndAsync();
             var output = p.StandardOutput.ReadToEnd();
             p.WaitForExit(2000);
-            return Parse(output);
+            var t = Parse(output);
+            LastError = t.Count == 0 ? $"keine Einträge erkannt (Exit {p.ExitCode}) {errTask.Result}".Trim() : "";
+            return t;
         }
-        catch { return new Dictionary<string, byte[]>(); }
+        catch (Exception ex)
+        {
+            LastError = ex.GetType().Name + ": " + ex.Message;
+            return new Dictionary<string, byte[]>();
+        }
     }
 }

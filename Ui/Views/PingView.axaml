@@ -60,7 +60,7 @@
                 <DataGridTextColumn Header="Ø" Binding="{Binding AvgText}" Width="80" />
                 <DataGridTextColumn Header="Max" Binding="{Binding MaxText}" Width="80" />
                 <DataGridTextColumn Header="Jitter" Binding="{Binding JitterText}" Width="80" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" MinWidth="120" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="260" />
             </DataGrid.Columns>
         </DataGrid>
 

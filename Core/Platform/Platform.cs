@@ -13,6 +13,9 @@ public interface INotifier
 public interface IArpResolver
 {
     byte[] Resolve(IPAddress ip);
+
+    /// <summary>Komplette ARP-Tabelle (IP → MAC), falls die Plattform sie auslesen kann; sonst null.</summary>
+    IReadOnlyDictionary<string, byte[]> Table() => null;
 }
 
 /// <summary>Mitschnitt von LLDP/CDP-Rahmen (Windows: pktmon, macOS: BPF/tcpdump). Liefert rohe Ethernet-Rahmen.</summary>
