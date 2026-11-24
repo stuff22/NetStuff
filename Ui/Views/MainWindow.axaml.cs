@@ -19,6 +19,7 @@ public partial class MainWindow : Window
         await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
+            if (UiOptions.Report && Content is MainView mv) mv.AddToReport();
             var size = new Avalonia.PixelSize((int)Bounds.Width, (int)Bounds.Height);
             using var bmp = new RenderTargetBitmap(size);
             bmp.Render(this);

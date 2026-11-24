@@ -1,0 +1,81 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.SettingsView">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Classes="PageTitle" Text="{l:T 'Einstellungen'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Sprache, Erscheinungsbild, Ihre Firmendaten für Berichte und Benachrichtigungen.'}" />
+        </StackPanel>
+        <ScrollViewer>
+            <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+                <Border Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="{l:T 'Allgemein'}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,16,8">
+                                <TextBlock Classes="Label" Text="Sprache / Language" />
+                                <ComboBox x:Name="LangBox" Width="220">
+                                    <ComboBoxItem Content="{l:T 'Systemsprache'}" Tag="system" />
+                                    <ComboBoxItem Content="Deutsch" Tag="de" />
+                                    <ComboBoxItem Content="English" Tag="en" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,16,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Design beim Start'}" />
+                                <ComboBox x:Name="ThemeBox" Width="220">
+                                    <ComboBoxItem Content="{l:T 'Wie das System'}" Tag="system" />
+                                    <ComboBoxItem Content="{l:T 'Hell'}" Tag="light" />
+                                    <ComboBoxItem Content="{l:T 'Dunkel'}" Tag="dark" />
+                                </ComboBox>
+                            </StackPanel>
+                        </WrapPanel>
+                        <CheckBox x:Name="NotifyBox" Content="{l:T 'Mitteilungen bei Ausfällen (Überwachung)'}" Margin="0,4,0,0" />
+                        <TextBlock x:Name="RestartHint" Classes="Status" Foreground="#D29922" Margin="0,8,0,0" IsVisible="False"
+                                   Text="{l:T 'Die Sprache wird nach einem Neustart von Net-Stuff übernommen.'}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="{l:T 'Berichte – Ihre Firmendaten'}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Classes="Label" Text="{l:T 'Firma'}" />
+                        <TextBox x:Name="CompanyBox" Margin="0,0,0,8" />
+                        <TextBlock Classes="Label" Text="{l:T 'Techniker'}" />
+                        <TextBox x:Name="TechBox" Margin="0,0,0,8" />
+                        <TextBlock Classes="Label" Text="{l:T 'Kontakt (Adresse, Telefon, E-Mail)'}" />
+                        <TextBox x:Name="ContactBox" Margin="0,0,0,8" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+                        <TextBlock Classes="Label" Text="{l:T 'Logo (PNG, JPG oder SVG)'}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox x:Name="LogoBox" IsReadOnly="True" PlaceholderText="{l:T 'Standard: Net-Stuff-Logo'}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="8,0,0,0">
+                                <Button Content="{l:T 'Auswählen …'}" Click="Logo_Click" />
+                                <Button Content="{l:T 'Entfernen'}" Click="LogoRemove_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <Image x:Name="LogoPreview" MaxHeight="70" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="{l:T 'Daten'}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <SelectableTextBlock x:Name="DataDirText" Classes="Status" Margin="0,0,0,8" TextWrapping="Wrap" />
+                        <WrapPanel>
+                            <Button Content="{l:T 'Datenordner öffnen'}" Click="OpenData_Click" Margin="0,0,8,0" />
+                            <Button Content="{l:T 'Herstellerliste aktualisieren'}" Click="Oui_Click" Margin="0,0,8,0" />
+                        </WrapPanel>
+                        <TextBlock x:Name="StatusText" Classes="Status" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="{l:T 'Über Net-Stuff'}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <SelectableTextBlock x:Name="AboutText" Classes="Status" LineHeight="20" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</l:ToolView>

@@ -34,8 +34,8 @@ public static class ReportRenderer
         sb.Append($@"<!doctype html><html lang=""{L.Language}""><head><meta charset=""utf-8""><title>{E(L.T("Netzwerkbericht"))} – {E(p.Display)}</title>
 <style>
 @page {{ size: A4; margin: 16mm 14mm; }}
-* {{ box-sizing: border-box; }}
-body {{ font-family: 'Segoe UI', Arial, sans-serif; color: #1f2328; font-size: 10.5pt; line-height: 1.45; margin: 0; background: #fff; }}
+* {{ box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+body {{ font-family: 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif; color: #1f2328; font-size: 10.5pt; line-height: 1.45; margin: 0; background: #fff; }}
 .wrap {{ max-width: 900px; margin: 0 auto; padding: 24px; }}
 header {{ display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid; border-image: linear-gradient(90deg,#e53935,#1565c0) 1; padding-bottom: 14px; }}
 header img {{ max-height: 64px; max-width: 220px; }}

@@ -26,7 +26,7 @@ public static class UiFactory
         if (!string.IsNullOrEmpty(s.Subtitle))
             panel.Children.Add(new TextBlock { Text = s.Subtitle, Classes = { "Status" }, Margin = new Thickness(0, -4, 0, 8) });
         foreach (var i in s.Items) panel.Children.Add(Item(i));
-        return new Border { Classes = { "Card" }, Child = panel };
+        return new Border { Classes = { "Card" }, Child = panel, Tag = s };
     }
 
     public static Control Item(CheckItem i)

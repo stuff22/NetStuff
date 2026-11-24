@@ -1,0 +1,46 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:i="using:NetStuff.Infrastructure"
+            x:Class="NetStuff.Ui.Views.HistoryView">
+    <Grid RowDefinitions="Auto,Auto,2*,Auto,3*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Verlauf &amp; Favoriten'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Favoriten speichern Sie mit „★ Favorit“ oben in jedem Werkzeug. Doppelklick startet das Werkzeug mit dem gespeicherten Ziel erneut.'}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,6">
+            <TextBlock Text="{l:T '★ Favoriten'}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,0,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                <TextBox x:Name="RenameBox" Width="240" IsVisible="False" KeyDown="RenameBox_KeyDown" />
+                <Button Content="{l:T 'Ausführen'}" Click="RunFav_Click" />
+                <Button x:Name="RenameButton" Content="{l:T 'Umbenennen'}" Click="RenameFav_Click" />
+                <Button Content="{l:T 'Entfernen'}" Click="RemoveFav_Click" />
+            </StackPanel>
+        </Grid>
+        <DataGrid Grid.Row="2" x:Name="FavGrid" x:DataType="i:Favorite" HeadersVisibility="Column" SelectionMode="Single" DoubleTapped="FavGrid_DoubleTapped">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="200" />
+                <DataGridTextColumn Header="{l:T 'Werkzeug'}" Binding="{Binding ToolTitle}" Width="200" />
+                <DataGridTextColumn Header="{l:T 'Ziel'}" Binding="{Binding Target}" Width="280" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" Margin="0,16,0,6">
+            <TextBlock Text="{l:T 'Verlauf'}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,0,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                <TextBox x:Name="FilterBox" Width="220" PlaceholderText="{l:T 'Verlauf filtern …'}" />
+                <Button Content="{l:T 'Ausführen'}" Click="RunHist_Click" />
+                <Button Content="{l:T 'Als Favorit'}" Click="FavFromHist_Click" />
+                <Button Content="{l:T 'Verlauf leeren'}" Click="ClearHist_Click" />
+            </StackPanel>
+        </Grid>
+        <DataGrid Grid.Row="4" x:Name="HistGrid" x:DataType="i:HistoryEntry" HeadersVisibility="Column" SelectionMode="Single" DoubleTapped="HistGrid_DoubleTapped">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{l:T 'Zeit'}" Binding="{Binding TimeText}" Width="150" />
+                <DataGridTextColumn Header="{l:T 'Werkzeug'}" Binding="{Binding ToolTitle}" Width="200" />
+                <DataGridTextColumn Header="{l:T 'Ziel'}" Binding="{Binding Target}" Width="*" MinWidth="200" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</l:ToolView>

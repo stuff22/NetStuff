@@ -1,6 +1,6 @@
 namespace NetStuff.Ui.Infrastructure;
 
-/// <summary>Startoptionen für automatisierte Läufe (wie die WPF-App): --page X --param Y --run --snapshot datei.png --snapdelay N --lang en</summary>
+/// <summary>Startoptionen für automatisierte Läufe (wie die WPF-App): --page X --param Y --run --snapshot datei.png --snapdelay N --lang en --datadir ordner --report</summary>
 public static class UiOptions
 {
     public static string Page { get; private set; }
@@ -9,6 +9,12 @@ public static class UiOptions
     public static string Snapshot { get; private set; }
     public static int SnapDelay { get; private set; } = 3;
     public static string Lang { get; private set; }
+
+    /// <summary>Eigener Datenordner (Tests, ohne die echten Projekte/Einstellungen zu berühren).</summary>
+    public static string DataDir { get; private set; }
+
+    /// <summary>Vor dem Screenshot das Ergebnis per „Zum Bericht“ ins aktive Projekt übernehmen.</summary>
+    public static bool Report { get; private set; }
 
     public static void Parse(string[] args)
     {
@@ -19,5 +25,7 @@ public static class UiOptions
         Snapshot = Arg("--snapshot");
         if (int.TryParse(Arg("--snapdelay"), out var d)) SnapDelay = d;
         Lang = Arg("--lang");
+        DataDir = Arg("--datadir");
+        Report = args.Contains("--report");
     }
 }

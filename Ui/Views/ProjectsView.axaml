@@ -1,0 +1,64 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.ProjectsView">
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Projekte &amp; Berichte'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Kundenprojekte anlegen, Messergebnisse sammeln (Button „Zum Bericht“ in jedem Werkzeug) und als professionellen HTML- oder PDF-Bericht mit Ihrem Logo exportieren.'}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="240,14,5*,14,6*">
+            <!-- Projektliste -->
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                    <Button Classes="accent" Content="{l:T 'Neues Projekt'}" Click="New_Click" />
+                    <Button x:Name="DeleteButton" Content="{l:T 'Löschen'}" Click="Delete_Click" />
+                </StackPanel>
+                <ListBox x:Name="ProjectList" />
+            </DockPanel>
+
+            <!-- Details -->
+            <ScrollViewer Grid.Column="2">
+                <StackPanel x:Name="DetailPanel" IsEnabled="False" Margin="0,0,10,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Kunde'}" />
+                    <TextBox x:Name="CustomerBox" Margin="0,0,0,8" />
+                    <TextBlock Classes="Label" Text="{l:T 'Standort'}" />
+                    <TextBox x:Name="SiteBox" Margin="0,0,0,8" />
+                    <TextBlock Classes="Label" Text="{l:T 'Adresse'}" />
+                    <TextBox x:Name="AddressBox" Margin="0,0,0,8" AcceptsReturn="True" Height="56" TextWrapping="Wrap" />
+                    <TextBlock Classes="Label" Text="{l:T 'Ansprechpartner'}" />
+                    <TextBox x:Name="ContactBox" Margin="0,0,0,8" />
+                    <TextBlock Classes="Label" Text="{l:T 'Notizen / Zusammenfassung (erscheint im Bericht)'}" />
+                    <TextBox x:Name="NotesBox" Margin="0,0,0,12" AcceptsReturn="True" Height="90" TextWrapping="Wrap" />
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,6">
+                        <TextBlock Text="{l:T 'Berichtseinträge'}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                            <Button Content="▲" Click="Up_Click" MinWidth="36" />
+                            <Button Content="▼" Click="Down_Click" MinWidth="36" />
+                            <Button Content="{l:T 'Entfernen'}" Click="RemoveEntry_Click" />
+                        </StackPanel>
+                    </Grid>
+                    <ListBox x:Name="EntryList" Height="220" />
+                    <TextBlock Classes="Label" Text="{l:T 'Kommentar zum ausgewählten Eintrag'}" Margin="0,8,0,4" />
+                    <TextBox x:Name="CommentBox" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+
+                    <WrapPanel Margin="0,14,0,0">
+                        <Button Classes="accent" Content="{l:T 'Als PDF speichern'}" Click="Pdf_Click" Margin="0,0,8,8" />
+                        <Button Content="{l:T 'Als HTML speichern'}" Click="Html_Click" Margin="0,0,8,8" />
+                        <Button Content="{l:T 'Im Browser öffnen'}" Click="Browser_Click" Margin="0,0,8,8" />
+                    </WrapPanel>
+                    <TextBlock x:Name="StatusText" Classes="Status" TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Vorschau -->
+            <Border Grid.Column="4" Classes="Card" Padding="0" Margin="0">
+                <ScrollViewer>
+                    <StackPanel x:Name="PreviewPanel" Margin="18" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</l:ToolView>

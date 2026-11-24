@@ -10,9 +10,9 @@ public static class Tools
 {
     public static readonly ToolInfo[] All =
     {
-        new("dashboard", "Übersicht", "Start", null),
-        new("projects", "Projekte & Berichte", "Start", null),
-        new("history", "Verlauf & Favoriten", "Start", null),
+        new("dashboard", "Übersicht", "Start", () => new DashboardView()),
+        new("projects", "Projekte & Berichte", "Start", () => new ProjectsView()),
+        new("history", "Verlauf & Favoriten", "Start", () => new HistoryView()),
 
         new("ping", "Ping", "Erreichbarkeit", () => new PingView()),
         new("trace", "Traceroute & Karte", "Erreichbarkeit", () => new TracerouteView()),
@@ -40,6 +40,8 @@ public static class Tools
         new("http", "HTTP-Header", "Web", () => new HttpHeaderView()),
         new("cms", "CMS-Checker", "Web", () => new CmsView()),
         new("sitecopy", "Website-Kopierer", "Web", null),
+
+        new("settings", "Einstellungen", "App", () => new SettingsView()),
     };
 
     public static ToolInfo Find(string key) => All.FirstOrDefault(t => t.Key == key);

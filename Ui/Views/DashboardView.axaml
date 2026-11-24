@@ -1,0 +1,21 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.DashboardView">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" Spacing="20">
+                <TextBlock Classes="PageTitle" Text="{l:T 'Übersicht'}" />
+                <Button x:Name="RefreshButton" Content="{l:T 'Aktualisieren'}" Click="Refresh_Click" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Netzwerkadapter dieses Computers, Gateways, DNS-Server und die öffentliche IP-Adresse.'}" />
+        </StackPanel>
+        <ScrollViewer>
+            <StackPanel>
+                <StackPanel x:Name="PublicPanel" />
+                <TextBlock Text="{l:T 'Netzwerkadapter'}" FontSize="16" FontWeight="SemiBold" Margin="2,8,0,8" />
+                <UniformGrid x:Name="AdapterGrid" Columns="2" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</l:ToolView>
