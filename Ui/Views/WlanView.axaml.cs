@@ -135,11 +135,15 @@ public partial class WlanView : ToolView
         UpdateAdvice();
     }
 
-    private string CurrentBand => Band5.IsChecked == true ? "5 GHz" : Band6.IsChecked == true ? "6 GHz" : "2,4 GHz";
+    // Beim Umschalten ist der vorherige RadioButton kurz noch gesetzt – daher den zuletzt gewählten merken
+    private string _band = "2,4 GHz";
+    private string CurrentBand => _band;
 
     private void Band_Changed(object sender, RoutedEventArgs e)
     {
-        if (Spectrum == null || sender is RadioButton { IsChecked: false }) return;
+        if (sender is not RadioButton { IsChecked: true } rb) return;
+        _band = rb == Band5 ? "5 GHz" : rb == Band6 ? "6 GHz" : "2,4 GHz";
+        if (Spectrum == null) return;
         Spectrum.Band = CurrentBand;
         Spectrum.Refresh();
         UpdateAdvice();
