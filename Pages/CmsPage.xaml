@@ -41,7 +41,7 @@
                     <DockPanel>
                         <ui:Button x:Name="WpButton" DockPanel.Dock="Right" Content="wp-json auswerten" Style="{StaticResource PrimaryButton}" Click="WpJson_Click" VerticalAlignment="Center" />
                         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                            <TextBlock FontWeight="SemiBold" Text="WordPress erkannt – REST-API auswerten?" />
+                            <TextBlock x:Name="WpOfferTitle" FontWeight="SemiBold" />
                             <TextBlock x:Name="WpOfferText" Style="{StaticResource Muted}" TextWrapping="Wrap" />
                         </StackPanel>
                     </DockPanel>

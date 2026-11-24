@@ -30,6 +30,9 @@ public class CmsResult
 
     /// <summary>Basis der WordPress-REST-API laut Seite (Link rel="https://api.w.org/"), sonst null.</summary>
     public string WpApiRoot { get; set; }
+
+    /// <summary>HTML der Startseite (für die API-Auswertung, z. B. Ghost-Content-Key).</summary>
+    public string Html { get; set; } = "";
 }
 
 /// <summary>Erkennt CMS, Shopsysteme, Frameworks und Dienste anhand von HTML, Headern, Cookies und typischen Pfaden.</summary>
@@ -67,6 +70,8 @@ public static class CmsDetector
         new("Adobe Experience Manager", "CMS", Src.Html, @"/etc\.clientlibs/|/content/dam/", 80),
         new("HubSpot CMS", "CMS", Src.Header, @".", 80, Key: "X-HS-Hub-Id"),
         new("Strapi", "CMS", Src.Header, @"Strapi", 100, Key: "X-Powered-By"),
+        new("Directus", "CMS", Src.Header, @"Directus", 100, Key: "X-Powered-By"),
+        new("Directus", "CMS", Src.Probe, @"""project_name""|""project"":\s*\{", 60, Probe: "/server/info"),
 
         // Website-Baukästen
         new("Wix", "Baukasten", Src.Header, @".", 100, Key: "X-Wix-Request-Id"),
@@ -175,6 +180,7 @@ public static class CmsDetector
         result.StatusCode = (int)res.StatusCode;
         var html = await res.Content.ReadAsStringAsync(ct);
         if (html.Length > 3_000_000) html = html[..3_000_000];
+        result.Html = html;
 
         var headers = res.Headers.Concat(res.Content.Headers)
             .ToDictionary(h => h.Key, h => string.Join(", ", h.Value), StringComparer.OrdinalIgnoreCase);

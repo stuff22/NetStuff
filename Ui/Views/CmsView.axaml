@@ -49,7 +49,7 @@
                 <Border x:Name="WpOffer" Classes="Card" IsVisible="False">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                            <TextBlock FontWeight="SemiBold" Text="{l:T 'WordPress erkannt – REST-API auswerten?'}" />
+                            <TextBlock x:Name="WpOfferTitle" FontWeight="SemiBold" />
                             <TextBlock x:Name="WpOfferText" Foreground="{DynamicResource SubtleTextBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <Button Grid.Column="1" x:Name="WpButton" Classes="accent" Content="{l:T 'wp-json auswerten'}" Click="WpJson_Click" VerticalAlignment="Center" />

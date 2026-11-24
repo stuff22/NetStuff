@@ -50,10 +50,11 @@ public partial class CmsPage : ToolPage
             MainSub.Text = (main != null ? $"Erkennung: {main.ConfidenceText} · {main.EvidenceText}\n" : "Möglicherweise individuell programmiert oder gut verschleiert.\n")
                            + $"Analysiert: {r.FinalUrl} (HTTP {r.StatusCode})";
 
-            if (r.IsWordPress)
+            if (CmsApi.SystemFor(r) is { } apiSystem)
             {
-                WpOfferText.Text = L.F("Fragt {0} ab und zeigt Website-Angaben, Plugins laut API-Namespaces, Anzahl der Inhalte und ob Benutzernamen öffentlich sind.",
-                    r.WpApiRoot ?? new Uri(r.FinalUrl).GetLeftPart(UriPartial.Authority) + "/wp-json/");
+                WpOfferTitle.Text = L.F("{0} erkannt – Schnittstellen auswerten?", apiSystem);
+                WpOfferText.Text = CmsApi.OfferText(r, apiSystem);
+                WpButton.Content = apiSystem == "WordPress" ? L.T("wp-json auswerten") : L.T("API auswerten");
                 WpButton.IsEnabled = true;
                 WpOffer.Visibility = Visibility.Visible;
             }
@@ -89,11 +90,11 @@ public partial class CmsPage : ToolPage
         if (_last == null || !WpButton.IsEnabled) return;
         WpButton.IsEnabled = false;
         WpPanel.Children.Clear();
-        WpPanel.Children.Add(UiFactory.Message(L.T("REST-API wird abgefragt …")));
+        WpPanel.Children.Add(UiFactory.Message(L.T("Schnittstellen werden abgefragt …")));
         try
         {
             using var cts = new CancellationTokenSource(60000);
-            _wpSections = await WordPressApi.AnalyzeAsync(_last.FinalUrl, _last.WpApiRoot, cts.Token);
+            _wpSections = await CmsApi.AnalyzeAsync(_last, cts.Token);
             WpPanel.Children.Clear();
             foreach (var s in _wpSections) WpPanel.Children.Add(UiFactory.Section(s));
             WpOffer.Visibility = Visibility.Collapsed;
