@@ -1,8 +1,8 @@
 {
-  "_hinweis": "Werte aus dem Partner Center: App → Produktverwaltung → Produktidentität. Müssen exakt übereinstimmen.",
-  "IdentityName": "PLATZHALTER.NetStuff",
-  "Publisher": "CN=00000000-0000-0000-0000-000000000000",
-  "PublisherDisplayName": "iT-Stuff",
+  "_hinweis": "Werte aus dem Partner Center: App → Produktverwaltung → Produktidentität. Müssen exakt übereinstimmen. PFN iT-stuff.Net-Stuff_bj2b5gcmn6zr8, Store-ID 9P771L6CH773.",
+  "IdentityName": "iT-stuff.Net-Stuff",
+  "Publisher": "CN=172E2774-29CA-4ECA-96E3-1739CD233BCF",
+  "PublisherDisplayName": "iT-stuff",
   "DisplayName": "Net-Stuff",
   "Description": "Netzwerk-Werkzeugkasten: Ping, Traceroute, DNS, Mail, SSL, WLAN, Netzwerkscanner, Berichte."
 }
