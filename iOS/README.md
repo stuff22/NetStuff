@@ -12,11 +12,14 @@ sudo dotnet workload install ios
 ## Im Simulator starten
 
 ```bash
-dotnet run --project iOS -f net10.0-ios -r iossimulator-arm64
+cd iOS
+dotnet run -f net10.0-ios -r iossimulator-arm64
 ```
 
-Alternative: `dotnet build iOS "-t:Build;Run" -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64`
-(nur `-t:Run` reicht ab .NET 10 nicht mehr – „The app must be built before …“).
+Wichtig: im Ordner `iOS` starten. Die Build-Ausgabe liegt am Mac unter `~/Library/Caches/NetStuff-build/iOS`
+(außerhalb von iCloud, sonst scheitert codesign); den Pfad dorthin rechnet das iOS-Werkzeug relativ zum
+iOS-Ordner aus – von einem anderen Ordner aus gestartet kommt „MT0069: The app directory … does not exist“.
+(Nur `-t:Run` reicht ab .NET 10 nicht mehr – „The app must be built before …“.)
 
 Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Gerät starten, dann denselben Befehl.
 
@@ -29,7 +32,8 @@ Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Ge
 3. Installieren:
 
    ```bash
-   dotnet run --project iOS -f net10.0-ios -r ios-arm64
+   cd iOS
+   dotnet run -f net10.0-ios -r ios-arm64
    ```
 
 4. Beim ersten Start am iPhone: **Einstellungen → Allgemein → VPN & Geräteverwaltung** → Entwickler-App vertrauen.
