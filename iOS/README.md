@@ -12,8 +12,11 @@ sudo dotnet workload install ios
 ## Im Simulator starten
 
 ```bash
-dotnet build iOS -t:Run -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
+dotnet run --project iOS -f net10.0-ios -r iossimulator-arm64
 ```
+
+Alternative: `dotnet build iOS "-t:Build;Run" -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64`
+(nur `-t:Run` reicht ab .NET 10 nicht mehr – „The app must be built before …“).
 
 Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Gerät starten, dann denselben Befehl.
 
@@ -26,7 +29,7 @@ Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Ge
 3. Installieren:
 
    ```bash
-   dotnet build iOS -t:Run -f net10.0-ios -p:RuntimeIdentifier=ios-arm64
+   dotnet run --project iOS -f net10.0-ios -r ios-arm64
    ```
 
 4. Beim ersten Start am iPhone: **Einstellungen → Allgemein → VPN & Geräteverwaltung** → Entwickler-App vertrauen.
