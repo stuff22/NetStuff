@@ -66,5 +66,23 @@ public static class L
     }
 
     /// <summary>Format mit Übersetzung der Vorlage.</summary>
-    public static string F(string format, params object[] args) => string.Format(T(format), args);
+    public static string F(string format, params object[] args) => string.Format(TFormat(format), args);
+
+    /// <summary>
+    /// Übersetzt eine Formatvorlage. Formatangaben wie {1:0.0} gehören nicht zum Schlüssel
+    /// („Fertig: {0} Geräte in {1} s“) und werden nach der Übersetzung wieder eingesetzt.
+    /// </summary>
+    private static string TFormat(string format)
+    {
+        if (IsGerman || string.IsNullOrEmpty(format)) return format;
+        if (_exact.TryGetValue(format, out var t)) return t;
+        var specs = new Dictionary<string, string>();
+        var key = Regex.Replace(format, @"\{(\d+)([,:][^}]*)\}", m =>
+        {
+            specs[m.Groups[1].Value] = m.Groups[2].Value;
+            return "{" + m.Groups[1].Value + "}";
+        });
+        if (specs.Count == 0 || !_exact.TryGetValue(key, out t)) return T(format);
+        return Regex.Replace(t, @"\{(\d+)\}", m => specs.TryGetValue(m.Groups[1].Value, out var s) ? "{" + m.Groups[1].Value + s + "}" : m.Value);
+    }
 }

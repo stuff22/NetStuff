@@ -21,13 +21,13 @@ public static class Tools
         new("speed", "Speedtest & iPerf3", "Erreichbarkeit", null),
         new("monitor", "Überwachung", "Erreichbarkeit", null),
 
-        new("netscan", "Netzwerkscanner", "Lokales Netz", null),
-        new("wlan", "WLAN-Scanner", "Lokales Netz", null),
-        new("survey", "WLAN-Ausleuchtung", "Lokales Netz", null),
+        new("netscan", "Netzwerkscanner", "Lokales Netz", () => new NetScanView()),
+        new("wlan", "WLAN-Scanner", "Lokales Netz", () => new WlanView()),
+        new("survey", "WLAN-Ausleuchtung", "Lokales Netz", () => new SurveyView()),
         new("lldp", "LLDP / CDP", "Lokales Netz", null),
         new("dhcp", "DHCP-Test", "Lokales Netz", null),
         new("snmp", "SNMP-Browser", "Lokales Netz", null),
-        new("wol", "Wake-on-LAN", "Lokales Netz", null),
+        new("wol", "Wake-on-LAN", "Lokales Netz", () => new WolView()),
         new("subnet", "Subnetzrechner", "Lokales Netz", () => new SubnetView()),
 
         new("dns", "DNS-Checker", "DNS & Domains", () => new DnsView()),

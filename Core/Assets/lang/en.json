@@ -865,5 +865,17 @@
   "Erkennung: {0} · {1}": "Detection: {0} · {1}",
   "Analysiert: {0} (HTTP {1})": "Analyzed: {0} (HTTP {1})",
   "CMS-Analyse {0}": "CMS analysis {0}",
-  "Treffsicherheit": "Confidence"
+  "Treffsicherheit": "Confidence",
+  "(Name verborgen)": "(name hidden)",
+  "CSV-Datei": "CSV file",
+  "CoreWLAN ist nicht verfügbar.": "CoreWLAN is not available.",
+  "Hinweis: Auf dieser Plattform werden keine MAC-Adressen ermittelt.": "Note: MAC addresses are not determined on this platform.",
+  "SSID/BSSID verborgen (Standortfreigabe fehlt – siehe WLAN-Scanner).": "SSID/BSSID hidden (location permission missing – see Wi-Fi scanner).",
+  "WLAN ({0})": "Wi-Fi ({0})",
+  "WLAN-Adapter nicht gefunden.": "Wi-Fi adapter not found.",
+  "WLAN-Scan fehlgeschlagen: ": "Wi-Fi scan failed: ",
+  "Zum Löschen aller Messpunkte nochmals „Liste leeren“ klicken.": "Click “Clear list” again to delete all measurement points.",
+  "macOS zeigt WLAN-Namen und BSSIDs nur mit Standortfreigabe. Kanäle und Signalstärken sind trotzdem sichtbar. Für die Namen Net-Stuff als App starten (Desktop/macos/build-app.sh) und unter Systemeinstellungen → Datenschutz & Sicherheit → Ortungsdienste erlauben.": "macOS only shows Wi-Fi names and BSSIDs with location permission. Channels and signal strengths are still visible. To see the names, start Net-Stuff as an app (Desktop/macos/build-app.sh) and allow it under System Settings → Privacy & Security → Location Services.",
+  "verborgen {0}": "hidden {0}",
+  "z. B. 192.168.1.1": "e.g. 192.168.1.1"
 }

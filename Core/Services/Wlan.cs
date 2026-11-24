@@ -28,6 +28,9 @@ public interface IWlanScanner
 
     /// <summary>Plattformspezifischer Hinweis, wie die Standortberechtigung erteilt wird (oder null).</summary>
     string PermissionHint { get; }
+
+    /// <summary>true, wenn die Plattform beim letzten Scan Netznamen und BSSIDs zurückgehalten hat (macOS ohne Standortfreigabe).</summary>
+    bool NamesHidden => false;
 }
 
 /* ====================================================================== Auswertung */
@@ -47,7 +50,8 @@ public static class WlanAnalysis
     /// <summary>Virtuelle BSSIDs (mehrere SSIDs pro AP) haben das "lokal verwaltet"-Bit gesetzt – ohne dieses Bit findet man meist den echten Hersteller.</summary>
     public static string VendorOf(string bssid)
     {
-        if (string.IsNullOrEmpty(bssid) || bssid.Length < 2) return "";
+        // nur echte MAC-Adressen (macOS liefert ohne Standortfreigabe Platzhalter)
+        if (string.IsNullOrEmpty(bssid) || !System.Text.RegularExpressions.Regex.IsMatch(bssid, "^[0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5}$")) return "";
         if (!OuiDatabase.IsRandomized(bssid)) return OuiDatabase.Lookup(bssid);
         var first = Convert.ToByte(bssid[..2], 16) & ~0x02;
         var real = OuiDatabase.Lookup(first.ToString("X2") + bssid[2..]);
@@ -150,7 +154,10 @@ public static class WlanSurvey
         p.SameSsid = same.Count.ToString() + (better != null ? L.F(" · besserer AP {0} ({1} dBm)", better.Bssid, better.Rssi) : "");
 
         status?.Invoke(L.T("Ping zum Gateway …"));
-        var gw = NetUtil.ActiveIPv4().Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Select(x => x.Gateway).FirstOrDefault(g => g != null);
+        // macOS meldet WLAN-Adapter als Ethernet – dann das erste Gateway verwenden
+        var active = NetUtil.ActiveIPv4().ToList();
+        var gw = active.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Select(x => x.Gateway).FirstOrDefault(g => g != null)
+                 ?? active.Select(x => x.Gateway).FirstOrDefault(g => g != null);
         if (gw != null)
         {
             var rtts = new List<long>();
