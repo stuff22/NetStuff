@@ -1,4 +1,4 @@
-﻿<infra:ToolPage x:Class="NetStuff.Pages.CmsPage"
+<infra:ToolPage x:Class="NetStuff.Pages.CmsPage"
                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -37,6 +37,16 @@
                         <DataGridTextColumn Header="Hinweise" Binding="{Binding EvidenceText}" Width="*" MinWidth="200" />
                     </DataGrid.Columns>
                 </DataGrid>
+                <Border x:Name="WpOffer" Style="{StaticResource Card}" Visibility="Collapsed">
+                    <DockPanel>
+                        <ui:Button x:Name="WpButton" DockPanel.Dock="Right" Content="wp-json auswerten" Style="{StaticResource PrimaryButton}" Click="WpJson_Click" VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock FontWeight="SemiBold" Text="WordPress erkannt – REST-API auswerten?" />
+                            <TextBlock x:Name="WpOfferText" Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <StackPanel x:Name="WpPanel" />
                 <StackPanel x:Name="ResultsPanel" />
             </StackPanel>
         </ScrollViewer>

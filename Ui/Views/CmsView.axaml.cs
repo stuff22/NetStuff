@@ -36,6 +36,9 @@ public partial class CmsView : ToolView
         if (url == "" || !CheckButton.IsEnabled) return;
         CheckButton.IsEnabled = false;
         ResultsPanel.Children.Clear();
+        WpPanel.Children.Clear();
+        WpOffer.IsVisible = false;
+        _wpSections = null;
         MainCard.IsVisible = true;
         MainText.Text = L.T("Analyse läuft …");
         MainSub.Text = "";
@@ -53,6 +56,14 @@ public partial class CmsView : ToolView
                                ? L.F("Erkennung: {0} · {1}", L.T(main.ConfidenceText), main.EvidenceText) + "\n"
                                : L.T("Möglicherweise individuell programmiert oder gut verschleiert.\n"))
                            + L.F("Analysiert: {0} (HTTP {1})", r.FinalUrl, r.StatusCode);
+
+            if (r.IsWordPress)
+            {
+                WpOfferText.Text = L.F("Fragt {0} ab und zeigt Website-Angaben, Plugins laut API-Namespaces, Anzahl der Inhalte und ob Benutzernamen öffentlich sind.",
+                    r.WpApiRoot ?? new Uri(r.FinalUrl).GetLeftPart(UriPartial.Authority) + "/wp-json/");
+                WpButton.IsEnabled = true;
+                WpOffer.IsVisible = true;
+            }
 
             DetectGrid.ItemsSource = r.Detections.Select(CmsRow.From).ToList();
             DetectGrid.IsVisible = r.Detections.Count > 0;
@@ -78,6 +89,30 @@ public partial class CmsView : ToolView
         }
     }
 
+    private List<CheckSection> _wpSections;
+
+    private async void WpJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (_last == null || !WpButton.IsEnabled) return;
+        WpButton.IsEnabled = false;
+        WpPanel.Children.Clear();
+        WpPanel.Children.Add(UiFactory.Message(L.T("REST-API wird abgefragt …")));
+        try
+        {
+            using var cts = new CancellationTokenSource(60000);
+            _wpSections = await WordPressApi.AnalyzeAsync(_last.FinalUrl, _last.WpApiRoot, cts.Token);
+            WpPanel.Children.Clear();
+            foreach (var s in _wpSections) WpPanel.Children.Add(UiFactory.Section(s));
+            WpOffer.IsVisible = false;
+        }
+        catch (Exception ex)
+        {
+            WpPanel.Children.Clear();
+            WpPanel.Children.Add(UiFactory.Message(L.T("Fehler: ") + (ex.InnerException?.Message ?? ex.Message), Level.Bad));
+            WpButton.IsEnabled = true;
+        }
+    }
+
     private void Copy_Click(object sender, RoutedEventArgs e)
     {
         if (_last == null) return;
@@ -85,6 +120,7 @@ public partial class CmsView : ToolView
         foreach (var d in _last.Detections) sb.AppendLine($"  {d.Name} {d.Version} [{L.T(d.Category ?? "")}, {L.T(d.ConfidenceText)}]");
         foreach (var p in _last.WpPlugins) sb.AppendLine($"  Plugin: {p.Slug} {p.Version}");
         foreach (var t in _last.WpThemes) sb.AppendLine($"  Theme: {t.Slug} {t.Version}");
+        if (_wpSections != null) foreach (var sec in _wpSections) sb.Append(sec.ToText());
         CopyText(sb.ToString());
     }
 }

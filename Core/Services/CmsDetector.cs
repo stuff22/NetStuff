@@ -24,6 +24,12 @@ public class CmsResult
     public List<(string Slug, string Version)> WpPlugins { get; } = new();
     public List<(string Slug, string Version)> WpThemes { get; } = new();
     public List<string> Notes { get; } = new();
+
+    /// <summary>WordPress erkannt?</summary>
+    public bool IsWordPress => Detections.Any(d => d.Name == "WordPress");
+
+    /// <summary>Basis der WordPress-REST-API laut Seite (Link rel="https://api.w.org/"), sonst null.</summary>
+    public string WpApiRoot { get; set; }
 }
 
 /// <summary>Erkennt CMS, Shopsysteme, Frameworks und Dienste anhand von HTML, Headern, Cookies und typischen Pfaden.</summary>
@@ -260,6 +266,10 @@ public static class CmsDetector
             foreach (Match m in Regex.Matches(html, @"/wp-content/themes/([a-z0-9_-]+)/[^""'\s>]*?(?:\?ver=([\d.]+))?[""'\s>]", RegexOptions.IgnoreCase))
                 AddSlug(result.WpThemes, m.Groups[1].Value, m.Groups[2].Value);
             if (probes.ContainsKey("/wp-json/")) result.Notes.Add("WordPress REST-API öffentlich erreichbar (/wp-json/).");
+            var api = Regex.Match(html, @"<link[^>]+rel=[""']https://api\.w\.org/[""'][^>]*href=[""']([^""']+)[""']", RegexOptions.IgnoreCase);
+            if (!api.Success && headers.TryGetValue("Link", out var link))
+                api = Regex.Match(link, @"<([^>]+)>;\s*rel=""https://api\.w\.org/""", RegexOptions.IgnoreCase);
+            if (api.Success) result.WpApiRoot = System.Net.WebUtility.HtmlDecode(api.Groups[1].Value);
         }
 
         result.Detections.AddRange(dict.Values
