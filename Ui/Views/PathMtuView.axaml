@@ -1,0 +1,38 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.PathMtuView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="Path-MTU" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Ermittelt die größte Paketgröße, die ohne Fragmentierung bis zum Ziel durchkommt (Ping mit gesetztem DF-Bit, binäre Suche).'}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+            <Border Classes="Card" Margin="0,0,12,12">
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Classes="Label" Text="{l:T 'Ziel'}" />
+                        <TextBox x:Name="TargetBox" Text="8.8.8.8" Width="280" KeyDown="TargetBox_KeyDown" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Classes="Label" Text="{l:T 'Max. MTU'}" />
+                        <NumericUpDown x:Name="MaxBox" Value="1500" Minimum="576" Maximum="9000" Increment="10" />
+                    </StackPanel>
+                    <CheckBox x:Name="V6Box" Content="IPv6" VerticalAlignment="Bottom" Margin="0,0,16,2" />
+                    <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Ermitteln'}" VerticalAlignment="Bottom" Click="Start_Click" />
+                </WrapPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="Card" MinWidth="240">
+                <StackPanel>
+                    <TextBlock Classes="Label" Text="Path-MTU" />
+                    <TextBlock x:Name="ResultText" Text="–" FontSize="36" FontWeight="SemiBold" />
+                    <TextBlock x:Name="ResultSub" Classes="Status" Margin="0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TextBox Grid.Row="2" x:Name="LogBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                 FontFamily="Menlo, Consolas, monospace" FontSize="12.5" VerticalContentAlignment="Top" />
+    </Grid>
+</l:ToolView>

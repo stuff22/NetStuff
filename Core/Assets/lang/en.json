@@ -860,5 +860,6 @@
   "DNS & Domains": "DNS & Domains",
   "Dieses Werkzeug folgt in einer der nächsten Ausbaustufen der Mac-Version.": "This tool will follow in one of the next stages of the Mac version.",
   "Geodaten: ip-api.com · Standorte von Routern sind Näherungswerte. Die Weltkarte folgt in der Mac-Version.": "Geo data: ip-api.com · Router locations are approximate. The world map will follow in the Mac version.",
-  "{0}: keine Antwort (Timeout)": "{0}: no answer (timeout)"
+  "{0}: keine Antwort (Timeout)": "{0}: no answer (timeout)",
+  "Test im Terminal zum Nachprüfen:  ping -D -s {0} {1}": "Terminal test to verify:  ping -D -s {0} {1}"
 }

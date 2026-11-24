@@ -1,0 +1,41 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.SubnetView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Subnetzrechner'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'IPv4 und IPv6: Netzadresse, Broadcast, Hostbereich, Maske, Wildcard und Aufteilung in Subnetze. Eingabe als CIDR (192.168.10.77/26) oder mit Maske (10.0.0.1 255.255.240.0).'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Adresse / Netz'}" />
+                    <TextBox x:Name="InputBox" Text="192.168.10.77/26" Width="340" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Classes="Label" Text="{l:T 'Aufteilen in Präfix /'}" />
+                    <NumericUpDown x:Name="SplitBox" Value="28" Minimum="0" Maximum="128" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,*">
+            <ScrollViewer Margin="0,0,12,0">
+                <StackPanel x:Name="ResultsPanel" />
+            </ScrollViewer>
+            <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                <TextBlock x:Name="SplitTitle" Classes="Status" FontWeight="SemiBold" />
+                <DataGrid Grid.Row="1" x:Name="SplitGrid" x:DataType="s:SubnetSplitRow" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="60" />
+                        <DataGridTextColumn Header="{l:T 'Netz'}" Binding="{Binding Network}" Width="*" />
+                        <DataGridTextColumn Header="{l:T 'Hostbereich'}" Binding="{Binding Hosts}" Width="1.4*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+    </Grid>
+</l:ToolView>

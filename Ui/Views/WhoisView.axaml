@@ -1,0 +1,38 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.WhoisView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="Whois / RDAP" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Registrierungsdaten zu Domains, IP-Adressen und AS-Nummern – klassisch per Whois (mit automatischer Weiterleitung) oder modern per RDAP.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Domain, IP oder ASN (z. B. AS3320)'}" />
+                    <TextBox x:Name="QueryBox" Text="example.com" Width="280" KeyDown="QueryBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Whois-Server (optional)'}" />
+                    <TextBox x:Name="ServerBox" Width="200" PlaceholderText="{l:T 'automatisch'}" />
+                </StackPanel>
+                <CheckBox x:Name="FollowBox" Content="{l:T 'Weiterleitungen folgen'}" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,16,2" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                    <Button x:Name="WhoisButton" Classes="accent" Content="Whois" Click="Whois_Click" />
+                    <Button x:Name="RdapButton" Content="RDAP" Click="Rdap_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="480,*">
+            <ScrollViewer Margin="0,0,12,0">
+                <StackPanel x:Name="SummaryPanel" />
+            </ScrollViewer>
+            <TextBox Grid.Column="1" x:Name="RawBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                     FontFamily="Menlo, Consolas, monospace" FontSize="12.5" VerticalContentAlignment="Top" />
+        </Grid>
+    </Grid>
+</l:ToolView>

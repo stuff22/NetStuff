@@ -16,8 +16,8 @@ public static class Tools
 
         new("ping", "Ping", "Erreichbarkeit", () => new PingView()),
         new("trace", "Traceroute & Karte", "Erreichbarkeit", () => new TracerouteView()),
-        new("mtu", "Path-MTU", "Erreichbarkeit", null),
-        new("portscan", "Port-Scanner", "Erreichbarkeit", null),
+        new("mtu", "Path-MTU", "Erreichbarkeit", () => new PathMtuView()),
+        new("portscan", "Port-Scanner", "Erreichbarkeit", () => new PortScanView()),
         new("speed", "Speedtest & iPerf3", "Erreichbarkeit", null),
         new("monitor", "Überwachung", "Erreichbarkeit", null),
 
@@ -28,12 +28,12 @@ public static class Tools
         new("dhcp", "DHCP-Test", "Lokales Netz", null),
         new("snmp", "SNMP-Browser", "Lokales Netz", null),
         new("wol", "Wake-on-LAN", "Lokales Netz", null),
-        new("subnet", "Subnetzrechner", "Lokales Netz", null),
+        new("subnet", "Subnetzrechner", "Lokales Netz", () => new SubnetView()),
 
         new("dns", "DNS-Checker", "DNS & Domains", () => new DnsView()),
         new("domaincheck", "Domain-Check", "DNS & Domains", null),
-        new("resolver", "Resolver-Vergleich", "DNS & Domains", null),
-        new("whois", "Whois / RDAP", "DNS & Domains", null),
+        new("resolver", "Resolver-Vergleich", "DNS & Domains", () => new ResolverView()),
+        new("whois", "Whois / RDAP", "DNS & Domains", () => new WhoisView()),
         new("mail", "Mail-Check", "DNS & Domains", null),
 
         new("ssl", "SSL/TLS-Checker", "Web", null),

@@ -1,3 +1,4 @@
+using Avalonia.Data.Converters;
 using Avalonia.Media;
 
 namespace NetStuff.Ui.Infrastructure;
@@ -23,4 +24,8 @@ public static class Palette
         Level.Bad => Bad,
         _ => Color.FromRgb(0x80, 0x80, 0x80),
     });
+
+    /// <summary>Für Bindungen: {Binding Level, Converter={x:Static l:Palette.LevelBrush}}</summary>
+    public static readonly IValueConverter LevelBrush = new FuncValueConverter<Level, IBrush>(For);
+    public static readonly IValueConverter LevelGlyph = new FuncValueConverter<Level, string>(UiFactory.Glyph);
 }

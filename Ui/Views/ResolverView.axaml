@@ -1,0 +1,80 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.ResolverView">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Resolver-Vergleich'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Stellt dieselbe Anfrage an viele DNS-Resolver (klassisch und DNS-over-HTTPS) und vergleicht Antworten und Antwortzeiten – ideal, um DNS-Propagation, Filter oder Manipulation zu erkennen.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="{l:T 'Name'}" />
+                    <TextBox x:Name="NameBox" Text="example.com" Width="240" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="{l:T 'Typ'}" />
+                    <ComboBox x:Name="TypeBox" Width="100" SelectedIndex="0">
+                        <ComboBoxItem Content="A" />
+                        <ComboBoxItem Content="AAAA" />
+                        <ComboBoxItem Content="MX" />
+                        <ComboBoxItem Content="NS" />
+                        <ComboBoxItem Content="TXT" />
+                        <ComboBoxItem Content="CNAME" />
+                        <ComboBoxItem Content="SOA" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="{l:T 'Wiederholungen'}" />
+                    <NumericUpDown x:Name="RoundsBox" Value="3" Minimum="1" Maximum="20" Width="120" />
+                </StackPanel>
+                <StackPanel Margin="0,0,8,8">
+                    <TextBlock Classes="Label" Text="{l:T 'Eigener Resolver (IP oder DoH-URL)'}" />
+                    <TextBox x:Name="CustomBox" Width="240" PlaceholderText="{l:T 'z. B. 192.168.1.1'}" />
+                </StackPanel>
+                <Button Content="{l:T 'Hinzufügen'}" VerticalAlignment="Bottom" Margin="0,0,12,8" Click="Add_Click" />
+                <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Vergleichen'}" VerticalAlignment="Bottom" Margin="0,0,0,8" Click="Start_Click" />
+            </WrapPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" x:Name="InfoText" Classes="Status" />
+
+        <DataGrid Grid.Row="3" x:Name="ResultGrid" x:DataType="s:ResolverRow" HeadersVisibility="Column" IsReadOnly="False">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="" Width="44">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="s:ResolverRow">
+                            <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" HorizontalAlignment="Center" MinWidth="0" Padding="0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{l:T 'Resolver'}" Binding="{Binding Name}" Width="150" IsReadOnly="True" />
+                <DataGridTextColumn Header="{l:T 'Adresse'}" Binding="{Binding Address}" Width="175" IsReadOnly="True" />
+                <DataGridTextColumn Header="{l:T 'Ø ms'}" Binding="{Binding AvgText}" Width="80" IsReadOnly="True" />
+                <DataGridTextColumn Header="Min" Binding="{Binding MinText}" Width="70" IsReadOnly="True" />
+                <DataGridTextColumn Header="Max" Binding="{Binding MaxText}" Width="70" IsReadOnly="True" />
+                <DataGridTextColumn Header="TTL" Binding="{Binding Ttl}" Width="80" IsReadOnly="True" />
+                <DataGridTemplateColumn Header="{l:T 'Ergebnis'}" Width="175">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="s:ResolverRow">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0">
+                                <TextBlock Text="{Binding Level, Converter={x:Static l:Palette.LevelGlyph}}" Foreground="{Binding Level, Converter={x:Static l:Palette.LevelBrush}}" FontWeight="Bold" />
+                                <TextBlock Text="{Binding Verdict}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="{l:T 'Antwort'}" Width="*" MinWidth="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="s:ResolverRow">
+                            <TextBlock Text="{Binding Answer}" TextWrapping="Wrap" FontFamily="Menlo, Consolas, monospace" FontSize="12" Margin="12,4" VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</l:ToolView>

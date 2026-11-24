@@ -184,7 +184,11 @@ public static class WhoisLookup
             sb.AppendLine(h.Response.Replace("\r\n", "\n").Replace("\n", Environment.NewLine).Trim());
             sb.AppendLine();
         }
-        var summary = WhoisClient.Summarize(hops.AsEnumerable().Reverse())
+        // Die IANA-Antwort beschreibt nur die Top-Level-Domain (z. B. .at) – nicht in die Zusammenfassung übernehmen,
+        // sobald ein zuständiger Whois-Server geantwortet hat.
+        var relevant = hops.Count > 1 ? hops.Where(h => !h.Server.Equals("whois.iana.org", StringComparison.OrdinalIgnoreCase)).ToList() : hops;
+        if (relevant.Count == 0) relevant = hops;
+        var summary = WhoisClient.Summarize(relevant.AsEnumerable().Reverse())
             .Select(kv => new CheckItem(kv.Key, kv.Value, kv.Key == "Läuft ab" ? ExpiryLevel(kv.Value) : Level.Info)).ToList();
         return new WhoisResult(sb.ToString(), summary);
     }
