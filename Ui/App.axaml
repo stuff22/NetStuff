@@ -1,0 +1,32 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NetStuff.Ui.App"
+             RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PageBrush" Color="#F7F7F8" />
+                    <SolidColorBrush x:Key="NavBrush" Color="#EEEEF0" />
+                    <SolidColorBrush x:Key="CardBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="CardStrokeBrush" Color="#E2E2E6" />
+                    <SolidColorBrush x:Key="SubtleTextBrush" Color="#5E5E66" />
+                    <SolidColorBrush x:Key="AccentTextBrush" Color="#0B63C9" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PageBrush" Color="#1C1C1E" />
+                    <SolidColorBrush x:Key="NavBrush" Color="#232326" />
+                    <SolidColorBrush x:Key="CardBrush" Color="#2A2A2D" />
+                    <SolidColorBrush x:Key="CardStrokeBrush" Color="#3A3A3E" />
+                    <SolidColorBrush x:Key="SubtleTextBrush" Color="#A2A2AA" />
+                    <SolidColorBrush x:Key="AccentTextBrush" Color="#6CB6FF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://NetStuff.Ui/Styles.axaml" />
+    </Application.Styles>
+</Application>

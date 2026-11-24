@@ -44,8 +44,11 @@ Deutsch und Englisch, läuft ohne Administratorrechte (nur LLDP/CDP fragt einmal
 | `CoreTests\` | Selbsttest des Kerns als Konsolenprogramm – läuft auf jedem System: `dotnet run --project CoreTests` (zusätzlich `-- --live` für eine echte Website-Kopie) |
 | `Platform\Windows\` | Windows-Umsetzungen: Toasts, SendARP, pktmon, WLAN-API |
 | `Pages\`, `Controls\`, `Infrastructure\` | WPF-Oberfläche (nur Windows) |
+| `Ui\` (NetStuff.Ui, Avalonia 12) | neue plattformübergreifende Oberfläche für macOS, Windows und später iPhone/iPad – im Aufbau (bisher Ping, Traceroute, DNS-Checker) |
+| `Desktop\` | Desktop-Start der Avalonia-Oberfläche (macOS/Windows): `dotnet run --project Desktop` |
 
-`NetStuff.sln` enthält beide Projekte. Ziel: dieselbe Core-Bibliothek später für macOS und iPhone/iPad (Avalonia) verwenden.
+`NetStuff.slnx` enthält alle Projekte. Die Avalonia-App versteht dieselben Startparameter wie die WPF-App (`--page`, `--param`, `--run`, `--lang`, `--snapshot`, `--snapdelay`), z. B.
+`dotnet run --project Desktop -- --page trace --param example.com --run`.
 
 ## Starten / Weitergeben
 

@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:NetStuff.Ui.Infrastructure"
+             x:Class="NetStuff.Ui.Views.MainView"
+             Background="{DynamicResource PageBrush}">
+    <Grid ColumnDefinitions="230,*">
+        <Border Background="{DynamicResource NavBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="16,18,16,8" Spacing="10">
+                    <Image Source="/Assets/netstuff.png" Width="28" Height="28" />
+                    <TextBlock Text="Net-Stuff" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Margin="12,6,12,6" PlaceholderText="{l:T 'Werkzeug suchen …'}" />
+                <ListBox x:Name="Nav" Background="Transparent" Margin="4,0,4,8" SelectionMode="Single" />
+            </DockPanel>
+        </Border>
+        <ContentControl Grid.Column="1" x:Name="Host" Margin="28,18,28,18" />
+    </Grid>
+</UserControl>

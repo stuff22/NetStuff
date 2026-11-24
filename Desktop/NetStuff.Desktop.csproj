@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Desktop-Start der Avalonia-Oberfläche (macOS, Windows, Linux).
+       Aufruf und Testoptionen: siehe README, Abschnitt Projektstruktur. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>NetStuff.Desktop</RootNamespace>
+    <AssemblyName>NetStuff</AssemblyName>
+    <Version>1.1.3</Version>
+    <ApplicationIcon Condition="Exists('..\Assets\netstuff.ico')">..\Assets\netstuff.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ui\NetStuff.Ui.csproj" />
+  </ItemGroup>
+
+</Project>

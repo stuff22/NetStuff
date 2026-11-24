@@ -1,0 +1,51 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.TracerouteView">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Traceroute &amp; Karte'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Verfolgt den Weg der Pakete Hop für Hop und zeigt die Stationen mit Standort und Provider auf der Weltkarte.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Ziel'}" />
+                    <TextBox x:Name="TargetBox" Text="google.com" Width="300" KeyDown="TargetBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Max. Hops'}" />
+                    <NumericUpDown x:Name="MaxHopsBox" Value="30" Minimum="1" Maximum="64" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'Timeout (ms)'}" />
+                    <NumericUpDown x:Name="TimeoutBox" Value="1500" Minimum="200" Maximum="10000" Increment="100" />
+                </StackPanel>
+                <CheckBox x:Name="V6Box" Content="{l:T 'IPv6 bevorzugen'}" VerticalAlignment="Bottom" Margin="0,0,16,2" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                    <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Start'}" Click="Start_Click" />
+                    <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" x:Name="StatusText" Classes="Status" />
+
+        <DataGrid Grid.Row="3" x:Name="HopGrid" x:DataType="s:TraceHop" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="50" />
+                <DataGridTextColumn Header="{l:T 'IP-Adresse'}" Binding="{Binding Ip}" Width="150" />
+                <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="140" />
+                <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="*" MinWidth="180" />
+                <DataGridTextColumn Header="{l:T 'Ort'}" Binding="{Binding Place}" Width="170" />
+                <DataGridTextColumn Header="{l:T 'Provider / AS'}" Binding="{Binding Isp}" Width="220" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="4" Classes="Status" Margin="2,8,0,0" FontSize="11"
+                   Text="{l:T 'Geodaten: ip-api.com · Standorte von Routern sind Näherungswerte. Die Weltkarte folgt in der Mac-Version.'}" />
+    </Grid>
+</l:ToolView>

@@ -72,9 +72,21 @@ public static class DnsLookup
         else
         {
             var list = types.Where(t => t != QueryType.PTR).ToList();
-            var tasks = list.Select(async t => (Type: t, Res: await client.QueryAsync(name, t, cancellationToken: ct))).ToList();
-            foreach (var (t, r) in await Task.WhenAll(tasks))
+            // Einzelne Typen dürfen scheitern (Timeout, gefilterte Typen) – die übrigen Ergebnisse bleiben erhalten.
+            var tasks = list.Select(async t =>
             {
+                try { return (Type: t, Res: await client.QueryAsync(name, t, cancellationToken: ct), Error: (string)null); }
+                catch (DnsResponseException ex) when (!ct.IsCancellationRequested) { return (Type: t, Res: (IDnsQueryResponse)null, Error: ex.Message); }
+            }).ToList();
+            var results = await Task.WhenAll(tasks);
+            if (results.All(x => x.Error != null)) throw new DnsResponseException(results[0].Error);
+            foreach (var (t, r, err) in results)
+            {
+                if (err != null)
+                {
+                    notes.Add(L.F("{0}: keine Antwort (Timeout)", t));
+                    continue;
+                }
                 if (r.HasError && r.Header.ResponseCode != DnsHeaderResponseCode.NoError)
                 {
                     notes.Add($"{t}: {r.ErrorMessage}");

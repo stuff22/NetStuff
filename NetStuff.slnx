@@ -5,5 +5,9 @@
   <Folder Name="/CoreTests/">
     <Project Path="CoreTests/NetStuff.CoreTests.csproj" />
   </Folder>
+  <Folder Name="/Avalonia/">
+    <Project Path="Ui/NetStuff.Ui.csproj" />
+    <Project Path="Desktop/NetStuff.Desktop.csproj" />
+  </Folder>
   <Project Path="NetStuff.csproj" />
 </Solution>

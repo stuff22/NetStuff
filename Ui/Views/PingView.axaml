@@ -1,0 +1,71 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:v="using:NetStuff.Ui.Views"
+            xmlns:c="using:NetStuff.Ui.Controls"
+            x:Class="NetStuff.Ui.Views.PingView">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="Ping" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Dauerping auf ein oder mehrere Ziele parallel – mit Verlust, Jitter und Live-Verlauf.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                    <TextBlock Classes="Label" Text="{l:T 'Ziele (Hostname oder IP, durch Komma oder Zeilenumbruch getrennt)'}" />
+                    <TextBox x:Name="TargetsBox" Text="8.8.8.8, 1.1.1.1" AcceptsReturn="True" Height="62" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Classes="Label" Text="{l:T 'Intervall (ms)'}" />
+                            <NumericUpDown x:Name="IntervalBox" Value="1000" Minimum="100" Maximum="60000" Increment="100" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Classes="Label" Text="{l:T 'Timeout (ms)'}" />
+                            <NumericUpDown x:Name="TimeoutBox" Value="2000" Minimum="100" Maximum="10000" Increment="100" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Classes="Label" Text="{l:T 'Größe (Bytes)'}" />
+                            <NumericUpDown x:Name="SizeBox" Value="32" Minimum="0" Maximum="65500" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <DockPanel Margin="0,10,0,0">
+                        <CheckBox x:Name="DfBox" Content="{l:T 'Nicht fragmentieren (DF)'}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Start'}" Click="Start_Click" />
+                            <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DataGrid Grid.Row="2" x:Name="StatsGrid" x:DataType="v:PingTarget" MaxHeight="230" Margin="0,0,0,12" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="30">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:DataType="v:PingTarget">
+                            <Ellipse Width="10" Height="10" Fill="{Binding ColorBrush}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{l:T 'Ziel'}" Binding="{Binding Host}" Width="1.3*" MinWidth="110" />
+                <DataGridTextColumn Header="IP" Binding="{Binding Ip}" Width="130" />
+                <DataGridTextColumn Header="{l:T 'Gesendet'}" Binding="{Binding Sent}" Width="95" />
+                <DataGridTextColumn Header="{l:T 'Verlust'}" Binding="{Binding LossText}" Width="85" />
+                <DataGridTextColumn Header="{l:T 'Letzter'}" Binding="{Binding LastText}" Width="85" />
+                <DataGridTextColumn Header="Min" Binding="{Binding MinText}" Width="75" />
+                <DataGridTextColumn Header="Ø" Binding="{Binding AvgText}" Width="80" />
+                <DataGridTextColumn Header="Max" Binding="{Binding MaxText}" Width="80" />
+                <DataGridTextColumn Header="Jitter" Binding="{Binding JitterText}" Width="80" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" MinWidth="120" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Border Grid.Row="3" Classes="Card" Margin="0" Padding="8">
+            <c:LineChart x:Name="Chart" />
+        </Border>
+    </Grid>
+</l:ToolView>

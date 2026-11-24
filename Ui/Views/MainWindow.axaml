@@ -1,0 +1,9 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:NetStuff.Ui.Views"
+        x:Class="NetStuff.Ui.Views.MainWindow"
+        Title="Net-Stuff" Icon="/Assets/netstuff.ico"
+        Width="1280" Height="820" MinWidth="900" MinHeight="560"
+        WindowStartupLocation="CenterScreen">
+    <v:MainView />
+</Window>

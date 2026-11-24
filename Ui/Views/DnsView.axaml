@@ -1,0 +1,44 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.DnsView">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'DNS-Checker'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Fragt DNS-Einträge direkt bei einem Resolver oder autoritativen Nameserver ab – inklusive TTL und DNSSEC-Status. Eine IP-Adresse wird automatisch per PTR aufgelöst.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <StackPanel Spacing="10">
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Classes="Label" Text="{l:T 'Domain oder IP'}" />
+                        <TextBox x:Name="NameBox" Text="example.com" Width="300" KeyDown="NameBox_KeyDown" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Classes="Label" Text="{l:T 'DNS-Server'}" />
+                        <AutoCompleteBox x:Name="ServerBox" Width="260" FilterMode="None" MinimumPrefixLength="0" />
+                    </StackPanel>
+                    <CheckBox x:Name="TcpBox" Content="{l:T 'Nur TCP'}" VerticalAlignment="Bottom" Margin="0,0,16,2" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                        <Button x:Name="QueryButton" Classes="accent" Content="{l:T 'Abfragen'}" Click="Query_Click" />
+                        <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                    </StackPanel>
+                </WrapPanel>
+                <WrapPanel x:Name="TypePanel" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" x:Name="InfoText" Classes="Status" />
+
+        <DataGrid Grid.Row="3" x:Name="ResultGrid" x:DataType="s:DnsRow" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding Type}" Width="80" />
+                <DataGridTextColumn Header="{l:T 'Name'}" Binding="{Binding Name}" Width="220" />
+                <DataGridTextColumn Header="TTL" Binding="{Binding TtlText}" Width="130" />
+                <DataGridTextColumn Header="{l:T 'Wert'}" Binding="{Binding Value}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</l:ToolView>
