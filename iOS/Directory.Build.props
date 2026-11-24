@@ -1,9 +1,10 @@
 <Project>
-  <!-- macOS: Build-Ausgabe außerhalb des Projektordners. Liegt das Projekt auf Schreibtisch/Dokumente mit iCloud-Abgleich,
-       hängt macOS den Dateien Attribute an und codesign bricht ab („resource fork, Finder information … not allowed“). -->
+  <!-- macOS: Build-Ordner mit Endung .nosync – iCloud gleicht solche Ordner nicht ab. Liegt das Projekt auf
+       Schreibtisch/Dokumente mit iCloud-Abgleich, hängt macOS den Dateien sonst Attribute an und codesign bricht ab
+       („resource fork, Finder information … not allowed“). Außerhalb des Projektordners findet das iOS-Werkzeug
+       die App nicht (MT0069), daher bleiben die Ordner hier. -->
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <NetStuffBuildRoot>$(HOME)/Library/Caches/NetStuff-build/iOS/</NetStuffBuildRoot>
-    <BaseIntermediateOutputPath>$(NetStuffBuildRoot)obj/</BaseIntermediateOutputPath>
-    <BaseOutputPath>$(NetStuffBuildRoot)bin/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj.nosync/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin.nosync/</BaseOutputPath>
   </PropertyGroup>
 </Project>

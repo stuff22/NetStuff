@@ -16,9 +16,8 @@ cd iOS
 dotnet run -f net10.0-ios -r iossimulator-arm64
 ```
 
-Wichtig: im Ordner `iOS` starten. Die Build-Ausgabe liegt am Mac unter `~/Library/Caches/NetStuff-build/iOS`
-(außerhalb von iCloud, sonst scheitert codesign); den Pfad dorthin rechnet das iOS-Werkzeug relativ zum
-iOS-Ordner aus – von einem anderen Ordner aus gestartet kommt „MT0069: The app directory … does not exist“.
+Die Build-Ausgabe liegt am Mac in `iOS/bin.nosync` und `iOS/obj.nosync` – Ordner mit `.nosync` gleicht iCloud
+nicht ab (sonst scheitert codesign mit „detritus not allowed“, wenn das Projekt auf Schreibtisch/Dokumente liegt).
 (Nur `-t:Run` reicht ab .NET 10 nicht mehr – „The app must be built before …“.)
 
 Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Gerät starten, dann denselben Befehl.

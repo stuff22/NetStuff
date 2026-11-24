@@ -17,8 +17,8 @@
     <!-- Nur die SDK-Bibliotheken kürzen: JSON-Speicher, SNMP und Berichte arbeiten mit Reflection -->
     <MtouchLink>SdkOnly</MtouchLink>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
-    <!-- Alte Build-Ordner im Projektordner (vor der Verlegung nach ~/Library/Caches) nicht mitkompilieren -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+    <!-- Build-Ordner nicht mitkompilieren (am Mac: *.nosync, siehe Directory.Build.props) -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**;obj.nosync/**;bin.nosync/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <!-- iCloud-/Finder-Attribute vor dem Signieren entfernen (sonst: „detritus not allowed“) -->

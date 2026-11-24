@@ -1,6 +1,7 @@
 # Build-Ausgaben
 bin/
 obj/
+*.nosync/
 publish/
 *.wpftmp.*
 
