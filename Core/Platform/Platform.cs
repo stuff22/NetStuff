@@ -25,6 +25,15 @@ public interface ILldpCaptureSource
 }
 
 /// <summary>
+/// Paketmitschnitt mit BPF-Filter (macOS: tcpdump mit Administratorrechten). <c>onReady</c> wird aufgerufen,
+/// sobald der Mitschnitt läuft (z. B. um dann eine Anfrage zu senden). Liefert Ethernet-Rahmen mit Zeitstempel in Sekunden.
+/// </summary>
+public interface IPacketCapture
+{
+    Task<List<(byte[] Frame, double Time)>> CaptureAsync(string filter, int seconds, string reason, Func<Task> onReady, CancellationToken ct);
+}
+
+/// <summary>
 /// Plattformdienste. Die jeweilige App (Windows/WPF, macOS, iOS) setzt beim Start ihre Umsetzungen;
 /// nicht gesetzte Dienste gelten als „auf dieser Plattform nicht verfügbar“.
 /// </summary>
@@ -60,6 +69,9 @@ public static class Platform
     public static INotifier Notifier { get; set; }
     public static IArpResolver Arp { get; set; }
     public static ILldpCaptureSource Lldp { get; set; }
+
+    /// <summary>Allgemeiner Paketmitschnitt (macOS: tcpdump) – z. B. für den DHCP-Test, wenn Port 68 belegt ist.</summary>
+    public static IPacketCapture Capture { get; set; }
 
     public static bool HasArp => Arp != null;
     public static bool HasLldp => Lldp != null;

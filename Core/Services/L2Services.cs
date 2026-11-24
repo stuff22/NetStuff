@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using NetStuff.Infrastructure;
 
 namespace NetStuff.Services;
 
@@ -231,6 +232,33 @@ public static class PcapNg
         return frames;
     }
 
+    /// <summary>Rahmen mit Zeitstempel (Sekunden) aus klassischem pcap (tcpdump -w); andere Formate ohne Zeit (0).</summary>
+    public static List<(byte[] Frame, double Time)> ReadFramesTimed(byte[] data)
+    {
+        if (data.Length >= 24)
+        {
+            uint m = BinaryPrimitives.ReadUInt32LittleEndian(data);
+            bool? le = m is 0xA1B2C3D4 or 0xA1B23C4D ? true : m is 0xD4C3B2A1 or 0x4D3CB2A1 ? false : null;
+            if (le != null)
+            {
+                bool nano = m is 0xA1B23C4D or 0x4D3CB2A1;
+                uint U(int off) => le.Value ? BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(off)) : BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(off));
+                var list = new List<(byte[], double)>();
+                int i = 24;
+                while (i + 16 <= data.Length)
+                {
+                    int cap = (int)U(i + 8);
+                    if (cap < 0 || cap > 262144 || i + 16 + cap > data.Length) break;
+                    double t = U(i) + U(i + 4) / (nano ? 1e9 : 1e6);
+                    list.Add((data.AsSpan(i + 16, cap).ToArray(), t));
+                    i += 16 + cap;
+                }
+                return list;
+            }
+        }
+        return ReadFrames(data).Select(f => (f, 0.0)).ToList();
+    }
+
     private static List<byte[]> ReadClassic(byte[] data, bool le)
     {
         uint U(int off) => le ? BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(off)) : BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(off));
@@ -273,6 +301,8 @@ public static class DhcpTester
     {
         using var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         sock.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        if (OperatingSystem.IsMacOS())
+            try { sock.SetRawSocketOption(0xFFFF /* SOL_SOCKET */, 0x0200 /* SO_REUSEPORT */, BitConverter.GetBytes(1)); } catch { }
         sock.EnableBroadcast = true;
         if (!OperatingSystem.IsWindows())
         {
@@ -286,7 +316,12 @@ public static class DhcpTester
         catch (SocketException)
         {
             try { sock.Bind(new IPEndPoint(IPAddress.Any, 68)); }
-            catch (SocketException ex) { throw new Exception("UDP-Port 68 ist belegt und kann nicht verwendet werden: " + ex.Message); }
+            catch (SocketException ex)
+            {
+                // macOS: der System-DHCP-Client belegt Port 68 exklusiv → Antworten per Paketmitschnitt empfangen
+                if (Platform.Capture != null) return await DiscoverViaCaptureAsync(mac, waitMs, interfaceIndex, ct);
+                throw new Exception(L.T("UDP-Port 68 ist belegt und kann nicht verwendet werden: ") + NetUtil.ErrorText(ex));
+            }
         }
 
         uint xid = (uint)Random.Shared.Next();
@@ -311,6 +346,64 @@ public static class DhcpTester
             if (!offers.Any(x => x.Server == o.Server && x.OfferedIp == o.OfferedIp)) offers.Add(o);
         }
         return offers;
+    }
+
+    /// <summary>DISCOVER von einem freien Port senden und die Antworten (an Port 68) per Mitschnitt auswerten.</summary>
+    private static async Task<List<DhcpOffer>> DiscoverViaCaptureAsync(byte[] mac, int waitMs, int interfaceIndex, CancellationToken ct)
+    {
+        uint xid = (uint)Random.Shared.Next();
+        var pkt = BuildDiscover(xid, mac);
+        using var sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        sock.EnableBroadcast = true;
+        if (OperatingSystem.IsMacOS() && interfaceIndex > 0)
+            try { sock.SetRawSocketOption(0 /* IPPROTO_IP */, 25 /* IP_BOUND_IF */, BitConverter.GetBytes(interfaceIndex)); } catch { }
+        sock.Bind(new IPEndPoint(IPAddress.Any, 0));
+
+        int seconds = Math.Max(3, (int)Math.Ceiling(waitMs / 1000.0)) + 1;
+        var frames = await Platform.Capture.CaptureAsync("udp and (port 67 or port 68)", seconds,
+            L.T("Net-Stuff möchte die Antworten der DHCP-Server mitschneiden (tcpdump) – macOS belegt den DHCP-Port 68 selbst."),
+            async () => await sock.SendToAsync(pkt, SocketFlags.None, new IPEndPoint(IPAddress.Broadcast, 67), ct), ct);
+        return OffersFromFrames(frames, xid);
+    }
+
+    /// <summary>Angebote zur Transaktion <paramref name="xid"/> aus mitgeschnittenen Rahmen; Antwortzeit ab dem eigenen DISCOVER.</summary>
+    internal static List<DhcpOffer> OffersFromFrames(IEnumerable<(byte[] Frame, double Time)> frames, uint xid)
+    {
+        double? sent = null;
+        var offers = new List<(DhcpOffer Offer, double Time)>();
+        foreach (var (frame, time) in frames)
+        {
+            if (!TryUdpPayload(frame, out var src, out int dstPort, out var payload)) continue;
+            if (dstPort == 67 && payload.Length > 8 && payload[0] == 1 && BinaryPrimitives.ReadUInt32BigEndian(payload.AsSpan(4)) == xid) { sent ??= time; continue; }
+            var o = Parse(payload, xid);
+            if (o == null) continue;
+            o.RelayOrSource = src.ToString();
+            if (!offers.Any(x => x.Offer.Server == o.Server && x.Offer.OfferedIp == o.OfferedIp)) offers.Add((o, time));
+        }
+        foreach (var (o, t) in offers) o.Ms = sent != null && t >= sent ? (t - sent.Value) * 1000 : 0;
+        return offers.Select(x => x.Offer).ToList();
+    }
+
+    /// <summary>UDP-Nutzdaten aus einem Ethernet/IPv4-Rahmen (auch mit VLAN-Tag).</summary>
+    internal static bool TryUdpPayload(byte[] f, out IPAddress src, out int dstPort, out byte[] payload)
+    {
+        src = null; dstPort = 0; payload = null;
+        if (f.Length < 14) return false;
+        int off = 12;
+        int type = f[off] << 8 | f[off + 1];
+        if (type == 0x8100 && f.Length >= 18) { off += 4; type = f[off] << 8 | f[off + 1]; }
+        if (type != 0x0800) return false;
+        int ip = off + 2;
+        if (f.Length < ip + 20 || (f[ip] >> 4) != 4 || f[ip + 9] != 17) return false;
+        int ihl = (f[ip] & 0x0F) * 4;
+        int udp = ip + ihl;
+        if (f.Length < udp + 8) return false;
+        src = new IPAddress(f.AsSpan(ip + 12, 4));
+        dstPort = f[udp + 2] << 8 | f[udp + 3];
+        int len = Math.Min((f[udp + 4] << 8 | f[udp + 5]) - 8, f.Length - udp - 8);
+        if (len <= 0) return false;
+        payload = f.AsSpan(udp + 8, len).ToArray();
+        return true;
     }
 
     private static byte[] BuildDiscover(uint xid, byte[] mac)
@@ -370,7 +463,7 @@ public static class DhcpTester
                 case 6: o.Dns = Ips(); break;
                 case 15: o.Domain = Encoding.ASCII.GetString(v).Trim('\0'); break;
                 case 42: o.Ntp = Ips(); break;
-                case 51: var s = BinaryPrimitives.ReadUInt32BigEndian(v); o.Lease = s >= 86400 ? $"{s / 86400.0:0.#} Tage" : $"{s / 3600.0:0.#} h"; break;
+                case 51: var s = BinaryPrimitives.ReadUInt32BigEndian(v); o.Lease = s == 86400 ? L.T("1 Tag") : s >= 86400 ? L.F("{0} Tage", (s / 86400.0).ToString("0.#")) : $"{s / 3600.0:0.#} h"; break;
                 case 66: o.BootServer = Encoding.ASCII.GetString(v).Trim('\0'); break;
                 case 67: o.BootFile = Encoding.ASCII.GetString(v).Trim('\0'); break;
                 case 58: case 59: break;

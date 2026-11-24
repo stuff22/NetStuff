@@ -1128,5 +1128,9 @@
   "Verbindung abgebrochen.": "Connection aborted.",
   "Zugriff verweigert – fehlende Berechtigung.": "Access denied – missing permission.",
   "Adresse auf diesem Gerät nicht verfügbar.": "Address not available on this device.",
-  "Port wird bereits verwendet.": "Port already in use."
+  "Port wird bereits verwendet.": "Port already in use.",
+  "Net-Stuff möchte die Antworten der DHCP-Server mitschneiden (tcpdump) – macOS belegt den DHCP-Port 68 selbst.": "Net-Stuff wants to capture the DHCP servers' replies (tcpdump) – macOS occupies DHCP port 68 itself.",
+  "Net-Stuff möchte LLDP/CDP-Pakete der Switches mitschneiden (tcpdump).": "Net-Stuff wants to capture the switches' LLDP/CDP packets (tcpdump).",
+  "osascript konnte nicht gestartet werden.": "osascript could not be started.",
+  "1 Tag": "1 day"
 }

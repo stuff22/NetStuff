@@ -53,6 +53,47 @@ public static class CoreSelfTest
             return Task.FromResult($"{n.DeviceName} {n.PortId} VLAN {n.Vlan} · pcap ✓");
         });
 
+        // DHCP über Mitschnitt (macOS: tcpdump, weil der System-Client Port 68 belegt)
+        await T("DHCP-Mitschnitt", () =>
+        {
+            const uint xid = 0x12345678;
+            byte[] Frame(bool offer)
+            {
+                var d = new List<byte> { (byte)(offer ? 2 : 1), 1, 6, 0, 0x12, 0x34, 0x56, 0x78, 0, 0, 0x80, 0 };
+                d.AddRange(new byte[4]);                                            // ciaddr
+                d.AddRange(offer ? new byte[] { 10, 0, 0, 50 } : new byte[4]);     // yiaddr
+                d.AddRange(new byte[8]);                                            // siaddr, giaddr
+                d.AddRange(new byte[16 + 192]);                                     // chaddr, sname, file
+                d.AddRange(new byte[] { 99, 130, 83, 99, 53, 1, (byte)(offer ? 2 : 1) });
+                if (offer) d.AddRange(new byte[] { 54, 4, 10, 0, 0, 1, 1, 4, 255, 255, 255, 0, 3, 4, 10, 0, 0, 1, 51, 4, 0, 1, 81, 128 });
+                d.Add(255);
+                var udp = new List<byte> { 0, (byte)(offer ? 67 : 68), 0, (byte)(offer ? 68 : 67), (byte)((d.Count + 8) >> 8), (byte)(d.Count + 8), 0, 0 };
+                udp.AddRange(d);
+                var ip = new List<byte> { 0x45, 0, (byte)((udp.Count + 20) >> 8), (byte)(udp.Count + 20), 0, 0, 0, 0, 64, 17, 0, 0 };
+                ip.AddRange(offer ? new byte[] { 10, 0, 0, 1 } : new byte[] { 10, 0, 0, 74 });
+                ip.AddRange(new byte[] { 255, 255, 255, 255 });
+                ip.AddRange(udp);
+                var eth = new List<byte>();
+                eth.AddRange(Enumerable.Repeat((byte)0xFF, 6)); eth.AddRange(new byte[] { 0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x08, 0x00 });
+                eth.AddRange(ip);
+                return eth.ToArray();
+            }
+            // klassisches pcap mit Zeitstempeln: DISCOVER bei 1,000 s, OFFER bei 1,012 s
+            var pcap = new List<byte> { 0xD4, 0xC3, 0xB2, 0xA1, 2, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 1, 0, 0, 0 };
+            foreach (var (f, usec) in new[] { (Frame(false), 0), (Frame(true), 12000) })
+            {
+                pcap.AddRange(BitConverter.GetBytes(1)); pcap.AddRange(BitConverter.GetBytes(usec));
+                pcap.AddRange(BitConverter.GetBytes(f.Length)); pcap.AddRange(BitConverter.GetBytes(f.Length));
+                pcap.AddRange(f);
+            }
+            var offers = DhcpTester.OffersFromFrames(PcapNg.ReadFramesTimed(pcap.ToArray()), xid);
+            if (offers.Count != 1) throw new Exception($"{offers.Count} Angebote");
+            var o = offers[0];
+            if (o.Server != "10.0.0.1" || o.OfferedIp != "10.0.0.50" || o.SubnetMask != "255.255.255.0" || Math.Abs(o.Ms - 12) > 0.5)
+                throw new Exception($"falsch: {o.Server} {o.OfferedIp} {o.SubnetMask} {o.Ms} ms");
+            return Task.FromResult($"Server {o.Server} bietet {o.OfferedIp} an · {o.Ms:0} ms · Lease {o.Lease}");
+        });
+
         // CDP-Parser
         await T("CDP-Parser", () =>
         {

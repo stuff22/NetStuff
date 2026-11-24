@@ -13,6 +13,7 @@ internal static class PlatformSetup
             NetStuff.Platform.Wlan = new MacWlanScanner();
             NetStuff.Platform.Notifier = new MacNotifier();
             NetStuff.Platform.Lldp = new TcpdumpLldpSource();
+            NetStuff.Platform.Capture = new TcpdumpCapture();
         }
         else if (OperatingSystem.IsWindows())
         {
