@@ -3,33 +3,39 @@
              xmlns:l="using:NetStuff.Ui.Infrastructure"
              x:Class="NetStuff.Ui.Views.MainView"
              Background="{DynamicResource PageBrush}">
-    <Grid ColumnDefinitions="230,*">
-        <Border Background="{DynamicResource NavBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="16,18,16,8" Spacing="10">
-                    <Image Source="/Assets/netstuff.png" Width="28" Height="28" />
-                    <TextBlock Text="Net-Stuff" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-                <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Margin="12,6,12,6" PlaceholderText="{l:T 'Werkzeug suchen …'}" />
-                <ListBox x:Name="Nav" Background="Transparent" Margin="4,0,4,8" SelectionMode="Single" />
-            </DockPanel>
-        </Border>
+    <!-- Breit (Mac, Windows, iPad quer): Navigation fest links. Schmal (iPhone): Navigation über ☰ einblenden. -->
+    <SplitView x:Name="Split" IsPaneOpen="True" DisplayMode="Inline" OpenPaneLength="230"
+               PaneBackground="{DynamicResource NavBrush}">
+        <SplitView.Pane>
+            <Border BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="16,18,16,8" Spacing="10">
+                        <Image Source="/Assets/netstuff.png" Width="28" Height="28" />
+                        <TextBlock Text="Net-Stuff" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Margin="12,6,12,6" PlaceholderText="{l:T 'Werkzeug suchen …'}" />
+                    <ListBox x:Name="Nav" Background="Transparent" Margin="4,0,4,8" SelectionMode="Single" />
+                </DockPanel>
+            </Border>
+        </SplitView.Pane>
 
-        <DockPanel Grid.Column="1">
+        <DockPanel>
             <!-- Werkzeugleiste -->
-            <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,0,1" Padding="28,8,20,8">
-                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="{l:T 'Projekt'}" Classes="Status" VerticalAlignment="Center" />
+            <Border x:Name="Toolbar" DockPanel.Dock="Top" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,0,0,1" Padding="28,8,20,8">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                    <Button x:Name="MenuButton" Content="☰" MinWidth="40" Margin="0,0,10,0" IsVisible="False" Click="Menu_Click"
+                            ToolTip.Tip="{l:T 'Werkzeuge'}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock x:Name="ProjectLabel" Text="{l:T 'Projekt'}" Classes="Status" VerticalAlignment="Center" />
                         <ComboBox x:Name="ProjectBox" Width="230" PlaceholderText="{l:T '(kein Projekt)'}" />
                         <Button x:Name="ReportButton" Content="{l:T '+ Zum Bericht'}" Click="AddToReport_Click" />
                         <Button x:Name="FavButton" Content="{l:T '★ Favorit'}" Click="Favorite_Click" />
                     </StackPanel>
-                    <TextBlock Grid.Column="1" x:Name="ToolbarInfo" Classes="Status" Margin="14,0,0,0" VerticalAlignment="Center" />
-                    <Button Grid.Column="3" x:Name="ThemeButton" Content="◐" ToolTip.Tip="{l:T 'Hell / Dunkel umschalten'}" Click="Theme_Click" MinWidth="36" />
+                    <TextBlock Grid.Column="2" x:Name="ToolbarInfo" Classes="Status" Margin="14,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <Button Grid.Column="4" x:Name="ThemeButton" Content="◐" ToolTip.Tip="{l:T 'Hell / Dunkel umschalten'}" Click="Theme_Click" MinWidth="36" />
                 </Grid>
             </Border>
             <ContentControl x:Name="Host" Margin="28,18,28,18" />
         </DockPanel>
-    </Grid>
+    </SplitView>
 </UserControl>

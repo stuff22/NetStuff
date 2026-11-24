@@ -229,7 +229,9 @@ public partial class ProjectsView : ToolView
         if (PdfExport.FindBrowser() == null)
         {
             NetUtil.OpenUrl(WriteTempHtml());
-            StatusText.Text = L.T("Für den direkten PDF-Export wird Chrome, Edge oder Brave benötigt. Der Bericht wurde im Browser geöffnet – dort „Drucken → Als PDF sichern“ wählen.");
+            StatusText.Text = OperatingSystem.IsIOS()
+                ? L.T("Der Bericht wird über „Teilen“ angeboten – z. B. „In Dateien sichern“ oder „Drucken“ (dort als PDF teilen).")
+                : L.T("Für den direkten PDF-Export wird Chrome, Edge oder Brave benötigt. Der Bericht wurde im Browser geöffnet – dort „Drucken → Als PDF sichern“ wählen.");
             return;
         }
         var file = await PickSaveFileAsync(FileName(".pdf"), "PDF", "pdf");

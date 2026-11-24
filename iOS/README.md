@@ -1,0 +1,43 @@
+# Net-Stuff für iPhone und iPad
+
+Gleiche Oberfläche wie am Mac (`Ui/`), auf schmalen Bildschirmen mit einklappbarer Navigation (☰).
+Gebaut wird nur am Mac (Xcode muss installiert sein).
+
+## Einmalig
+
+```bash
+sudo dotnet workload install ios
+```
+
+## Im Simulator starten
+
+```bash
+dotnet build iOS -t:Run -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
+```
+
+Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Gerät starten, dann denselben Befehl.
+
+## Auf dem eigenen iPhone/iPad
+
+1. iPhone per Kabel anschließen, am iPhone **Einstellungen → Datenschutz & Sicherheit → Entwicklermodus** einschalten.
+2. Einmalig ein Bereitstellungsprofil erzeugen lassen: In Xcode ein neues Projekt „App“ anlegen,
+   Bundle Identifier `at.itstuff.netstuff`, unter *Signing & Capabilities* das eigene Team (Apple-ID) wählen,
+   iPhone als Ziel wählen und einmal starten (▶). Danach kann das Xcode-Projekt gelöscht werden.
+3. Installieren:
+
+   ```bash
+   dotnet build iOS -t:Run -f net10.0-ios -p:RuntimeIdentifier=ios-arm64
+   ```
+
+4. Beim ersten Start am iPhone: **Einstellungen → Allgemein → VPN & Geräteverwaltung** → Entwickler-App vertrauen.
+
+Mit einer kostenlosen Apple-ID läuft die App 7 Tage, danach Schritt 3 wiederholen.
+
+## Einschränkungen unter iOS
+
+- Ausgeblendet: WLAN-Scanner, WLAN-Ausleuchtung, LLDP/CDP (iOS gibt keine WLAN-Liste frei und erlaubt keinen Mitschnitt).
+- Netzwerkscanner: keine MAC-Adressen/Hersteller (kein ARP-Zugriff).
+- Broadcast/Multicast (Wake-on-LAN an die Broadcast-Adresse, DHCP-Test, UPnP/SSDP) braucht von Apple die
+  Berechtigung `com.apple.developer.networking.multicast` – ohne sie können diese Funktionen fehlschlagen.
+- Überwachung läuft nur, solange die App im Vordergrund ist.
+- PDF-Export: Der Bericht wird über „Teilen“ angeboten (In Dateien sichern, Drucken → als PDF).

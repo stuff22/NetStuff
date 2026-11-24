@@ -19,7 +19,7 @@
                 <!-- Internet -->
                 <Border Classes="Card">
                     <StackPanel>
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid Classes="responsive" ColumnDefinitions="*,Auto">
                             <StackPanel>
                                 <TextBlock Text="{l:T 'Internet-Speedtest'}" FontSize="16" FontWeight="SemiBold" />
                                 <TextBlock x:Name="NetInfo" Classes="Status" TextWrapping="Wrap" Text="{l:T 'Server: speed.cloudflare.com (nächstgelegenes Rechenzentrum)'}" />

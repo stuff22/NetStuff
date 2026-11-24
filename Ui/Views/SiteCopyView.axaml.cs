@@ -24,8 +24,9 @@ public partial class SiteCopyView : ToolView
     private string _overwriteArmed;
 
     /// <summary>Standard: Downloads-Ordner (Dokumente liegt oft in OneDrive/iCloud – tausende Dateien würden synchronisiert).</summary>
-    public static string DefaultFolder =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "Net-Stuff Websites");
+    public static string DefaultFolder => OperatingSystem.IsIOS()
+        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Websites")   // in der Dateien-App sichtbar
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "Net-Stuff Websites");
 
     public SiteCopyView()
     {

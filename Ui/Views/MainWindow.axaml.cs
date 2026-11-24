@@ -10,6 +10,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        if (UiOptions.Size is { } sz) { Width = sz.W; Height = sz.H; }
         if (UiOptions.Snapshot != null) Opened += async (_, _) => await SnapshotAsync(UiOptions.Snapshot, UiOptions.SnapDelay);
     }
 

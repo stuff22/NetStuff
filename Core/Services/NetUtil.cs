@@ -351,6 +351,7 @@ public static class NetUtil
 
     public static void OpenUrl(string url)
     {
+        if (Platform.UrlOpener != null) { try { Platform.UrlOpener(url); } catch { } return; }
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
 

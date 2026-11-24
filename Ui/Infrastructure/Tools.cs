@@ -44,5 +44,13 @@ public static class Tools
         new("settings", "Einstellungen", "App", () => new SettingsView()),
     };
 
-    public static ToolInfo Find(string key) => All.FirstOrDefault(t => t.Key == key);
+    /// <summary>Auf iPhone/iPad nicht möglich: iOS gibt keine WLAN-Liste frei und erlaubt keinen Paketmitschnitt.</summary>
+    private static readonly HashSet<string> NotOnIos = new() { "wlan", "survey", "lldp" };
+
+    public static bool IsAvailable(ToolInfo t) => !(OperatingSystem.IsIOS() && NotOnIos.Contains(t.Key));
+
+    /// <summary>Werkzeuge, die auf dieser Plattform angezeigt werden.</summary>
+    public static IEnumerable<ToolInfo> Visible => All.Where(IsAvailable);
+
+    public static ToolInfo Find(string key) => All.FirstOrDefault(t => t.Key == key && IsAvailable(t));
 }

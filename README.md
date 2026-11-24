@@ -1,4 +1,4 @@
-﻿# Net-Stuff
+# Net-Stuff
 
 Das Schweizer Taschenmesser für Netzwerktechniker – native Windows-11-App (WPF, .NET 10, Fluent-Design mit Mica).
 Deutsch und Englisch, läuft ohne Administratorrechte (nur LLDP/CDP fragt einmal nach).
@@ -47,6 +47,7 @@ Deutsch und Englisch, läuft ohne Administratorrechte (nur LLDP/CDP fragt einmal
 | `Ui\` (NetStuff.Ui, Avalonia 12) | neue plattformübergreifende Oberfläche für macOS, Windows und später iPhone/iPad – im Aufbau (alle Werkzeuge der WPF-App; Berichts-PDF über Edge/Chrome/Brave im Hintergrund) |
 | `Desktop\` | Desktop-Start der Avalonia-Oberfläche (macOS/Windows): `dotnet run --project Desktop`. `Desktop\Platform\Mac\`: macOS-Umsetzungen (ARP-Tabelle, CoreWLAN, Mitteilungen, LLDP/CDP über tcpdump); unter Windows werden die Dateien aus `Platform\Windows\` mitverwendet |
 | `Desktop\macos\` | `build-app.sh` baut `Net-Stuff.app` (nötig für die Standortfreigabe – ohne sie zeigt macOS keine WLAN-Namen/BSSIDs) |
+| `iOS\` | iPhone/iPad-Start der Avalonia-Oberfläche (baut nur am Mac) – Anleitung und Einschränkungen in `iOS\README.md`. Schmale Bildschirme: einklappbare Navigation, `Ui\Infrastructure\Responsive.cs` ordnet Spalten untereinander an; am Desktop testbar mit `--size 390x844` |
 
 `NetStuff.slnx` enthält alle Projekte. Die Avalonia-App versteht dieselben Startparameter wie die WPF-App (`--page`, `--param`, `--run`, `--lang`, `--snapshot`, `--snapdelay`), z. B.
 `dotnet run --project Desktop -- --page trace --param example.com --run`.

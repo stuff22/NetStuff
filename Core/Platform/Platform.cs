@@ -73,6 +73,9 @@ public static class Platform
     /// <summary>Allgemeiner Paketmitschnitt (macOS: tcpdump) – z. B. für den DHCP-Test, wenn Port 68 belegt ist.</summary>
     public static IPacketCapture Capture { get; set; }
 
+    /// <summary>Öffnet eine URL oder Datei (Standard: Shell; iOS: Safari bzw. Teilen-Dialog für Dateien).</summary>
+    public static Action<string> UrlOpener { get; set; }
+
     public static bool HasArp => Arp != null;
     public static bool HasLldp => Lldp != null;
 }

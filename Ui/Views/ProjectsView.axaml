@@ -8,7 +8,7 @@
             <TextBlock Classes="PageSubtitle" Text="{l:T 'Kundenprojekte anlegen, Messergebnisse sammeln (Button „Zum Bericht“ in jedem Werkzeug) und als professionellen HTML- oder PDF-Bericht mit Ihrem Logo exportieren.'}" />
         </StackPanel>
 
-        <Grid Grid.Row="1" ColumnDefinitions="240,14,5*,14,6*">
+        <Grid Classes="responsive" Grid.Row="1" ColumnDefinitions="240,14,5*,14,6*">
             <!-- Projektliste -->
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">

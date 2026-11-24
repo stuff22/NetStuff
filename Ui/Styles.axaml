@@ -43,6 +43,22 @@
         <Setter Property="Width" Value="140" />
         <Setter Property="FormatString" Value="0" />
     </Style>
+    <!-- Kompakt (iPhone, schmale Fenster): feste Feldbreiten begrenzen -->
+    <Style Selector="UserControl.compact TextBox">
+        <Setter Property="MaxWidth" Value="320" />
+    </Style>
+    <Style Selector="UserControl.compact ComboBox">
+        <Setter Property="MaxWidth" Value="320" />
+    </Style>
+    <Style Selector="UserControl.compact Button">
+        <Setter Property="MinWidth" Value="64" />
+    </Style>
+    <Style Selector="UserControl.compact CheckBox">
+        <Setter Property="MinWidth" Value="0" />
+    </Style>
+    <Style Selector="UserControl.compact TextBlock.PageTitle">
+        <Setter Property="FontSize" Value="24" />
+    </Style>
     <Style Selector="DataGrid">
         <Setter Property="Background" Value="{DynamicResource CardBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeBrush}" />

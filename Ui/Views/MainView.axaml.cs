@@ -24,8 +24,11 @@ public partial class MainView : UserControl
         SearchBox.TextChanged += (_, _) => BuildNav(SearchBox.Text ?? "");
         Nav.SelectionChanged += (_, _) =>
         {
-            if (!_building && Nav.SelectedItem is ListBoxItem { Tag: ToolInfo t }) Open(t.Key);
+            if (_building || Nav.SelectedItem is not ListBoxItem { Tag: ToolInfo t }) return;
+            Open(t.Key);
+            if (_compact) Split.IsPaneOpen = false;   // iPhone: nach der Auswahl Navigation schließen
         };
+        SizeChanged += (_, e) => ApplyLayout(e.NewSize.Width);
 
         LoadProjects();
         ProjectStore.ActiveChanged += (_, _) => Dispatcher.UIThread.Post(LoadProjects);
@@ -49,7 +52,7 @@ public partial class MainView : UserControl
         _building = true;
         Nav.Items.Clear();
         filter = filter.Trim();
-        foreach (var g in Tools.All.GroupBy(t => t.Group))
+        foreach (var g in Tools.Visible.GroupBy(t => t.Group))
         {
             var items = g.Where(t => filter == "" || L.T(t.Title).Contains(filter, StringComparison.OrdinalIgnoreCase) || t.Key.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
             if (items.Count == 0) continue;
@@ -76,6 +79,7 @@ public partial class MainView : UserControl
             _views[key] = view;
         }
         Host.Content = view;
+        Responsive.Apply(view, _compact);
         if (parameter != null) view.OnNavigatedTo(parameter);
         if (run)
         {
@@ -88,6 +92,36 @@ public partial class MainView : UserControl
         Nav.SelectedItem = Nav.Items.OfType<ListBoxItem>().FirstOrDefault(i => i.Tag is ToolInfo t && t.Key == key);
         _building = false;
     }
+
+    /* ------------------------------------------------------------------ Layout (breit / kompakt) */
+
+    private bool _compact;
+    private bool? _layoutApplied;
+
+    /// <summary>Unter 760 px (iPhone, iPad im geteilten Bildschirm): Navigation einklappbar, kürzere Werkzeugleiste.</summary>
+    private void ApplyLayout(double width)
+    {
+        bool compact = width > 0 && width < 760;
+        if (_layoutApplied == compact) return;
+        _layoutApplied = compact;
+        _compact = compact;
+
+        Split.DisplayMode = compact ? SplitViewDisplayMode.Overlay : SplitViewDisplayMode.Inline;
+        Split.IsPaneOpen = !compact;
+        Split.OpenPaneLength = compact ? Math.Min(280, width * 0.8) : 230;
+        MenuButton.IsVisible = compact;
+        ProjectLabel.IsVisible = !compact;
+        ProjectBox.Width = compact ? Math.Max(100, Math.Min(200, width - 290)) : 230;
+        ReportButton.Content = compact ? L.T("+ Bericht") : L.T("+ Zum Bericht");
+        FavButton.Content = compact ? "★" : L.T("★ Favorit");
+        ReportButton.MinWidth = FavButton.MinWidth = compact ? 0 : 90;
+        Toolbar.Padding = compact ? new Thickness(10, 6, 10, 6) : new Thickness(28, 8, 20, 8);
+        Host.Margin = compact ? new Thickness(12, 12, 12, 12) : new Thickness(28, 18, 28, 18);
+        if (compact) Classes.Add("compact"); else Classes.Remove("compact");
+        Responsive.Apply(CurrentView, compact);
+    }
+
+    private void Menu_Click(object sender, RoutedEventArgs e) => Split.IsPaneOpen = !Split.IsPaneOpen;
 
     /* ------------------------------------------------------------------ Werkzeugleiste */
 

@@ -1132,5 +1132,8 @@
   "Net-Stuff möchte die Antworten der DHCP-Server mitschneiden (tcpdump) – macOS belegt den DHCP-Port 68 selbst.": "Net-Stuff wants to capture the DHCP servers' replies (tcpdump) – macOS occupies DHCP port 68 itself.",
   "Net-Stuff möchte LLDP/CDP-Pakete der Switches mitschneiden (tcpdump).": "Net-Stuff wants to capture the switches' LLDP/CDP packets (tcpdump).",
   "osascript konnte nicht gestartet werden.": "osascript could not be started.",
-  "1 Tag": "1 day"
+  "1 Tag": "1 day",
+  "Der Bericht wird über „Teilen“ angeboten – z. B. „In Dateien sichern“ oder „Drucken“ (dort als PDF teilen).": "The report is offered via “Share” – e.g. “Save to Files” or “Print” (share as PDF from there).",
+  "+ Bericht": "+ Report",
+  "Werkzeuge": "Tools"
 }
