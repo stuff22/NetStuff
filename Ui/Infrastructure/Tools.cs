@@ -18,8 +18,8 @@ public static class Tools
         new("trace", "Traceroute & Karte", "Erreichbarkeit", () => new TracerouteView()),
         new("mtu", "Path-MTU", "Erreichbarkeit", () => new PathMtuView()),
         new("portscan", "Port-Scanner", "Erreichbarkeit", () => new PortScanView()),
-        new("speed", "Speedtest & iPerf3", "Erreichbarkeit", null),
-        new("monitor", "Überwachung", "Erreichbarkeit", null),
+        new("speed", "Speedtest & iPerf3", "Erreichbarkeit", () => new SpeedView()),
+        new("monitor", "Überwachung", "Erreichbarkeit", () => new MonitorView()),
 
         new("netscan", "Netzwerkscanner", "Lokales Netz", () => new NetScanView()),
         new("wlan", "WLAN-Scanner", "Lokales Netz", () => new WlanView()),

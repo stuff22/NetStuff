@@ -1,0 +1,117 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:c="using:NetStuff.Ui.Controls"
+            x:Class="NetStuff.Ui.Views.SpeedView">
+    <l:ToolView.Styles>
+        <Style Selector="TextBlock.Big">
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </l:ToolView.Styles>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Classes="PageTitle" Text="{l:T 'Speedtest &amp; iPerf3'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Misst Download, Upload, Ping und Jitter ins Internet (Cloudflare-Netz) oder den Durchsatz zu einem iPerf3-Server im LAN/WAN – ohne Zusatzsoftware.'}" />
+        </StackPanel>
+        <ScrollViewer>
+            <StackPanel>
+                <!-- Internet -->
+                <Border Classes="Card">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="{l:T 'Internet-Speedtest'}" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock x:Name="NetInfo" Classes="Status" TextWrapping="Wrap" Text="{l:T 'Server: speed.cloudflare.com (nächstgelegenes Rechenzentrum)'}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Internet-Test starten'}" Click="Start_Click" />
+                                <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <UniformGrid Columns="4" Margin="0,16,0,8">
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Download" />
+                                <TextBlock x:Name="DownText" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="Mbit/s" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Upload" />
+                                <TextBlock x:Name="UpText" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="Mbit/s" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Ping" />
+                                <TextBlock x:Name="PingText" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="ms" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Jitter" />
+                                <TextBlock x:Name="JitterText" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="ms" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <c:LineChart x:Name="NetChart" Height="200" Unit="Mbit/s" ShowLoss="False" MaxPoints="80" />
+                        <TextBlock x:Name="NetStatus" Classes="Status" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- iPerf3 -->
+                <Border Classes="Card">
+                    <StackPanel>
+                        <TextBlock Text="{l:T 'iPerf3-Durchsatz'}" FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock Classes="Status" Margin="0,0,0,10" TextWrapping="Wrap"
+                                   Text="{l:T 'Für Messungen im eigenen Netz: auf einem Server/PC „iperf3 -s“ starten und hier dessen IP eintragen. Öffentliche Server sind oft belegt – dann wird automatisch der nächste Port probiert.'}" />
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="Server" />
+                                <AutoCompleteBox x:Name="ServerBox" Width="260" FilterMode="Contains" MinimumPrefixLength="0" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Port(s)'}" />
+                                <TextBox x:Name="IperfPort" Text="5200-5209" Width="130" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Richtung'}" />
+                                <ComboBox x:Name="IperfDir" Width="220" SelectedIndex="2">
+                                    <ComboBoxItem Content="{l:T 'Upload (Client → Server)'}" />
+                                    <ComboBoxItem Content="{l:T 'Download (Server → Client)'}" />
+                                    <ComboBoxItem Content="{l:T 'Beide nacheinander'}" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Dauer (s)'}" />
+                                <NumericUpDown x:Name="IperfTime" Value="10" Minimum="3" Maximum="120" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="Streams" />
+                                <NumericUpDown x:Name="IperfStreams" Value="4" Minimum="1" Maximum="16" />
+                            </StackPanel>
+                            <Button x:Name="IperfButton" Classes="accent" Content="{l:T 'iPerf3 starten'}" Click="Iperf_Click" VerticalAlignment="Bottom" Margin="0,0,0,8" />
+                        </WrapPanel>
+                        <UniformGrid Columns="3" Margin="0,8,0,8">
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Upload" />
+                                <TextBlock x:Name="IperfUp" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="Mbit/s" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="Download" />
+                                <TextBlock x:Name="IperfDown" Classes="Big" Text="–" />
+                                <TextBlock Classes="Status" Text="Mbit/s" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Classes="Label" Text="{l:T 'TCP-Retransmits'}" />
+                                <TextBlock x:Name="IperfRetr" Classes="Big" Text="–" />
+                            </StackPanel>
+                        </UniformGrid>
+                        <c:LineChart x:Name="IperfChart" Height="180" Unit="Mbit/s" ShowLoss="False" MaxPoints="60" />
+                        <TextBlock x:Name="IperfStatus" Classes="Status" Margin="0,6,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel x:Name="ResultPanel" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</l:ToolView>

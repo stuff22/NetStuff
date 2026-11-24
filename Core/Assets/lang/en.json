@@ -899,5 +899,8 @@
   "App": "App",
   "Datum": "Date",
   "Erstellt von": "Created by",
-  "Zum Löschen des gesamten Verlaufs nochmals „Verlauf leeren“ klicken.": "Click “Clear history” again to delete the entire history."
+  "Zum Löschen des gesamten Verlaufs nochmals „Verlauf leeren“ klicken.": "Click “Clear history” again to delete the entire history.",
+  "Download": "Download",
+  "Upload": "Upload",
+  "Prüft Hosts und Dienste dauerhaft im Hintergrund (Ping, TCP-Port, HTTP, DNS, TLS-Zertifikat) und meldet Ausfälle als Mitteilung – auch wenn ein anderes Werkzeug geöffnet ist.": "Continuously checks hosts and services in the background (ping, TCP port, HTTP, DNS, TLS certificate) and reports outages as notifications – even while another tool is open."
 }
