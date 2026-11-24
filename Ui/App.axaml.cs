@@ -12,6 +12,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Infrastructure.ErrorGuard.Install();
         RequestedThemeVariant = AppSettings.Current.Theme switch
         {
             "light" => ThemeVariant.Light,

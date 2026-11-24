@@ -328,10 +328,10 @@ public static class NetUtil
         if (ct.IsCancellationRequested) return null;
         try
         {
+            // Plattformgerechter Sender (Windows: System.Net-Ping, macOS/iOS: ICMP-Datagramm-Socket).
             // Bewusst ohne CancellationToken: Abbruch laufender ICMP-Requests kann freigegebenen Speicher beschreiben.
-            using var p = new Ping();
-            var r = await p.SendPingAsync(ip, TimeSpan.FromMilliseconds(timeoutMs));
-            return r.Status == IPStatus.Success ? r.RoundtripTime : null;
+            var r = await Icmp.Sender.SendAsync(ip, timeoutMs, new byte[32], 128, false);
+            return r.Status == IPStatus.Success ? (long)Math.Round(r.RttMs) : null;
         }
         catch { return null; }
     }

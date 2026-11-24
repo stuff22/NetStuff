@@ -29,6 +29,8 @@ public partial class MainView : UserControl
             if (_compact) Split.IsPaneOpen = false;   // iPhone: nach der Auswahl Navigation schließen
         };
         SizeChanged += (_, e) => ApplyLayout(e.NewSize.Width);
+        ErrorGuard.Reported += ex => Dispatcher.UIThread.Post(() =>
+            ShowInfo(L.T("Fehler: ") + Services.NetUtil.ErrorText(ex)));
 
         LoadProjects();
         ProjectStore.ActiveChanged += (_, _) => Dispatcher.UIThread.Post(LoadProjects);
