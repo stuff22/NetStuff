@@ -36,7 +36,16 @@ public sealed class SystemIcmpSender : IIcmpSender
 
 public static class Icmp
 {
-    public static IIcmpSender Sender => Platform.Icmp ?? (Platform.Icmp = new SystemIcmpSender());
+    public static IIcmpSender Sender => Platform.Icmp ??= CreateDefault();
+
+    /// <summary>
+    /// macOS/iOS: eigener Datagramm-Sender (System.Net-Ping meldet dort bei TTL-Ablauf die Zieladresse statt des Routers
+    /// und keine Antwort-TTL). Sonst: System.Net.NetworkInformation.Ping.
+    /// </summary>
+    private static IIcmpSender CreateDefault() =>
+        (OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst()) && DatagramIcmpSender.IsSupported()
+            ? new DatagramIcmpSender()
+            : new SystemIcmpSender();
 
     public static string StatusText(IPStatus s) => s switch
     {
@@ -144,7 +153,7 @@ public static class PingRunner
             {
                 var r = await Icmp.Sender.SendAsync(ip, s.TimeoutMs, buffer, 128, s.DontFragment);
                 if (ct.IsCancellationRequested) break;
-                if (r.Status == IPStatus.Success) t.Add(r.RttMs, $"OK (TTL {r.Ttl})");
+                if (r.Status == IPStatus.Success) t.Add(r.RttMs, r.Ttl > 0 ? $"OK (TTL {r.Ttl})" : "OK");
                 else t.Add(null, L.T(Icmp.StatusText(r.Status)));
             }
             catch (Exception ex)

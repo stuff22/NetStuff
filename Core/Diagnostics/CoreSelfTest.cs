@@ -116,6 +116,30 @@ public static class CoreSelfTest
             if (t.Received == 0) throw new Exception($"keine Antwort ({t.Status})");
             return $"{t.Received}/{t.Sent} Antworten, Ø {t.AvgText}, Jitter {t.JitterText}";
         });
+        await T("ICMP-Parser (macOS-Sender)", () =>
+        {
+            // Echo-Request wie gesendet (Seq 0x1234) – Prüfsumme muss sich selbst zu 0 ergänzen
+            var req = new byte[] { 8, 0, 0, 0, 0xAB, 0xCD, 0x12, 0x34, 1, 2, 3, 4 };
+            var cs = DatagramIcmpSender.Checksum(req);
+            req[2] = (byte)(cs >> 8); req[3] = (byte)cs;
+            if (DatagramIcmpSender.Checksum(req) != 0) throw new Exception("Prüfsumme falsch");
+
+            static byte[] Ip(byte ttl, byte[] body) { var h = new byte[20 + body.Length]; h[0] = 0x45; h[8] = ttl; h[9] = 1; body.CopyTo(h, 20); return h; }
+            var reply = Ip(57, new byte[] { 0, 0, 0, 0, 0xAB, 0xCD, 0x12, 0x34, 1, 2, 3, 4 });
+            var r1 = DatagramIcmpSender.Parse4(reply, 0x1234);
+            if (r1 is not { Status: System.Net.NetworkInformation.IPStatus.Success, Ttl: 57 }) throw new Exception("Echo-Antwort: " + r1);
+            if (DatagramIcmpSender.Parse4(reply, 0x1235) != null) throw new Exception("fremde Sequenz akzeptiert");
+            // Time Exceeded vom Router: äußerer IP-Kopf + ICMP 11 + innerer IP-Kopf + erste 8 Bytes des Echo-Requests
+            var inner = Ip(1, req[..8]);
+            var te = Ip(254, new byte[] { 11, 0, 0, 0, 0, 0, 0, 0 }.Concat(inner).ToArray());
+            var r2 = DatagramIcmpSender.Parse4(te, 0x1234);
+            if (r2 is not { Status: System.Net.NetworkInformation.IPStatus.TtlExpired }) throw new Exception("Time Exceeded: " + r2);
+            // Linux-Variante ohne IP-Kopf
+            var r3 = DatagramIcmpSender.Parse4(reply[20..], 0x1234);
+            if (r3 is not { Status: System.Net.NetworkInformation.IPStatus.Success }) throw new Exception("ohne IP-Kopf: " + r3);
+            return Task.FromResult("Echo, TTL, Time Exceeded und Sequenzprüfung korrekt");
+        });
+
         await T("Path-MTU 1.1.1.1", async () =>
         {
             var r = await PathMtu.DiscoverAsync(System.Net.IPAddress.Parse("1.1.1.1"), 1500, null);
@@ -128,8 +152,13 @@ public static class CoreSelfTest
             using var cts = new CancellationTokenSource(60000);
             await Traceroute.RunAsync(System.Net.IPAddress.Parse("1.1.1.1"), 20, 1000, hops, null, cts.Token);
             if (hops.Count == 0) throw new Exception("keine Hops");
+            if (hops.Count >= 3 && hops.Take(hops.Count - 1).Where(h => h.Address != null).All(h => h.Address.ToString() == "1.1.1.1"))
+                throw new Exception("alle Hops melden die Zieladresse – Router-Adressen fehlen (" + Icmp.Sender.GetType().Name + ")");
             var pts = Traceroute.MapPoints(null, hops);
-            return $"{hops.Count} Hops, Ziel {(hops[^1].Reached ? "erreicht" : "nicht erreicht")}, erster Hop {hops[0].Ip} {hops[0].Host}";
+            var echo = await Icmp.Sender.SendAsync(System.Net.IPAddress.Parse("1.1.1.1"), 2000, new byte[32], 128, false);
+            if (echo.Status == System.Net.NetworkInformation.IPStatus.Success && echo.Ttl >= 128)
+                throw new Exception($"Antwort-TTL {echo.Ttl} unplausibel (gesendeter statt empfangener Wert?)");
+            return $"{hops.Count} Hops, Ziel {(hops[^1].Reached ? "erreicht" : "nicht erreicht")}, erster Hop {hops[0].Ip} {hops[0].Host}, Antwort-TTL {echo.Ttl} [{Icmp.Sender.GetType().Name}]";
         });
 
         // DNS & Web (echte Abfragen)
