@@ -1,0 +1,45 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.HttpHeaderView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="HTTP-Header-Checker" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Zeigt Weiterleitungskette, alle Response-Header und bewertet Sicherheits-Header (HSTS, CSP, X-Frame-Options …) sowie Cookies.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="URL" />
+                    <TextBox x:Name="UrlBox" Text="https://example.com" Width="380" KeyDown="UrlBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="{l:T 'Methode'}" />
+                    <ComboBox x:Name="MethodBox" Width="100" SelectedIndex="0">
+                        <ComboBoxItem Content="GET" />
+                        <ComboBoxItem Content="HEAD" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="User-Agent" />
+                    <ComboBox x:Name="UaBox" Width="170" SelectedIndex="0">
+                        <ComboBoxItem Content="Browser (Chrome)" />
+                        <ComboBoxItem Content="Smartphone" />
+                        <ComboBoxItem Content="Googlebot" />
+                        <ComboBoxItem Content="curl" />
+                    </ComboBox>
+                </StackPanel>
+                <CheckBox x:Name="FollowBox" Content="{l:T 'Weiterleitungen folgen'}" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,16,10" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8" Margin="0,0,0,8">
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Prüfen'}" Click="Check_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

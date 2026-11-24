@@ -1,0 +1,34 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.MailView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="Mail-Check" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Prüft die E-Mail-Konfiguration einer Domain: MX, SPF, DMARC, DKIM, MTA-STS, TLS-RPT, BIMI sowie die SMTP-Erreichbarkeit mit STARTTLS.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="Domain" />
+                    <TextBox x:Name="DomainBox" Width="260" PlaceholderText="example.com" KeyDown="DomainBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,8">
+                    <TextBlock Classes="Label" Text="{l:T 'DKIM-Selektoren (kommagetrennt)'}" />
+                    <TextBox x:Name="SelectorBox" Width="380"
+                             Text="default, selector1, selector2, google, k1, k2, s1, s2, mail, dkim, smtp, mx, key1, mandrill, everlytic, sig1, 2024, 2025" />
+                </StackPanel>
+                <CheckBox x:Name="SmtpBox" Content="{l:T 'SMTP-Server testen (Port 25)'}" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,16,10" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8" Margin="0,0,0,8">
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Prüfen'}" Click="Check_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

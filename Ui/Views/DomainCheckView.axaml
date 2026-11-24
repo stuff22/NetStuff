@@ -1,0 +1,29 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.DomainCheckView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="Domain-Check" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Alle wichtigen DNS-Prüfungen auf einmal: Delegation, Nameserver-Erreichbarkeit und Konsistenz, SOA-Werte, DNSSEC-Kette, Web/IPv6, Mail-Grundlagen, CAA, Blacklists und weltweite DNS-Propagation.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="Domain" />
+                    <TextBox x:Name="DomainBox" Width="320" PlaceholderText="example.com" KeyDown="DomainBox_KeyDown" />
+                </StackPanel>
+                <CheckBox x:Name="BlacklistBox" Content="{l:T 'Blacklists prüfen'}" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,16,2" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Prüfen'}" Click="Check_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

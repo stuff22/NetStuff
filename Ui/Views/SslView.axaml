@@ -1,0 +1,36 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.SslView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="SSL/TLS-Checker" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Analysiert Zertifikat, Zertifikatskette, Laufzeit, Protokollversionen und Verschlüsselung eines TLS-Dienstes (HTTPS, aber auch IMAPS, SMTPS, LDAPS …).'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <WrapPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="Host" />
+                    <TextBox x:Name="HostBox" Text="example.com" Width="300" KeyDown="HostBox_KeyDown" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="Port" />
+                    <NumericUpDown x:Name="PortBox" Value="443" Minimum="1" Maximum="65535" />
+                </StackPanel>
+                <StackPanel Margin="0,0,12,0">
+                    <TextBlock Classes="Label" Text="{l:T 'SNI (optional)'}" />
+                    <TextBox x:Name="SniBox" Width="200" PlaceholderText="{l:T 'wie Host'}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Prüfen'}" Click="Check_Click" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

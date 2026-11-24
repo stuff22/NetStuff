@@ -31,14 +31,14 @@ public static class Tools
         new("subnet", "Subnetzrechner", "Lokales Netz", () => new SubnetView()),
 
         new("dns", "DNS-Checker", "DNS & Domains", () => new DnsView()),
-        new("domaincheck", "Domain-Check", "DNS & Domains", null),
+        new("domaincheck", "Domain-Check", "DNS & Domains", () => new DomainCheckView()),
         new("resolver", "Resolver-Vergleich", "DNS & Domains", () => new ResolverView()),
         new("whois", "Whois / RDAP", "DNS & Domains", () => new WhoisView()),
-        new("mail", "Mail-Check", "DNS & Domains", null),
+        new("mail", "Mail-Check", "DNS & Domains", () => new MailView()),
 
-        new("ssl", "SSL/TLS-Checker", "Web", null),
-        new("http", "HTTP-Header", "Web", null),
-        new("cms", "CMS-Checker", "Web", null),
+        new("ssl", "SSL/TLS-Checker", "Web", () => new SslView()),
+        new("http", "HTTP-Header", "Web", () => new HttpHeaderView()),
+        new("cms", "CMS-Checker", "Web", () => new CmsView()),
         new("sitecopy", "Website-Kopierer", "Web", null),
     };
 
