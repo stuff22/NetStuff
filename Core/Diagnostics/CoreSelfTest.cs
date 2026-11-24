@@ -177,8 +177,8 @@ public static class CoreSelfTest
         {
             var v4 = SubnetCalculator.Calculate("192.168.10.77/22");
             string V(SubnetInfo s, string name) => s.Sections[0].Items.First(i => i.Name == L.T(name)).Value;
-            if (V(v4, "Netzadresse") != "192.168.8.0/22" || V(v4, "Broadcast") != "192.168.11.255" || V(v4, "Nutzbare Hosts").Replace(".", "").Replace(",", "") != "1022")
-                throw new Exception($"IPv4 falsch: {V(v4, "Netzadresse")} / {V(v4, "Broadcast")}");
+            if (V(v4, "Netzadresse") != "192.168.8.0/22" || V(v4, "Broadcast") != "192.168.11.255" || new string(V(v4, "Nutzbare Hosts").Where(char.IsDigit).ToArray()) != "1022")
+                throw new Exception($"IPv4 falsch: {V(v4, "Netzadresse")} / {V(v4, "Broadcast")} / {V(v4, "Nutzbare Hosts")} Hosts");
             var mask = SubnetCalculator.Calculate("10.1.2.3 255.255.255.0");
             if (mask.Prefix != 24) throw new Exception("Maske → Präfix falsch");
             var (rows, _) = SubnetCalculator.Split(v4, 24);
