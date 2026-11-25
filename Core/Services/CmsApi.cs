@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -67,7 +66,6 @@ public static class CmsApi
             "Contao" => await ContaoAsync(c, ct),
             _ => new List<CheckSection>(),
         };
-        sections.Add(await SitemapSectionAsync(c, ct));
         return sections;
     }
 
@@ -496,40 +494,6 @@ public static class CmsApi
         return new List<CheckSection> { new("Contao", items) };
     }
 
-    // ===================================================================== Sitemap (alle Systeme)
-
-    private static async Task<CheckSection> SitemapSectionAsync(Client c, CancellationToken ct)
-    {
-        var robots = await c.GetAsync("/robots.txt", ct);
-        var maps = robots.Status == 200
-            ? Regex.Matches(robots.Body, @"^\s*Sitemap:\s*(\S+)", RegexOptions.Multiline | RegexOptions.IgnoreCase).Select(m => m.Groups[1].Value).Distinct().Take(5).ToList()
-            : new List<string>();
-        var source = maps.Count > 0 ? "robots.txt" : "/sitemap.xml";
-        if (maps.Count == 0) maps.Add(c.Origin + "/sitemap.xml");
-
-        int urls = 0, files = 0;
-        var queue = new Queue<string>(maps);
-        var seen = new HashSet<string>();
-        while (queue.Count > 0 && files < 25)
-        {
-            var u = queue.Dequeue();
-            if (!seen.Add(u)) continue;
-            var text = await c.GetTextMaybeGzipAsync(u, ct);
-            if (text == null) continue;
-            files++;
-            var locs = Regex.Matches(text, @"<loc>\s*([^<\s]+)\s*</loc>", RegexOptions.IgnoreCase).Select(m => WebUtility.HtmlDecode(m.Groups[1].Value)).ToList();
-            if (text.Contains("<sitemapindex", StringComparison.OrdinalIgnoreCase)) foreach (var l in locs) queue.Enqueue(l);
-            else urls += locs.Count;
-        }
-        var items = new List<CheckItem>
-        {
-            files == 0
-                ? new CheckItem("Sitemap", L.F("Keine Sitemap gefunden ({0}).", source), Level.Info)
-                : new CheckItem("Sitemap", L.F("{0} URLs in {1} Datei(en) (gefunden über {2}){3}", urls.ToString("N0"), files, source, queue.Count > 0 ? " – " + L.T("nur die ersten 25 Dateien gezählt") : "")),
-        };
-        return new CheckSection("Sitemap", items, "Die Anzahl der URLs zeigt grob, wie viele Seiten, Produkte und Kategorien öffentlich sind.");
-    }
-
     // ===================================================================== Hilfen
 
     private static CheckItem AdminItem(string path, Resp r, string pattern) =>
@@ -615,27 +579,6 @@ public static class CmsApi
             {
                 return new Resp(0, NetUtil.ErrorText(ex), new Dictionary<string, string>());
             }
-        }
-
-        /// <summary>Text einer Sitemap (auch .xml.gz); null bei Fehler.</summary>
-        public async Task<string> GetTextMaybeGzipAsync(string url, CancellationToken ct)
-        {
-            try
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(15000);
-                var bytes = await _http.GetByteArrayAsync(url, cts.Token);
-                if (bytes.Length > 2 && bytes[0] == 0x1f && bytes[1] == 0x8b)
-                {
-                    using var gz = new GZipStream(new MemoryStream(bytes), CompressionMode.Decompress);
-                    using var ms = new MemoryStream();
-                    await gz.CopyToAsync(ms, cts.Token);
-                    bytes = ms.ToArray();
-                }
-                var text = Encoding.UTF8.GetString(bytes);
-                return text.Contains("<urlset", StringComparison.OrdinalIgnoreCase) || text.Contains("<sitemapindex", StringComparison.OrdinalIgnoreCase) ? text : null;
-            }
-            catch { return null; }
         }
 
         public void Dispose() => _http.Dispose();

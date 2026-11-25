@@ -94,6 +94,20 @@ public static class CoreSelfTest
             return Task.FromResult($"Server {o.Server} bietet {o.OfferedIp} an · {o.Ms:0} ms · Lease {o.Lease}");
         });
 
+        // Sitemap-Parser (urlset mit CDATA, Entities, lastmod; Index)
+        await T("Sitemap-Parser", () =>
+        {
+            const string set = "<?xml version=\"1.0\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
+                + "<url><loc>https://example.com/b?x=1&amp;y=2</loc><lastmod>2026-11-20T10:00:00+01:00</lastmod></url>"
+                + "<url>\n <loc><![CDATA[ https://example.com/%C3%BCber-uns ]]></loc>\n</url></urlset>";
+            const string index = "<sitemapindex><sitemap><loc>https://example.com/s1.xml</loc></sitemap><sitemap><loc>https://example.com/s2.xml</loc></sitemap></sitemapindex>";
+            var a = SitemapReader.Locs(set);
+            var b = SitemapReader.Locs(index);
+            if (a.Count != 2 || a[0].Loc != "https://example.com/b?x=1&y=2" || a[0].LastMod != "2026-11-20" || a[1].Loc != "https://example.com/%C3%BCber-uns" || b.Count != 2)
+                throw new Exception($"falsch: {string.Join(" | ", a)} · Index {b.Count}");
+            return Task.FromResult($"{a.Count} Links (lastmod {a[0].LastMod}) · Index mit {b.Count} Sitemaps");
+        });
+
         // CDP-Parser
         await T("CDP-Parser", () =>
         {

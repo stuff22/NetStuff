@@ -47,6 +47,33 @@
                     </DockPanel>
                 </Border>
                 <StackPanel x:Name="WpPanel" />
+                <Border x:Name="SitemapCard" Style="{StaticResource Card}" Visibility="Collapsed">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:TextBox x:Name="SitemapFilter" Width="220" PlaceholderText="Filtern …" TextChanged="SitemapFilter_TextChanged" />
+                                <ui:Button Content="Links kopieren" Click="SitemapCopy_Click" Margin="8,0,0,0" Height="34" />
+                            </StackPanel>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock x:Name="SitemapTitle" FontWeight="SemiBold" FontSize="16" />
+                                <TextBlock Text="Alphabetisch sortiert – Klick öffnet den Link im Browser." Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DockPanel>
+                        <ListBox x:Name="SitemapList" MaxHeight="520" PreviewMouseLeftButtonUp="SitemapList_MouseUp"
+                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Cursor="Hand" ToolTip="{Binding Url}">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding LastMod}" Style="{StaticResource Muted}" Margin="12,0,0,0" />
+                                        <TextBlock Text="{Binding Display}" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock x:Name="SitemapCount" Style="{StaticResource Muted}" />
+                    </StackPanel>
+                </Border>
                 <StackPanel x:Name="ResultsPanel" />
             </StackPanel>
         </ScrollViewer>
