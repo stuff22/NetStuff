@@ -7,7 +7,7 @@
 # Voraussetzungen (einmalig, siehe Apple-Developer-Konto):
 #   - Zertifikat „Apple Distribution“ (oder „3rd Party Mac Developer Application“) im Schlüsselbund
 #   - Zertifikat „Mac Installer Distribution“ (oder „3rd Party Mac Developer Installer“) im Schlüsselbund
-#   - Provisioning Profile vom Typ „Mac App Store“ für at.it-stuff.netstuff, abgelegt als
+#   - Provisioning Profile vom Typ „Mac App Store“ für at.itstuff.netstuff, abgelegt als
 #     Desktop/macos/NetStuff_AppStore.provisionprofile (oder Pfad in PROFILE angeben)
 #
 # Optionale Umgebungsvariablen:
@@ -27,6 +27,10 @@ PLIST_SRC=Desktop/macos/Info.plist
 OUT=Desktop/bin/appstore
 
 fail() { echo "FEHLER: $*" >&2; exit 1; }
+
+# dotnet auch finden, wenn es nicht im PATH steht (Standard-Installationsort des .NET-Installers)
+command -v dotnet >/dev/null || PATH="/usr/local/share/dotnet:$PATH"
+command -v dotnet >/dev/null || fail "dotnet nicht gefunden – .NET SDK installieren (dot.net)."
 
 # --- Zertifikate und Profil prüfen -----------------------------------------------------------
 find_identity() { # $1 = Suchmuster, $2 = Policy-Argumente
@@ -93,9 +97,11 @@ fi
 # --- Signieren: erst alle eingebetteten Bibliotheken, dann die App ---------------------------
 xattr -cr "$APP"
 MAIN_EXE="$APP/Contents/MacOS/$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLIST_SRC")"
+# Alles in Contents/MacOS zählt für macOS als Programmcode – auch die .NET-DLLs – und muss einzeln signiert sein.
+# Außerhalb davon nur Mach-O-Dateien signieren; der Rest wird als Ressource versiegelt.
 find "$APP/Contents" -type f ! -path "$MAIN_EXE" -print0 | while IFS= read -r -d '' f; do
-    if file -b "$f" | grep -q "Mach-O"; then
-        codesign --force --sign "$APP_SIGN_ID" "$f"
+    if [[ "$f" == "$APP/Contents/MacOS/"* ]] || file -b "$f" | grep -q "Mach-O"; then
+        codesign --force --sign "$APP_SIGN_ID" "$f" 2>&1 | grep -v "replacing existing signature" || true
     fi
 done
 codesign --force --sign "$APP_SIGN_ID" --entitlements "$ENTITLEMENTS" "$APP"

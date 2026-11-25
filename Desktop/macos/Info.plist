@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>Net-Stuff</string>
     <key>CFBundleIdentifier</key>
-    <string>at.it-stuff.netstuff</string>
+    <string>at.itstuff.netstuff</string>
     <key>CFBundleExecutable</key>
     <string>NetStuff</string>
     <key>CFBundlePackageType</key>
