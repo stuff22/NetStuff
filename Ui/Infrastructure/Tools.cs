@@ -35,6 +35,7 @@ public static class Tools
         new("resolver", "Resolver-Vergleich", "DNS & Domains", () => new ResolverView()),
         new("whois", "Whois / RDAP", "DNS & Domains", () => new WhoisView()),
         new("mail", "Mail-Check", "DNS & Domains", () => new MailView()),
+        new("mailheader", "E-Mail-Header", "DNS & Domains", () => new MailHeaderView()),
 
         new("ssl", "SSL/TLS-Checker", "Web", () => new SslView()),
         new("http", "HTTP-Header", "Web", () => new HttpHeaderView()),

@@ -114,6 +114,7 @@ public partial class MainWindow : FluentWindow
             new("resolver", "Resolver-Vergleich", "", "DNS & Domains", () => new ResolverPage(), "doh 1.1.1.1 8.8.8.8 propagation"),
             new("whois", "Whois / RDAP", "", "DNS & Domains", () => new WhoisPage(), "registrar domain inhaber"),
             new("mail", "Mail-Check", "", "DNS & Domains", () => new MailPage(), "spf dmarc dkim smtp starttls mx"),
+            new("mailheader", "E-Mail-Header", "", "DNS & Domains", () => new MailHeaderPage(), "header kopfzeilen received phishing spam absender echt eml"),
 
             new("ssl", "SSL/TLS-Checker", "", "Web", () => new SslPage(), "zertifikat https tls"),
             new("http", "HTTP-Header", "", "Web", () => new HttpHeaderPage(), "security header hsts csp redirect"),

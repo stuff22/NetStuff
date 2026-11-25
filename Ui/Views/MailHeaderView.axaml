@@ -1,0 +1,36 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.MailHeaderView">
+    <Grid RowDefinitions="Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'E-Mail-Header-Analyse'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Übersetzt den Kopfbereich einer E-Mail in verständliche Sprache: Wer hat wirklich gesendet, welchen Weg hat die Nachricht genommen, ist der Absender echt (SPF, DKIM, DMARC) und wie haben die Spamfilter entschieden?'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="Label" Text="{l:T 'E-Mail-Header (Quelltext der Nachricht)'}" />
+                <TextBox x:Name="HeaderBox" AcceptsReturn="True" TextWrapping="NoWrap" Height="170"
+                         FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12"
+                         Watermark="{l:T 'Header hier einfügen – z. B. Received: from … / From: … / Subject: …'}" />
+                <WrapPanel>
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Auswerten'}" Click="Check_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Einfügen'}" Click="Paste_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Datei öffnen (.eml)'}" Click="Open_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Beispiel'}" Click="Sample_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Leeren'}" Click="Clear_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" Margin="0,0,16,6" />
+                    <CheckBox x:Name="GeoBox" Content="{l:T 'Standorte der Mailserver ermitteln (ip-api.com)'}" IsChecked="True" Margin="0,0,0,6" />
+                </WrapPanel>
+                <Expander Header="{l:T 'Wo finde ich den E-Mail-Header?'}" HorizontalAlignment="Stretch">
+                    <SelectableTextBlock TextWrapping="Wrap" Foreground="{DynamicResource SubtleTextBrush}" x:Name="HelpText" />
+                </Expander>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

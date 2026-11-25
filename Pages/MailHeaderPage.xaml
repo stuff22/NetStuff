@@ -1,0 +1,36 @@
+<infra:ToolPage x:Class="NetStuff.Pages.MailHeaderPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="E-Mail-Header-Analyse" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Übersetzt den Kopfbereich einer E-Mail in verständliche Sprache: Wer hat wirklich gesendet, welchen Weg hat die Nachricht genommen, ist der Absender echt (SPF, DKIM, DMARC) und wie haben die Spamfilter entschieden?" Style="{StaticResource PageSubtitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="E-Mail-Header (Quelltext der Nachricht)" Style="{StaticResource Label}" />
+                    <ui:TextBox x:Name="HeaderBox" AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap" Height="170"
+                                VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                FontFamily="Cascadia Mono, Consolas" FontSize="12"
+                                PlaceholderText="Header hier einfügen – z. B. Received: from … / From: … / Subject: …" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <ui:Button x:Name="CheckButton" Content="Auswerten" Style="{StaticResource PrimaryButton}" Click="Check_Click" Margin="0,0,8,6" />
+                        <ui:Button Content="Einfügen" Click="Paste_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button Content="Datei öffnen (.eml)" Click="Open_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button Content="Beispiel" Click="Sample_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button Content="Leeren" Click="Clear_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button Content="Kopieren" Click="Copy_Click" Margin="0,0,16,6" Height="34" />
+                        <CheckBox x:Name="GeoBox" Content="Standorte der Mailserver ermitteln (ip-api.com)" IsChecked="True" VerticalAlignment="Center" Margin="0,0,0,6" />
+                    </WrapPanel>
+                    <Expander Header="Wo finde ich den E-Mail-Header?" Margin="0,4,0,0">
+                        <TextBox x:Name="HelpText" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    </Expander>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>

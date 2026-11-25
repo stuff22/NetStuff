@@ -108,6 +108,26 @@ public static class CoreSelfTest
             return Task.FromResult($"{a.Count} Links (lastmod {a[0].LastMod}) · Index mit {b.Count} Sitemaps");
         });
 
+        // E-Mail-Header (Beispiel, offline)
+        await T("E-Mail-Header", async () =>
+        {
+            var h = MailHeaderAnalyzer.Parse(MailHeaderAnalyzer.Sample + "\nHallo, das ist der Text: kein Header\n");
+            var hops = MailHeaderAnalyzer.Hops(h);
+            if (hops.Count != 3) throw new Exception($"{hops.Count} Stationen");
+            if (hops[0].Ip != "203.0.113.7" || hops[0].With != "ESMTPSA" || hops[1].Ip != "198.51.100.25" || hops[1].Tls != "TLS 1.3" || hops[1].Encrypted != true)
+                throw new Exception($"Stationen falsch: {hops[0].Ip} {hops[0].With} · {hops[1].Ip} {hops[1].Tls}");
+            if (hops[1].Delay != TimeSpan.FromSeconds(3)) throw new Exception($"Verzögerung {hops[1].Delay}");
+            var subject = MailHeaderAnalyzer.Decode(h.First(x => x.Name == "Subject").Value);
+            if (subject != "Angebot für das neue Netzwerk") throw new Exception("Betreff: " + subject);
+            if (MailHeaderAnalyzer.Decode("=?iso-8859-1?B?R3L832U=?=") != "Grüße") throw new Exception("Latin-1-Dekodierung");
+            var sink = new CheckCollector();
+            await MailHeaderAnalyzer.AnalyzeAsync(MailHeaderAnalyzer.Sample, sink, lookupLocations: false);
+            var verdict = sink.Sections[0].Items[0];
+            if (verdict.Level != Level.Ok) throw new Exception("Urteil: " + verdict.Value);
+            if (!sink.AllItems.Any(i => i.Name == "Antwortadresse weicht ab")) throw new Exception("Reply-To-Warnung fehlt");
+            return $"{sink.Sections.Count} Abschnitte · {hops.Count} Stationen · {verdict.Value[..Math.Min(40, verdict.Value.Length)]} …";
+        });
+
         // CDP-Parser
         await T("CDP-Parser", () =>
         {
