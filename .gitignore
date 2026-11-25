@@ -23,3 +23,6 @@ Desktop.ini
 
 # Lokale Claude-Einstellungen
 .claude/settings.local.json
+
+# Mac-App-Store-Profil (persönlich, nicht ins Repository)
+*.provisionprofile

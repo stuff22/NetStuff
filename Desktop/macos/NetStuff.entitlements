@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Berechtigungen für den Mac-App-Store-Build (build-appstore.sh).
+     application-identifier und team-identifier ergänzt das Skript aus dem Provisioning Profile. -->
+<plist version="1.0">
+<dict>
+    <!-- Im Mac App Store Pflicht -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Ausgehende Verbindungen: Ping, Portscan, DNS, HTTP, SNMP, Speedtest … -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <!-- Eingehende Verbindungen / eigene Ports: UPnP-Antworten, iPerf3, DHCP-Test -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    <!-- WLAN-Namen (SSID/BSSID) gibt macOS nur mit Standortfreigabe heraus -->
+    <key>com.apple.security.personal-information.location</key>
+    <true/>
+    <!-- Berichte/CSV speichern über den Speichern-Dialog -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!-- .NET erzeugt Maschinencode zur Laufzeit (JIT) -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+</dict>
+</plist>
