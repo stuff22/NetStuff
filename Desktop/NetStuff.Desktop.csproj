@@ -9,7 +9,7 @@
     <Nullable>disable</Nullable>
     <RootNamespace>NetStuff.Desktop</RootNamespace>
     <AssemblyName>NetStuff</AssemblyName>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
     <ApplicationIcon Condition="Exists('..\Assets\netstuff.ico')">..\Assets\netstuff.ico</ApplicationIcon>
   </PropertyGroup>
 
