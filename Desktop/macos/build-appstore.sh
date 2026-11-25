@@ -16,7 +16,7 @@
 #   PROFILE            Pfad zum Provisioning Profile
 #   RID                osx-arm64 (Standard) oder osx-x64
 #
-# Vor jedem Upload muss CFBundleVersion in Desktop/macos/Info.plist höher sein als beim letzten Upload.
+# Vor jedem Upload muss CFBundleVersion (Build-Nummer) in Desktop/macos/Info.plist höher sein als beim letzten Upload.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -79,6 +79,13 @@ cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
 
 # createdump ist ein eigenes Hilfsprogramm von .NET; in der Sandbox unnötig und es würde eigene Berechtigungen brauchen
 rm -f "$APP/Contents/MacOS/createdump"
+
+# Eigenes Startprogramm statt des .NET-Apphosts: In der Sandbox muss NSApplication vor der .NET-Laufzeit
+# angelegt werden, sonst bricht AppKit beim Start ab (Details in launcher.m).
+case "$RID" in osx-x64) ARCH=x86_64 ;; *) ARCH=arm64 ;; esac
+MAIN_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$PLIST_SRC")
+clang -fobjc-arc -framework Cocoa -arch "$ARCH" -mmacosx-version-min="$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$PLIST_SRC")" \
+    -DAPP_DLL="\"$MAIN_NAME.dll\"" Desktop/macos/launcher.m -o "$APP/Contents/MacOS/$MAIN_NAME"
 
 # Symbol aus dem PNG erzeugen (wie build-app.sh)
 PNG=$(ls Assets/*.png 2>/dev/null | head -1 || true)
