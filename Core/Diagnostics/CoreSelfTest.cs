@@ -128,6 +128,52 @@ public static class CoreSelfTest
             return $"{sink.Sections.Count} Abschnitte · {hops.Count} Stationen · {verdict.Value[..Math.Min(40, verdict.Value.Length)]} …";
         });
 
+        // Speicher-Checker (Testordner im Temp-Verzeichnis)
+        await T("Speicher-Checker", async () =>
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "netstuff-selftest-" + Guid.NewGuid().ToString("N")[..8]);
+            try
+            {
+                var data = new byte[2 * 1024 * 1024 + 123];
+                new Random(42).NextBytes(data);
+                Directory.CreateDirectory(Path.Combine(dir, "Fotos", "2024"));
+                Directory.CreateDirectory(Path.Combine(dir, "Kopie"));
+                Directory.CreateDirectory(Path.Combine(dir, "Archiv"));
+                Directory.CreateDirectory(Path.Combine(dir, "Temp"));
+                Directory.CreateDirectory(Path.Combine(dir, "Leer"));
+                File.WriteAllBytes(Path.Combine(dir, "Fotos", "2024", "bild.jpg"), data);
+                File.WriteAllBytes(Path.Combine(dir, "Kopie", "bild (1).jpg"), data);
+                data[^1] ^= 0xFF;   // gleiche Größe, anderes Ende → kein Duplikat
+                File.WriteAllBytes(Path.Combine(dir, "anders.jpg"), data);
+                File.WriteAllBytes(Path.Combine(dir, "Archiv.zip"), new byte[1024 * 1024 + 5]);
+                File.WriteAllBytes(Path.Combine(dir, "Temp", "x.tmp"), new byte[1000]);
+                var old = Path.Combine(dir, "alt.txt");
+                File.WriteAllText(old, "alt");
+                File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddYears(-6));
+
+                var scanner = new DiskAnalyzer();
+                var root = await scanner.ScanAsync(dir, CancellationToken.None);
+                long expected = 3L * data.Length + 1024 * 1024 + 5 + 1000 + 3;
+                if (root.Size != expected || root.Files != 6 || root.Dirs != 6)
+                    throw new Exception($"Summen falsch: {root.Size} B (erwartet {expected}), {root.Files} Dateien, {root.Dirs} Ordner");
+                if (root.SubFolders[0].Name != "Fotos" && root.SubFolders[0].Name != "Kopie") throw new Exception("Sortierung: " + root.SubFolders[0].Name);
+                var report = DiskAnalyzer.Analyze(root);
+                if (!report.Hints.Any(h => h.Title == "Bereits entpackte Archive")) throw new Exception("entpacktes Archiv nicht erkannt");
+                if (!report.Hints.Any(h => h.Title == "Temporäre Dateien")) throw new Exception("Temp-Ordner nicht erkannt");
+                if (report.EmptyFolders != 2) throw new Exception($"{report.EmptyFolders} leere Ordner");
+                var oldFiles = DiskAnalyzer.OldFiles(root, 5);
+                if (oldFiles.Count != 1) throw new Exception($"{oldFiles.Count} alte Dateien");
+                var dups = await DiskAnalyzer.FindDuplicatesAsync(root, 1024, null, CancellationToken.None);
+                if (dups.Count != 1 || dups[0].Files.Count != 2 || dups[0].Wasted != data.Length)
+                    throw new Exception($"Duplikate: {dups.Count} Gruppen " + string.Join(" | ", dups.Select(g => g.PathsText)));
+                return $"{root.SizeText} in {root.Files} Dateien · {report.Hints.Count} Hinweise · 1 Duplikat ({dups[0].WastedText})";
+            }
+            finally
+            {
+                try { Directory.Delete(dir, true); } catch { }
+            }
+        });
+
         // CDP-Parser
         await T("CDP-Parser", () =>
         {
