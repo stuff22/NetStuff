@@ -42,7 +42,7 @@
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="200" />
                 <DataGridTextColumn Header="{l:T 'MAC-Adresse'}" Binding="{Binding Mac}" Width="180" />
                 <DataGridTextColumn Header="{l:T 'Ziel'}" Binding="{Binding Target}" Width="180" />
-                <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="80" />
+                <DataGridTextColumn Header="Port" Binding="{ReflectionBinding Port}" Width="80" />
             </DataGrid.Columns>
         </DataGrid>
 

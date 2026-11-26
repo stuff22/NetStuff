@@ -8,6 +8,9 @@
     <Nullable>disable</Nullable>
     <RootNamespace>NetStuff.Ui</RootNamespace>
     <AssemblyName>NetStuff.Ui</AssemblyName>
+    <!-- Ausnahme: Bindungen an Werttypen (int, bool, Enum wie Level) als {ReflectionBinding …} schreiben. Kompilierte
+         Bindungen erzeugen dafür generischen Code, den iOS (AOT, Release) nicht vorübersetzt – die App stürzt beim
+         Öffnen der Ansicht ab („Attempting to JIT compile … FunctionPointerPropertyInfo`2<…, int>“). -->
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 

@@ -64,7 +64,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="s:MonitorTarget">
                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,0" VerticalAlignment="Center">
-                                    <Ellipse Width="10" Height="10" Fill="{Binding Level, Converter={x:Static l:Palette.LevelBrush}}" />
+                                    <Ellipse Width="10" Height="10" Fill="{ReflectionBinding Level, Converter={x:Static l:Palette.LevelBrush}}" />
                                     <TextBlock Text="{Binding Status}" />
                                 </StackPanel>
                             </DataTemplate>
@@ -90,7 +90,7 @@
                 <DataGridTemplateColumn Header="" Width="32">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate x:DataType="s:MonitorEvent">
-                            <TextBlock Text="{Binding Level, Converter={x:Static l:Palette.LevelGlyph}}" Foreground="{Binding Level, Converter={x:Static l:Palette.LevelBrush}}"
+                            <TextBlock Text="{ReflectionBinding Level, Converter={x:Static l:Palette.LevelGlyph}}" Foreground="{ReflectionBinding Level, Converter={x:Static l:Palette.LevelBrush}}"
                                        FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

@@ -38,7 +38,7 @@
         <Grid Classes="responsive" Grid.Row="3" ColumnDefinitions="3*,12,2*">
             <DataGrid x:Name="HopGrid" x:DataType="s:TraceHop" HeadersVisibility="Column">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="#" Binding="{Binding Hop}" Width="50" />
+                    <DataGridTextColumn Header="#" Binding="{ReflectionBinding Hop}" Width="50" />
                     <DataGridTextColumn Header="{l:T 'IP-Adresse'}" Binding="{Binding Ip}" Width="150" />
                     <DataGridTextColumn Header="RTT" Binding="{Binding Rtt}" Width="140" />
                     <DataGridTextColumn Header="{l:T 'Hostname'}" Binding="{Binding Host}" Width="260" />

@@ -35,7 +35,7 @@
                 <DataGridTemplateColumn Header="" Width="32">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate x:DataType="s:SurveyPoint">
-                            <TextBlock Text="{Binding Level, Converter={x:Static l:Palette.LevelGlyph}}" Foreground="{Binding Level, Converter={x:Static l:Palette.LevelBrush}}"
+                            <TextBlock Text="{ReflectionBinding Level, Converter={x:Static l:Palette.LevelGlyph}}" Foreground="{ReflectionBinding Level, Converter={x:Static l:Palette.LevelBrush}}"
                                        FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
