@@ -13,7 +13,7 @@
     <ApplicationId>at.itstuff.netstuff</ApplicationId>
     <ApplicationTitle>Net-Stuff</ApplicationTitle>
     <ApplicationDisplayVersion>1.1.5</ApplicationDisplayVersion>
-    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationVersion>4</ApplicationVersion>
     <!-- Nur die SDK-Bibliotheken kürzen: JSON-Speicher, SNMP und Berichte arbeiten mit Reflection -->
     <MtouchLink>SdkOnly</MtouchLink>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>

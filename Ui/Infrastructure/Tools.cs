@@ -47,9 +47,9 @@ public static class Tools
 
     /// <summary>
     /// Auf iPhone/iPad nicht möglich: iOS gibt keine WLAN-Liste frei, erlaubt keinen Paketmitschnitt und blockiert
-    /// Broadcasts (DHCP-DISCOVER an 255.255.255.255 → „Host nicht erreichbar“) ohne Sonderfreigabe von Apple.
+    /// Broadcasts (DHCP-DISCOVER an 255.255.255.255 → „Host nicht erreichbar“) ohne Sonderfreigabe von Apple. Den Website-Kopierer gibt es nur am Computer.
     /// </summary>
-    private static readonly HashSet<string> NotOnIos = new() { "wlan", "survey", "lldp", "dhcp" };
+    private static readonly HashSet<string> NotOnIos = new() { "wlan", "survey", "lldp", "dhcp", "sitecopy" };
 
     public static bool IsAvailable(ToolInfo t) => !(OperatingSystem.IsIOS() && NotOnIos.Contains(t.Key));
 
