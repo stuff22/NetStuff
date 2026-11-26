@@ -1,0 +1,213 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:s="using:NetStuff.Services"
+            x:Class="NetStuff.Ui.Views.DiskUsageView">
+    <l:ToolView.Styles>
+        <Style Selector="TabControl#Tabs > TabItem">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+    </l:ToolView.Styles>
+    <l:ToolView.Resources>
+        <DataTemplate x:Key="PercentCell" x:DataType="s:DiskNode">
+            <Panel Margin="4,0">
+                <ProgressBar Value="{Binding Percent, Mode=OneWay}" Maximum="100" Height="14" MinHeight="0" MinWidth="0" Opacity="0.55" />
+                <TextBlock Text="{Binding PercentText}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" />
+            </Panel>
+        </DataTemplate>
+    </l:ToolView.Resources>
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Speicher-Checker'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Zeigt wie TreeSize, welche Ordner und Dateien den meisten Platz belegen – auf lokalen Laufwerken, USB-Datenträgern und Netzwerkfreigaben. Findet Aufräum-Kandidaten wie Papierkorb, Caches, alte Installer, uralte Dateien und Duplikate.'}" />
+        </StackPanel>
+
+        <!-- Eingabe -->
+        <Border Grid.Row="1" Classes="Card">
+            <StackPanel>
+                <WrapPanel>
+                    <StackPanel Margin="0,0,12,8">
+                        <TextBlock Classes="Label" Text="{l:T 'Ordner, Laufwerk oder Freigabe'}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBox x:Name="TargetBox" Width="420" PlaceholderText="/Users/…  ·  /Volumes/NAS" KeyDown="TargetBox_KeyDown" />
+                            <Button Content="…" ToolTip.Tip="{l:T 'Ordner wählen'}" Click="Browse_Click" MinWidth="36" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8" Margin="0,0,0,8">
+                        <Button x:Name="StartButton" Classes="accent" Content="{l:T 'Analysieren'}" Click="Start_Click" />
+                        <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
+                        <Button x:Name="CopyButton" Content="{l:T 'Kopieren'}" IsEnabled="False" Click="Copy_Click" />
+                        <Button x:Name="CsvButton" Content="{l:T 'CSV exportieren'}" IsEnabled="False" Click="Csv_Click" />
+                    </StackPanel>
+                </WrapPanel>
+                <TextBlock Classes="Label" Text="{l:T 'Schnellauswahl'}" Margin="0,4,0,4" />
+                <WrapPanel x:Name="LocationsPanel" />
+                <TextBlock x:Name="NetworkHint" Classes="Status" TextWrapping="Wrap" Margin="0,6,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Fortschritt -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+            <ProgressBar x:Name="Progress" Height="4" MinWidth="0" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" x:Name="StatusText" Classes="Status" Margin="12,0,0,0" VerticalAlignment="Center" MaxWidth="700" TextTrimming="CharacterEllipsis" />
+        </Grid>
+
+        <TabControl Grid.Row="3" x:Name="Tabs" IsEnabled="False" MinHeight="320">
+            <TabItem Header="{l:T 'Übersicht'}">
+                <ScrollViewer Padding="0,8,8,0">
+                    <StackPanel x:Name="SummaryPanel" />
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="{l:T 'Ordner'}">
+                <Grid ColumnDefinitions="360,6,*" Margin="0,8,0,0">
+                    <TreeView x:Name="FolderTree" SelectionChanged="FolderTree_SelectionChanged">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="s:DiskNode" ItemsSource="{Binding SubFolders}">
+                                <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding FullPath}">
+                                    <ProgressBar Value="{Binding Percent, Mode=OneWay}" Maximum="100" Width="40" Height="8" MinWidth="0" MinHeight="0" VerticalAlignment="Center" Opacity="0.6" />
+                                    <TextBlock Text="{Binding TreeText}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                    <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" />
+                    <DockPanel Grid.Column="2">
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                            <TextBlock x:Name="CurrentPathText" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                <Button Content="{l:T 'Nach oben'}" Click="Up_Click" />
+                                <Button x:Name="RevealCurrentButton" Content="{l:T 'Im Finder zeigen'}" Click="RevealCurrent_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <DataGrid x:Name="ContentGrid" x:DataType="s:DiskNode" HeadersVisibility="Column" IsReadOnly="True" CanUserSortColumns="True"
+                                  DoubleTapped="ContentGrid_DoubleTapped">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="{l:T 'Im Finder zeigen'}" Click="Reveal_Click" />
+                                    <MenuItem Header="{l:T 'Pfad kopieren'}" Click="CopyPath_Click" />
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="" Binding="{Binding Icon}" Width="36" />
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" MinWidth="180" />
+                                <DataGridTextColumn Header="{l:T 'Größe'}" Binding="{Binding SizeText}" SortMemberPath="Size" Width="100" />
+                                <DataGridTemplateColumn Header="{l:T 'Anteil'}" CellTemplate="{StaticResource PercentCell}" SortMemberPath="Size" Width="110" />
+                                <DataGridTextColumn Header="{l:T 'Dateien'}" Binding="{Binding FilesText}" SortMemberPath="Files" Width="90" />
+                                <DataGridTextColumn Header="{l:T 'Geändert'}" Binding="{Binding ModifiedText}" SortMemberPath="Modified" Width="100" />
+                                <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding TypeText}" Width="*" MinWidth="110" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{l:T 'Größte Dateien'}">
+                <DataGrid x:Name="LargestGrid" x:DataType="s:DiskNode" Margin="0,8,0,0" HeadersVisibility="Column" IsReadOnly="True" CanUserSortColumns="True"
+                          DoubleTapped="Grid_DoubleTapped">
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="{l:T 'Im Finder zeigen'}" Click="Reveal_Click" />
+                            <MenuItem Header="{l:T 'Pfad kopieren'}" Click="CopyPath_Click" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{l:T 'Größe'}" Binding="{Binding SizeText}" SortMemberPath="Size" Width="100" />
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="180" />
+                        <DataGridTextColumn Header="{l:T 'Ordner'}" Binding="{Binding FolderPath}" Width="2*" MinWidth="200" />
+                        <DataGridTextColumn Header="{l:T 'Geändert'}" Binding="{Binding ModifiedText}" SortMemberPath="Modified" Width="100" />
+                        <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding TypeText}" Width="160" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="{l:T 'Dateitypen'}">
+                <DataGrid x:Name="TypesGrid" x:DataType="s:DiskTypeRow" Margin="0,8,0,0" HeadersVisibility="Column" IsReadOnly="True" CanUserSortColumns="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{l:T 'Endung'}" Binding="{Binding ExtensionText}" Width="140" />
+                        <DataGridTextColumn Header="{l:T 'Kategorie'}" Binding="{Binding CategoryText}" Width="200" />
+                        <DataGridTextColumn Header="{l:T 'Größe'}" Binding="{Binding SizeText}" SortMemberPath="Size" Width="100" />
+                        <DataGridTemplateColumn Header="{l:T 'Anteil'}" SortMemberPath="Size" Width="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="s:DiskTypeRow">
+                                    <Panel Margin="4,0">
+                                        <ProgressBar Value="{Binding Percent, Mode=OneWay}" Maximum="100" Height="14" MinHeight="0" MinWidth="0" Opacity="0.55" />
+                                        <TextBlock Text="{Binding PercentText}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" />
+                                    </Panel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="{l:T 'Dateien'}" Binding="{Binding CountText}" SortMemberPath="Count" Width="100" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="{l:T 'Alte Dateien'}">
+                <DockPanel Margin="0,8,0,0">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                        <TextBlock Text="{l:T 'Nicht geändert seit mehr als'}" VerticalAlignment="Center" />
+                        <ComboBox x:Name="YearsBox" Width="130" SelectedIndex="1" SelectionChanged="Years_Changed">
+                            <ComboBoxItem Content="{l:T '1 Jahr'}" Tag="1" />
+                            <ComboBoxItem Content="{l:T '2 Jahren'}" Tag="2" />
+                            <ComboBoxItem Content="{l:T '3 Jahren'}" Tag="3" />
+                            <ComboBoxItem Content="{l:T '5 Jahren'}" Tag="5" />
+                            <ComboBoxItem Content="{l:T '10 Jahren'}" Tag="10" />
+                        </ComboBox>
+                        <TextBlock x:Name="OldSummary" VerticalAlignment="Center" FontWeight="SemiBold" Margin="4,0,0,0" />
+                    </StackPanel>
+                    <DataGrid x:Name="OldGrid" x:DataType="s:DiskNode" HeadersVisibility="Column" IsReadOnly="True" CanUserSortColumns="True" DoubleTapped="Grid_DoubleTapped">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{l:T 'Im Finder zeigen'}" Click="Reveal_Click" />
+                                <MenuItem Header="{l:T 'Pfad kopieren'}" Click="CopyPath_Click" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{l:T 'Größe'}" Binding="{Binding SizeText}" SortMemberPath="Size" Width="100" />
+                            <DataGridTextColumn Header="{l:T 'Geändert'}" Binding="{Binding ModifiedText}" SortMemberPath="Modified" Width="100" />
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="180" />
+                            <DataGridTextColumn Header="{l:T 'Ordner'}" Binding="{Binding FolderPath}" Width="2*" MinWidth="200" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="{l:T 'Duplikate'}">
+                <DockPanel Margin="0,8,0,0">
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{l:T 'Dateien ab'}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="MinSizeBox" Width="110" SelectedIndex="1">
+                                <ComboBoxItem Content="100 KB" Tag="102400" />
+                                <ComboBoxItem Content="1 MB" Tag="1048576" />
+                                <ComboBoxItem Content="10 MB" Tag="10485760" />
+                                <ComboBoxItem Content="100 MB" Tag="104857600" />
+                            </ComboBox>
+                            <Button x:Name="DupButton" Content="{l:T 'Duplikate suchen'}" Click="Dup_Click" />
+                            <TextBlock x:Name="DupStatus" VerticalAlignment="Center" FontWeight="SemiBold" Margin="4,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Classes="Status" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Text="{l:T 'Vergleicht den Inhalt (SHA-256), nicht nur Name und Größe. Dateien gleicher Größe werden dafür gelesen – auf Netzlaufwerken kann das dauern. Nur-Cloud-Dateien werden übersprungen.'}" />
+                    </StackPanel>
+                    <DataGrid x:Name="DupGrid" x:DataType="s:DuplicateGroup" HeadersVisibility="Column" IsReadOnly="True" CanUserSortColumns="True" DoubleTapped="Grid_DoubleTapped">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{l:T 'Im Finder zeigen'}" Click="Reveal_Click" />
+                                <MenuItem Header="{l:T 'Pfad kopieren'}" Click="CopyPath_Click" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{l:T 'Verschwendet'}" Binding="{Binding WastedText}" SortMemberPath="Wasted" Width="110" />
+                            <DataGridTextColumn Header="{l:T 'Je Datei'}" Binding="{Binding SizeText}" SortMemberPath="Size" Width="95" />
+                            <DataGridTextColumn Header="{l:T 'Anzahl'}" Binding="{Binding CountText}" Width="75" />
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="160" />
+                            <DataGridTextColumn Header="{l:T 'Fundorte'}" Binding="{Binding PathsText}" Width="2*" MinWidth="240" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</l:ToolView>

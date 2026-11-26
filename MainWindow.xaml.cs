@@ -121,6 +121,8 @@ public partial class MainWindow : FluentWindow
             new("cms", "CMS-Checker", "", "Web", () => new CmsPage(), "wordpress joomla typo3 shopware technologie"),
             new("sitecopy", "Website-Kopierer", "", "Web", () => new SiteCopyPage(), "httrack offline spiegel mirror download copier herunterladen"),
 
+            new("diskusage", "Speicher-Checker", "", "System", () => new DiskUsagePage(), "treesize festplatte ordner größe speicherplatz platz voll duplikate netzlaufwerk nas freigabe unc disk space aufräumen"),
+
             new("settings", "Einstellungen", "", "", () => new SettingsPage(), "settings sprache language logo"),
         };
 
