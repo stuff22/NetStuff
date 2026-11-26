@@ -35,7 +35,10 @@
                     <Button Grid.Column="4" x:Name="ThemeButton" Content="◐" ToolTip.Tip="{l:T 'Hell / Dunkel umschalten'}" Click="Theme_Click" MinWidth="36" />
                 </Grid>
             </Border>
-            <ContentControl x:Name="Host" Margin="28,18,28,18" />
+            <!-- Schmal (iPhone): ganze Seite senkrecht scrollbar, siehe MainView.UpdatePageHeight -->
+            <ScrollViewer x:Name="PageScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled">
+                <ContentControl x:Name="Host" Margin="28,18,28,18" />
+            </ScrollViewer>
         </DockPanel>
     </SplitView>
 </UserControl>

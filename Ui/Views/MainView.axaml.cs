@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Styling;
@@ -28,7 +29,8 @@ public partial class MainView : UserControl
             Open(t.Key);
             if (_compact) Split.IsPaneOpen = false;   // iPhone: nach der Auswahl Navigation schließen
         };
-        SizeChanged += (_, e) => ApplyLayout(e.NewSize.Width);
+        SizeChanged += (_, e) => ApplyLayout(e.NewSize.Width, e.NewSize.Height);
+        PageScroll.SizeChanged += (_, _) => UpdatePageHeight();
         ErrorGuard.Reported += ex => Dispatcher.UIThread.Post(() =>
             ShowInfo(L.T("Fehler: ") + Services.NetUtil.ErrorText(ex)));
 
@@ -81,7 +83,8 @@ public partial class MainView : UserControl
             _views[key] = view;
         }
         Host.Content = view;
-        Responsive.Apply(view, _compact);
+        Responsive.Apply(view, _compact, Bounds.Width);
+        UpdatePageHeight();
         if (parameter != null) view.OnNavigatedTo(parameter);
         if (run)
         {
@@ -100,11 +103,19 @@ public partial class MainView : UserControl
     private bool _compact;
     private bool? _layoutApplied;
 
-    /// <summary>Unter 760 px (iPhone, iPad im geteilten Bildschirm): Navigation einklappbar, kürzere Werkzeugleiste.</summary>
-    private void ApplyLayout(double width)
+    /// <summary>
+    /// Unter 760 px Breite (iPhone, iPad im geteilten Bildschirm) oder unter 500 px Höhe (iPhone quer):
+    /// Navigation einklappbar, kürzere Werkzeugleiste.
+    /// </summary>
+    private void ApplyLayout(double width, double height = 0)
     {
-        bool compact = width > 0 && width < 760;
-        if (_layoutApplied == compact) return;
+        bool compact = width > 0 && (width < 760 || (height > 0 && height < 500));
+        if (_layoutApplied == compact)
+        {
+            // Drehen innerhalb der schmalen Ansicht: Feldbreiten an die neue Breite anpassen
+            if (compact) Responsive.Apply(CurrentView, true, width);
+            return;
+        }
         _layoutApplied = compact;
         _compact = compact;
 
@@ -120,7 +131,25 @@ public partial class MainView : UserControl
         Toolbar.Padding = compact ? new Thickness(10, 6, 10, 6) : new Thickness(28, 8, 20, 8);
         Host.Margin = compact ? new Thickness(12, 12, 12, 12) : new Thickness(28, 18, 28, 18);
         if (compact) Classes.Add("compact"); else Classes.Remove("compact");
-        Responsive.Apply(CurrentView, compact);
+        PageScroll.VerticalScrollBarVisibility = PageScrolls ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+        Responsive.Apply(CurrentView, compact, width);
+        UpdatePageHeight();
+    }
+
+    /// <summary>
+    /// Schmal und auf iOS: Die Seite scrollt als Ganzes. Ansichten mit Tabelle oder Protokollfeld bekommen eine feste Höhe
+    /// (mindestens 900 px), damit die Tabelle eigenen Platz und eigenes Scrollen behält; alle anderen sind so hoch
+    /// wie ihr Inhalt. Breit: wie bisher genau Fensterhöhe.
+    /// </summary>
+    /// <summary>Seite als Ganzes scrollen: auf iPhone/iPad immer (auch quer), sonst nur in der schmalen Ansicht.</summary>
+    private bool PageScrolls => _compact || OperatingSystem.IsIOS();
+
+    private void UpdatePageHeight()
+    {
+        if (CurrentView is not { } v) return;
+        if (!PageScrolls) { v.Height = double.NaN; return; }
+        var viewport = PageScroll.Bounds.Height - Host.Margin.Top - Host.Margin.Bottom;
+        v.Height = Responsive.NeedsFixedHeight(v) && viewport > 0 ? Math.Max(viewport, 900) : double.NaN;
     }
 
     private void Menu_Click(object sender, RoutedEventArgs e) => Split.IsPaneOpen = !Split.IsPaneOpen;

@@ -14,7 +14,9 @@ public partial class ResolverView : ToolView
     public ResolverView()
     {
         InitializeComponent();
-        _rows = new ObservableCollection<ResolverRow>(ResolverBench.DefaultResolvers(L.T("System-Resolver")));
+        // iOS gibt die System-Nameserver nicht heraus – dann gäbe es keine eigene „System“-Messung, also weglassen
+        _rows = new ObservableCollection<ResolverRow>(ResolverBench.DefaultResolvers(L.T("System-Resolver"))
+            .Where(r => !(r.IsSystem && DnsHelper.UsesPublicFallback)));
         ResultGrid.ItemsSource = _rows;
     }
 

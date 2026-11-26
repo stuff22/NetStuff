@@ -24,7 +24,7 @@ public static class DnsHelper
 
     public static LookupClient Create(IPAddress server = null, bool tcpOnly = false, int timeoutMs = 4000, bool dnssec = true)
     {
-        var options = server == null ? new LookupClientOptions() : new LookupClientOptions(new NameServer(server));
+        var options = server == null ? new LookupClientOptions(SystemNameServers().ToArray()) : new LookupClientOptions(new NameServer(server));
         options.UseCache = false;
         options.Timeout = TimeSpan.FromMilliseconds(timeoutMs);
         options.Retries = 1;
@@ -34,6 +34,29 @@ public static class DnsHelper
         options.RequestDnsSecRecords = dnssec;
         return new LookupClient(options);
     }
+
+    private static IReadOnlyCollection<NameServer> _systemServers;
+
+    /// <summary>
+    /// Nameserver des Systems. iOS gibt sie in der App-Sandbox nicht heraus (/etc/resolv.conf ist nicht lesbar) –
+    /// dann öffentliche Resolver verwenden, statt mit „List of configured name servers must not be empty“ abzubrechen.
+    /// </summary>
+    public static IReadOnlyCollection<NameServer> SystemNameServers()
+    {
+        if (_systemServers != null) return _systemServers;
+        IReadOnlyCollection<NameServer> found = null;
+        try { found = NameServer.ResolveNameServers(skipIPv6SiteLocal: true, fallbackToGooglePublicDns: false); } catch { }
+        _systemServers = found is { Count: > 0 } ? found : PublicFallback;
+        return _systemServers;
+    }
+
+    /// <summary>True, wenn statt der System-Nameserver öffentliche Resolver verwendet werden.</summary>
+    public static bool UsesPublicFallback => ReferenceEquals(SystemNameServers(), PublicFallback);
+
+    private static readonly NameServer[] PublicFallback =
+    {
+        new(IPAddress.Parse("1.1.1.1")), new(IPAddress.Parse("8.8.8.8")), new(IPAddress.Parse("9.9.9.9")),
+    };
 
     /// <summary>Datenteil eines Records (ohne Name, TTL, Klasse, Typ).</summary>
     public static string ValueOf(DnsResourceRecord rec)
