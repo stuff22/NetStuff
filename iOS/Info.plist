@@ -46,6 +46,9 @@
     <true/>
     <key>LSSupportsOpeningDocumentsInPlace</key>
     <true/>
+    <!-- App-Symbol (iOS/Assets.xcassets, 1024 px; iOS erzeugt alle Größen daraus) -->
+    <key>XSAppIconAssets</key>
+    <string>Assets.xcassets/AppIcon.appiconset</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
 </dict>
