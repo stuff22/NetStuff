@@ -67,11 +67,11 @@
                 <DataGridTemplateColumn Header="{l:T 'Qualität'}" Width="100" SortMemberPath="Quality">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate x:DataType="v:WlanRow">
-                            <ProgressBar Value="{Binding Quality}" Maximum="100" Height="6" MinWidth="0" Margin="12,0" VerticalAlignment="Center" />
+                            <ProgressBar Value="{ReflectionBinding Quality}" Maximum="100" Height="6" MinWidth="0" Margin="12,0" VerticalAlignment="Center" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="{l:T 'Kanal'}" Binding="{Binding Channel}" Width="85" />
+                <DataGridTextColumn Header="{l:T 'Kanal'}" Binding="{ReflectionBinding Channel}" Width="85" />
                 <DataGridTextColumn Header="{l:T 'Breite'}" Binding="{Binding WidthText}" SortMemberPath="Width" Width="90" />
                 <DataGridTextColumn Header="Band" Binding="{Binding Band}" Width="85" />
                 <DataGridTextColumn Header="Standard" Binding="{Binding Standard}" Width="125" />

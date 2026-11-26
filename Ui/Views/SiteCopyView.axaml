@@ -107,7 +107,7 @@
                                     <TextBlock Text="{Binding Host}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     <TextBlock Grid.Column="1" Text="{Binding Summary}" Classes="Status" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" Text="{Binding DecisionText}" VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPending}">
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" IsVisible="{ReflectionBinding IsPending}">
                                         <Button Content="{l:T 'Erlauben'}" Tag="{Binding Host}" Click="Allow_Click" />
                                         <Button Content="{l:T 'Ablehnen'}" Tag="{Binding Host}" Click="Deny_Click" />
                                     </StackPanel>

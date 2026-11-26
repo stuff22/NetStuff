@@ -39,6 +39,17 @@ Startet den Standard-Simulator. Ein bestimmtes Gerät: Simulator-App öffnen, Ge
 
 Mit einer kostenlosen Apple-ID läuft die App 7 Tage, danach Schritt 3 wiederholen.
 
+## Für den App Store bauen (iPhone + iPad)
+
+```bash
+bash iOS/build-appstore.sh
+```
+
+Erzeugt `iOS/bin.nosync/appstore/Net-Stuff-iOS-<Version>-<Build>.ipa` (eine Datei für iPhone und iPad), die mit
+der App **Transporter** hochgeladen wird. Voraussetzungen stehen oben im Skript: Zertifikat „Apple Distribution“
+und ein Provisioning Profile „App Store Connect“ (iOS) als `iOS/NetStuff_AppStore.mobileprovision` (nicht im Repository).
+Vor jedem weiteren Upload derselben Version `ApplicationVersion` in `NetStuff.iOS.csproj` erhöhen.
+
 ## Einschränkungen unter iOS
 
 - Ausgeblendet: WLAN-Scanner, WLAN-Ausleuchtung, LLDP/CDP (iOS gibt keine WLAN-Liste frei und erlaubt keinen Mitschnitt).

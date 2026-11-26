@@ -9,6 +9,8 @@ namespace NetStuff.Ui.Infrastructure;
 /// Anpassung an schmale Bildschirme (iPhone, iPad im geteilten Bildschirm) – umkehrbar beim Drehen/Vergrößern:
 /// <list type="bullet">
 /// <item>Grids mit <c>Classes="responsive"</c> (eine Zeile, mehrere Spalten) werden untereinander angeordnet.</item>
+/// <item>Ebenso einzeilige Grids mit Karten nebeneinander, Text links und Knöpfen rechts, oder Fortschrittsbalken + Statuszeile.</item>
+/// <item>Eingabefelder mit fester Breite werden auf die Bildschirmbreite gekürzt.</item>
 /// <item>Tabellen: „Rest“-Spalten (Width="*") bekommen eine feste Breite, damit die Tabelle waagrecht scrollt statt zu stauchen.</item>
 /// </list>
 /// </summary>
@@ -24,13 +26,59 @@ public static class Responsive
     private static readonly ConditionalWeakTable<Grid, SavedGrid> Grids = new();
     private static readonly ConditionalWeakTable<DataGridColumn, object> Columns = new();
 
-    public static void Apply(Control root, bool compact)
+    private static readonly ConditionalWeakTable<Control, object> Widths = new();
+
+    public static void Apply(Control root, bool compact, double width = 0)
     {
         if (root == null) return;
-        foreach (var g in root.GetLogicalDescendants().OfType<Grid>().Where(g => g.Classes.Contains("responsive")).ToList())
+        foreach (var g in root.GetLogicalDescendants().OfType<Grid>().Where(ShouldStack).ToList())
             if (compact) Stack(g); else Restore(g);
         foreach (var dg in root.GetLogicalDescendants().OfType<DataGrid>().ToList())
             ApplyDataGrid(dg, compact);
+        // Feldbreite höchstens Bildschirm minus Ränder (Seite 2×12, Karte 2×16, etwas Luft)
+        double max = Math.Max(160, width - 80);
+        foreach (var c in root.GetLogicalDescendants().OfType<Control>().Where(c => c is TextBox or ComboBox or NumericUpDown).ToList())
+        {
+            if (compact)
+            {
+                if (Widths.TryGetValue(c, out var orig)) { c.Width = Math.Min((double)orig, max); continue; }
+                if (double.IsNaN(c.Width) || c.Width <= max) continue;
+                Widths.Add(c, c.Width);
+                c.Width = max;
+            }
+            else if (Widths.TryGetValue(c, out var w))
+            {
+                Widths.Remove(c);
+                c.Width = (double)w;
+            }
+        }
+    }
+
+    /// <summary>Schmale Ansicht: Braucht die Ansicht eine feste Höhe (Tabelle, Protokollfeld, Diagramm) oder darf sie so hoch wie ihr Inhalt werden?</summary>
+    public static bool NeedsFixedHeight(Control root)
+    {
+        var all = root.GetLogicalDescendants().OfType<Control>().ToList();
+        bool hasTable = all.Any(c => c is DataGrid or ListBox || c is TextBox { AcceptsReturn: true });
+        bool hasScroll = all.OfType<ScrollViewer>().Any();
+        return hasTable || !hasScroll;
+    }
+
+    /// <summary>
+    /// Einzeilige Grids mit mehreren Spalten, die schmal untereinander gehören: ausdrücklich markierte,
+    /// Karten nebeneinander, oder Text links + Knopfleiste rechts (sonst wird der Text Buchstabe für Buchstabe umbrochen).
+    /// </summary>
+    private static bool ShouldStack(Grid g)
+    {
+        if (g.Classes.Contains("responsive")) return true;
+        if (Grids.TryGetValue(g, out _)) return true;
+        if (g.RowDefinitions.Count > 1 || g.ColumnDefinitions.Count < 2) return false;
+        if (g.GetLogicalAncestors().Any(a => a is DataGrid or ItemsControl)) return false;
+        var kids = g.Children.OfType<Control>().ToList();
+        if (kids.Count(k => k is Border b && b.Classes.Contains("Card")) >= 1 && kids.Count >= 2) return true;
+        if (kids.Any(k => k is ProgressBar) && kids.Any(k => k is TextBlock)) return true;   // Fortschritt + Statuszeile
+        bool wrapText = kids.Any(k => k is TextBlock { TextWrapping: not Avalonia.Media.TextWrapping.NoWrap });
+        bool buttonBar = kids.Any(k => k is StackPanel { Orientation: Avalonia.Layout.Orientation.Horizontal } sp && sp.Children.OfType<Button>().Count() >= 2);
+        return wrapText && buttonBar;
     }
 
     private static void Stack(Grid g)
@@ -62,6 +110,7 @@ public static class Responsive
             Grid.SetColumn(child, 0);
             Grid.SetColumnSpan(child, 1);
             Grid.SetRow(child, Math.Min(col, rows.Count - 1));
+            if (child is TextBlock tb) tb.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
             // Abstand nach links (Spaltenabstand) wird zum Abstand nach oben
             if (margin.Left > 0 && margin.Left <= 24 && margin.Top == 0)
                 child.Margin = new Thickness(0, margin.Left, margin.Right, margin.Bottom);

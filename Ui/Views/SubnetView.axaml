@@ -30,7 +30,7 @@
                 <TextBlock x:Name="SplitTitle" Classes="Status" FontWeight="SemiBold" />
                 <DataGrid Grid.Row="1" x:Name="SplitGrid" x:DataType="s:SubnetSplitRow" HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="60" />
+                        <DataGridTextColumn Header="#" Binding="{ReflectionBinding Index}" Width="60" />
                         <DataGridTextColumn Header="{l:T 'Netz'}" Binding="{Binding Network}" Width="*" />
                         <DataGridTextColumn Header="{l:T 'Hostbereich'}" Binding="{Binding Hosts}" Width="1.4*" />
                     </DataGrid.Columns>

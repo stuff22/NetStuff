@@ -43,7 +43,9 @@ public static class DnsLookup
         name = NetUtil.CleanHost(name);
         var sw = Stopwatch.StartNew();
         IPAddress serverIp = null;
-        string serverLabel = L.T("System-Resolver");
+        string serverLabel = DnsHelper.UsesPublicFallback
+            ? L.T("System-Resolver nicht lesbar – öffentliche Resolver 1.1.1.1 / 8.8.8.8 / 9.9.9.9")
+            : L.T("System-Resolver");
         var sel = (server ?? "").Trim();
         if (sel.StartsWith("Autoritativ") || sel.StartsWith("Authoritative"))
         {

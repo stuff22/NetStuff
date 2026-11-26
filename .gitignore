@@ -26,3 +26,4 @@ Desktop.ini
 
 # Mac-App-Store-Profil (persönlich, nicht ins Repository)
 *.provisionprofile
+*.mobileprovision
