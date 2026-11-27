@@ -13,15 +13,35 @@ public partial class NetScanView : ToolView
 {
     private readonly ObservableCollection<ScanHost> _hosts = new();
     private CancellationTokenSource _cts;
+    /// <summary>FRITZ!Box-Kennwort nur im Speicher (bis zum Beenden der App), nicht in settings.json.</summary>
+    private static string _routerPassword = "";
+
+    private static readonly (RouterKind Kind, string Label)[] Kinds =
+    {
+        (RouterKind.Auto, "Automatisch"), (RouterKind.FritzBox, "FRITZ!Box (TR-064)"), (RouterKind.UniFi, "UniFi OS"),
+        (RouterKind.OpenWrt, "OpenWrt (ubus)"), (RouterKind.MikroTik, "MikroTik (REST)"), (RouterKind.OpnSense, "OPNsense (API)"),
+        (RouterKind.SnmpOnly, "Nur SNMP"),
+    };
 
     public NetScanView()
     {
         InitializeComponent();
         HostGrid.ItemsSource = _hosts;
         RangeBox.Text = NetUtil.DefaultScanRange();
+        var cfg = AppSettings.Current;
+        RouterBox.IsChecked = cfg.ScanQueryRouter;
+        ProbeBox.IsChecked = cfg.ScanDeviceProbes;
+        KindBox.ItemsSource = Kinds.Select(k => L.T(k.Label)).ToList();
+        KindBox.SelectedIndex = Math.Max(0, Array.FindIndex(Kinds, k => k.Kind.ToString() == cfg.ScanRouterKind));
+        RouterAddrBox.Text = cfg.ScanRouter;
+        RouterUserBox.Text = cfg.ScanRouterUser;
+        RouterPassBox.Text = _routerPassword;
+        CommunityBox.Text = cfg.ScanSnmpCommunity;
+        // Auf iOS gibt es keine ARP-Tabelle – dort ist der Router die einzige Quelle für MAC-Adressen
+        RouterExpander.IsExpanded = !Platform.HasArp;
         Loaded += async (_, _) =>
         {
-            if (!Platform.HasArp) StatusText.Text = L.T("Hinweis: Auf dieser Plattform werden keine MAC-Adressen ermittelt.");
+            if (!Platform.HasArp) StatusText.Text = L.T("Hinweis: Dieses System gibt keine MAC-Adressen heraus – sie werden beim Router erfragt.");
             if (!OuiDatabase.IsLoaded)
             {
                 OuiText.Text = L.T("Herstellerliste wird geladen …");
@@ -54,7 +74,28 @@ public partial class NetScanView : ToolView
         Progress.Maximum = ips.Count;
         Progress.Value = 0;
         var sw = Stopwatch.StartNew();
-        var settings = new NetScanSettings { TimeoutMs = (int)(TimeoutBox.Value ?? 700), CheckPorts = PortsBox.IsChecked == true };
+        var cfg = AppSettings.Current;
+        cfg.ScanQueryRouter = RouterBox.IsChecked == true;
+        cfg.ScanDeviceProbes = ProbeBox.IsChecked == true;
+        var kind = Kinds[Math.Max(0, KindBox.SelectedIndex)].Kind;
+        cfg.ScanRouterKind = kind.ToString();
+        cfg.ScanRouter = (RouterAddrBox.Text ?? "").Trim();
+        cfg.ScanRouterUser = (RouterUserBox.Text ?? "").Trim();
+        cfg.ScanSnmpCommunity = (CommunityBox.Text ?? "").Trim();
+        cfg.Save();
+        _routerPassword = RouterPassBox.Text ?? "";
+        var router = cfg.ScanRouter;
+        if (router != "" && !IPAddress.TryParse(router, out _))
+        {
+            try { router = (await Dns.GetHostAddressesAsync(router)).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)?.ToString() ?? ""; }
+            catch { StatusText.Text = L.F("Router „{0}“ nicht gefunden.", cfg.ScanRouter); return; }
+        }
+        var settings = new NetScanSettings
+        {
+            TimeoutMs = (int)(TimeoutBox.Value ?? 700), CheckPorts = PortsBox.IsChecked == true,
+            QueryRouter = cfg.ScanQueryRouter, RouterKind = kind, DeviceProbes = cfg.ScanDeviceProbes, Router = router, RouterUser = cfg.ScanRouterUser,
+            RouterPassword = _routerPassword, SnmpCommunity = cfg.ScanSnmpCommunity,
+        };
 
         try
         {
@@ -65,7 +106,8 @@ public partial class NetScanView : ToolView
                     StatusText.Text = L.F("{0}/{1} Adressen · {2} Geräte", done, ips.Count, count);
                 }),
                 text => Dispatcher.UIThread.Post(() => { StatusText.Text = text; OuiText.Text = NetworkScanner.OuiStatus(); }), ct);
-            StatusText.Text = L.F("Fertig: {0} Geräte in {1:0.0} s", _hosts.Count, sw.Elapsed.TotalSeconds);
+            StatusText.Text = L.F("Fertig: {0} Geräte in {1:0.0} s", _hosts.Count, sw.Elapsed.TotalSeconds)
+                + (settings.RouterSummary != "" ? " · " + settings.RouterSummary : "");
         }
         catch (OperationCanceledException)
         {

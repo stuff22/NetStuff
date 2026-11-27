@@ -18,6 +18,13 @@ public class AppSettings
     public bool Notifications { get; set; } = true;
     public string ActiveProjectId { get; set; } = "";
     public string IperfServer { get; set; } = "";
+    // Netzwerkscanner: MAC-Adressen beim Router erfragen (Kennwort wird nicht gespeichert)
+    public bool ScanQueryRouter { get; set; } = true;
+    public string ScanRouter { get; set; } = "";
+    public string ScanRouterUser { get; set; } = "";
+    public string ScanSnmpCommunity { get; set; } = "";
+    public string ScanRouterKind { get; set; } = "Auto";
+    public bool ScanDeviceProbes { get; set; } = true;
 
     public static AppSettings Current => _current ??= Load();
 

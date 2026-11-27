@@ -10,6 +10,7 @@
         </StackPanel>
 
         <Border Grid.Row="1" Classes="Card">
+            <StackPanel>
             <WrapPanel>
                 <StackPanel Margin="0,0,12,8">
                     <TextBlock Classes="Label" Text="{l:T 'Bereich (CIDR, a-b oder Einzel-IP)'}" />
@@ -25,6 +26,36 @@
                     <Button x:Name="StopButton" Content="{l:T 'Stopp'}" IsEnabled="False" Click="Stop_Click" />
                 </StackPanel>
             </WrapPanel>
+                <Expander x:Name="RouterExpander" Header="{l:T 'MAC-Adressen, Modell und Seriennummer ermitteln'}" HorizontalAlignment="Stretch" Margin="0,4,0,0">
+                    <StackPanel Spacing="6">
+                        <CheckBox x:Name="ProbeBox" Content="{l:T 'Geräte direkt fragen (mDNS/Bonjour, UPnP, Ubiquiti, Geräte-APIs)'}" />
+                        <CheckBox x:Name="RouterBox" Content="{l:T 'Router nach Geräteliste und MAC-Adressen fragen'}" />
+                        <WrapPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Routertyp'}" />
+                                <ComboBox x:Name="KindBox" Width="170" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Router (leer = Gateway)'}" />
+                                <TextBox x:Name="RouterAddrBox" Width="160" Watermark="fritz.box / 192.168.1.1" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Benutzer / API-Schlüssel'}" />
+                                <TextBox x:Name="RouterUserBox" Width="160" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'Kennwort / Secret'}" />
+                                <TextBox x:Name="RouterPassBox" Width="160" PasswordChar="●" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,8">
+                                <TextBlock Classes="Label" Text="{l:T 'SNMP-Community (leer = aus)'}" />
+                                <TextBox x:Name="CommunityBox" Width="160" Watermark="public" />
+                            </StackPanel>
+                        </WrapPanel>
+                        <TextBlock Classes="Status" TextWrapping="Wrap" Text="{l:T 'FRITZ!Box: „Zugriff für Anwendungen zulassen“ aktivieren, Benutzer wie bei der Anmeldung. UniFi: lokales Konto ohne Zwei-Faktor – oder Benutzer leer lassen und einen API-Schlüssel (Network → Integrationen) als Kennwort eintragen. OpenWrt: root + Kennwort (ubus). MikroTik: RouterOS 7 mit aktiviertem www/www-ssl-Dienst. OPNsense: API-Schlüssel als Benutzer, Secret als Kennwort. Andere: SNMP v2c. Das Kennwort wird nur bis zum Beenden der App gemerkt.'}" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
         </Border>
 
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
@@ -39,6 +70,8 @@
                 <DataGridTextColumn Header="Hostname" Binding="{Binding Hostname}" Width="170" />
                 <DataGridTextColumn Header="{l:T 'MAC-Adresse'}" Binding="{Binding Mac}" Width="160" />
                 <DataGridTextColumn Header="{l:T 'Hersteller'}" Binding="{Binding Vendor}" Width="180" />
+                <DataGridTextColumn Header="{l:T 'Modell'}" Binding="{Binding Model}" Width="170" />
+                <DataGridTextColumn Header="{l:T 'Seriennummer'}" Binding="{Binding Serial}" Width="150" />
                 <DataGridTextColumn Header="{l:T 'Typ'}" Binding="{Binding Type}" Width="170" />
                 <DataGridTextColumn Header="Ping" Binding="{Binding PingText}" SortMemberPath="PingSort" Width="80" />
                 <DataGridTextColumn Header="{l:T 'Offene Ports'}" Binding="{Binding Ports}" Width="200" />

@@ -12,7 +12,7 @@ namespace NetStuff.Services;
 
 public class ScanHost : Bindable
 {
-    private string _hostname = "", _mac = "", _vendor = "", _type = "", _ports = "", _info = "";
+    private string _hostname = "", _mac = "", _vendor = "", _type = "", _ports = "", _info = "", _model = "", _serial = "";
     private long? _ping;
 
     public IPAddress Address { get; init; }
@@ -24,6 +24,8 @@ public class ScanHost : Bindable
     public SsdpDevice Ssdp { get; set; }
     public string NetBiosName { get; set; } = "";
     public string Workgroup { get; set; } = "";
+    /// <summary>Gerätename laut Router (FRITZ!Box-Hostliste).</summary>
+    public string RouterName { get; set; } = "";
 
     public string Hostname { get => _hostname; set => Set(ref _hostname, value); }
     public string Mac { get => _mac; set => Set(ref _mac, value); }
@@ -31,6 +33,23 @@ public class ScanHost : Bindable
     public string Type { get => _type; set => Set(ref _type, value); }
     public string Ports { get => _ports; set => Set(ref _ports, value); }
     public string Info { get => _info; set => Set(ref _info, value); }
+    /// <summary>Modell/Hersteller laut Gerät oder Router (mDNS, UPnP, Ubiquiti, HTTP-API, SNMP, UniFi).</summary>
+    public string Model { get => _model; set => Set(ref _model, value); }
+    public string Serial { get => _serial; set => Set(ref _serial, value); }
+    /// <summary>Woher die MAC-Adresse stammt (leer = eigene ARP-Tabelle).</summary>
+    public string MacSource { get; set; } = "";
+    public string Firmware { get; set; } = "";
+    public List<string> MdnsServices { get; } = new();
+
+    /// <summary>MAC übernehmen, wenn noch keine (echte) bekannt ist; Hersteller über die OUI-Liste.</summary>
+    public void SetMac(byte[] mac, string source)
+    {
+        if (mac is not { Length: 6 } || mac.All(b => b == 0)) return;
+        if (Mac != "" && Mac != "02:00:00:00:00:00") return;
+        Mac = NetUtil.FormatMac(mac);
+        MacSource = source;
+        Vendor = OuiDatabase.Lookup(Mac);
+    }
 
     public long? Ping
     {
@@ -47,6 +66,22 @@ public class NetScanSettings
     public int TimeoutMs { get; set; } = 700;
     public bool CheckPorts { get; set; } = true;
     public int Parallel { get; set; } = 128;
+
+    /// <summary>MAC-Adressen zusätzlich beim Router erfragen (FRITZ!Box TR-064, SNMP-ARP-Tabelle).</summary>
+    public bool QueryRouter { get; set; } = true;
+    /// <summary>Art des Routers für die Abfrage (Automatisch probiert alle).</summary>
+    public RouterKind RouterKind { get; set; } = RouterKind.Auto;
+    /// <summary>Geräte direkt fragen: mDNS, UPnP, Ubiquiti-Discovery, Geräte-HTTP-APIs, SNMP (mit Community).</summary>
+    public bool DeviceProbes { get; set; } = true;
+    /// <summary>Router-Adresse; leer = Standard-Gateway.</summary>
+    public string Router { get; set; } = "";
+    public string RouterUser { get; set; } = "";
+    public string RouterPassword { get; set; } = "";
+    /// <summary>SNMP-Community für die ARP-Tabelle des Routers; leer = keine SNMP-Abfrage.</summary>
+    public string SnmpCommunity { get; set; } = "";
+
+    /// <summary>Ergebnis der Router-Abfrage für die Statuszeile (wird vom Scanner gesetzt).</summary>
+    public string RouterSummary { get; set; } = "";
 }
 
 /// <summary>
@@ -74,6 +109,25 @@ public static class NetworkScanner
         await OuiDatabase.EnsureLoadedAsync();
         status?.Invoke(L.T("Suche Geräte …"));
         var ssdpTask = SsdpDiscovery.DiscoverAsync(3500, ct);
+
+        // Router parallel zum Ping-Durchlauf fragen – liefert MACs auch dort, wo das System keine ARP-Tabelle herausgibt (iOS)
+        Task<RouterHostResult> routerTask = Task.FromResult<RouterHostResult>(null);
+        IPAddress router = null;
+        if (s.QueryRouter)
+        {
+            if (!IPAddress.TryParse((s.Router ?? "").Trim(), out router))
+                router = locals.Select(l => l.Gateway).FirstOrDefault(g => g != null);
+            if (router != null)
+            {
+                var r = router;
+                routerTask = Task.Run(async () =>
+                {
+                    try { return await RouterHosts.QueryAsync(r, s.RouterUser, s.RouterPassword, s.SnmpCommunity, ct, kind: s.RouterKind); }
+                    catch (OperationCanceledException) { throw; }
+                    catch { return null; }
+                }, ct);
+            }
+        }
 
         var hosts = new List<ScanHost>();
         using var gate = new SemaphoreSlim(Math.Max(1, s.Parallel));
@@ -103,7 +157,7 @@ public static class NetworkScanner
                 host.Vendor = OuiDatabase.Lookup(host.Mac);
                 lock (hosts) hosts.Add(host);
                 found?.Invoke(host);
-                lock (detailTasks) detailTasks.Add(DetailsAsync(host, s.CheckPorts, ct));
+                lock (detailTasks) detailTasks.Add(DetailsAsync(host, s, ct));
             }
             catch (OperationCanceledException) { }
             finally
@@ -137,7 +191,39 @@ public static class NetworkScanner
                     h.Vendor = OuiDatabase.Lookup(h.Mac);
                     hosts.Add(h);
                     found?.Invoke(h);
-                    detailTasks.Add(DetailsAsync(h, s.CheckPorts, ct));
+                    detailTasks.Add(DetailsAsync(h, s, ct));
+                }
+            }
+        }
+
+        // Hostliste/ARP-Tabelle des Routers: fehlende MACs und Namen ergänzen, aktive Geräte ohne Ping-Antwort aufnehmen
+        var routerResult = await routerTask;
+        s.RouterSummary = routerResult?.Summary ?? "";
+        if (s.RouterSummary == "" && router != null && !Platform.HasArp)
+            s.RouterSummary = L.F("Router {0} liefert keine MAC-Adressen (kein TR-064 – SNMP-Community eintragen?)", router);
+        if (routerResult != null && routerResult.Hosts.Count > 0)
+        {
+            var known = hosts.ToDictionary(h => h.Ip);
+            var wanted = ips.Select(i => i.ToString()).ToHashSet();
+            foreach (var rh in routerResult.Hosts.Values)
+            {
+                if (!wanted.Contains(rh.Ip)) continue;
+                bool isNew = !known.TryGetValue(rh.Ip, out var h);
+                if (isNew)
+                {
+                    if (!rh.Active) continue;
+                    h = new ScanHost { Address = IPAddress.Parse(rh.Ip), IsGateway = gateways.Contains(rh.Ip) };
+                }
+                h.SetMac(rh.Mac, rh.Source);
+                if (rh.Name != "") h.RouterName = rh.Name;
+                if (h.Model == "" && rh.Model != "") h.Model = rh.Model;
+                if (h.Serial == "" && rh.Serial != "") h.Serial = rh.Serial;
+                if (isNew)
+                {
+                    hosts.Add(h);
+                    known[rh.Ip] = h;
+                    found?.Invoke(h);
+                    lock (detailTasks) detailTasks.Add(DetailsAsync(h, s, ct));
                 }
             }
         }
@@ -156,21 +242,31 @@ public static class NetworkScanner
         return hosts.OrderBy(h => h.SortKey).ToList();
     }
 
-    private static async Task DetailsAsync(ScanHost h, bool checkPorts, CancellationToken ct)
+    private static async Task DetailsAsync(ScanHost h, NetScanSettings s, CancellationToken ct)
     {
         var dnsTask = NetUtil.ReverseDnsAsync(h.Address, 2500);
-        var nbTask = NetBiosClient.QueryAsync(h.Address, 1200);
+        var nbTask = NetBiosClient.QueryExAsync(h.Address, 1200);
         Task<int[]> portTask = Task.FromResult(Array.Empty<int>());
-        if (checkPorts)
+        if (s.CheckPorts)
         {
             portTask = Task.WhenAll(PortCatalog.Quick.Select(async p => await NetUtil.TcpConnectAsync(h.Address, p, 600, ct) ? p : 0))
                 .ContinueWith(t => t.Result.Where(p => p > 0).ToArray(), ct);
         }
 
+        // Das Gerät selbst fragen – jede Quelle für sich, danach nach Verlässlichkeit zusammenführen
+        DeviceFacts mdns = new(), ubnt = new(), snmp = new(), http = new();
+        var probes = new List<Task>
+        {
+            DeviceProbe.MdnsAsync(h.Address, mdns, ct),
+            DeviceProbe.UbiquitiAsync(h.Address, ubnt, ct),
+        };
+        var ssdpTask = s.DeviceProbes ? DeviceProbe.SsdpAsync(h.Address, ct) : Task.FromResult<SsdpDevice>(null);
+        if (!s.DeviceProbes) probes.Clear();
+        if (s.DeviceProbes && !string.IsNullOrWhiteSpace(s.SnmpCommunity)) probes.Add(DeviceProbe.SnmpAsync(h.Address, s.SnmpCommunity.Trim(), snmp, ct));
+
         var dns = await dnsTask;
         var nb = await nbTask;
         h.NetBiosName = nb.Name;
-        h.Hostname = dns != "" ? dns : nb.Name;
         h.Workgroup = nb.Group;
 
         try
@@ -180,7 +276,65 @@ public static class NetworkScanner
             h.Ports = string.Join(", ", ports.Select(p => PortCatalog.Name(p) is { Length: > 0 } n ? $"{p} {n}" : p.ToString()));
         }
         catch { }
+        if (s.DeviceProbes) probes.Add(DeviceProbe.HttpApisAsync(h.Address, h.OpenPorts, h.Vendor, http, ct));
+        try { await Task.WhenAll(probes); } catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; } catch { }
+        var ssdp = await ssdpTask;
+        if (ssdp != null) h.Ssdp = ssdp;
+
+        var facts = new DeviceFacts();
+        foreach (var f in new[] { ubnt, http }) facts.MergeFrom(f);
+        var up = new DeviceFacts();
+        DeviceProbe.ApplySsdp(ssdp, up);
+        facts.MergeFrom(up);
+        facts.MergeFrom(mdns);
+        facts.MergeFrom(snmp);
+        // NetBIOS: Windows liefert die echte MAC, Samba meist Nullen (werden ignoriert)
+        if (facts.Mac == null) facts.SetMac(nb.Mac, "NetBIOS");
+        // Viele Hersteller (Synology, Loxone, AVM, Sonos …) verwenden die MAC als Seriennummer oder am Ende der UPnP-UDN
+        if (facts.Mac == null) facts.SetMac(MacFromId(facts.Serial, facts.Manufacturer), L.T("Seriennummer"));
+        if (facts.Mac == null && ssdp != null) facts.SetMac(MacFromId(ssdp.Udn, facts.Manufacturer, atEnd: true), "UPnP-UDN");
+
+        h.SetMac(facts.Mac, facts.MacSource);
+        h.Hostname = dns != "" ? dns : mdns.Hostname != "" ? mdns.Hostname : nb.Name != "" ? nb.Name : h.RouterName;
+        if (h.Model == "") h.Model = ModelText(facts.Manufacturer, facts.Model);
+        if (h.Serial == "") h.Serial = facts.Serial;
+        if (h.Firmware == "") h.Firmware = facts.Firmware;
+        if (h.Hostname == "" && facts.Name != "") h.Hostname = facts.Name;
+        h.MdnsServices.AddRange(facts.Services.Take(6));
         UpdateInfo(h);
+    }
+
+    /// <summary>
+    /// 12 Hex-Zeichen am Anfang (Seriennummer) bzw. Ende (UDN) als MAC, aber nur wenn die OUI zum gemeldeten Hersteller passt –
+    /// sonst wäre jede zufällige Hex-Seriennummer eine „MAC“.
+    /// </summary>
+    internal static byte[] MacFromId(string id, string manufacturer, bool atEnd = false)
+    {
+        if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(manufacturer)) return null;
+        var m = System.Text.RegularExpressions.Regex.Match(id, atEnd ? @"([0-9A-Fa-f]{12})$" : @"^([0-9A-Fa-f]{12})(?![0-9A-Fa-f])");
+        if (!m.Success) return null;
+        var vendor = OuiDatabase.Lookup(m.Groups[1].Value);
+        var word = manufacturer.Split(' ', ',', '.')[0];
+        if (vendor == "" || word.Length < 3 || !vendor.Contains(word, StringComparison.OrdinalIgnoreCase)) return null;
+        return RouterHosts.ParseMac(m.Groups[1].Value);
+    }
+
+    /// <summary>„Hersteller Modell“ ohne Wiederholungen („Loxone Electronics GmbH Loxone Miniserver“ → „Loxone Miniserver“).</summary>
+    internal static string ModelText(string manufacturer, string model)
+    {
+        model = (model ?? "").Trim();
+        manufacturer = (manufacturer ?? "").Trim();
+        var words = model.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        // doppelte Hälfte entfernen („Loxone Miniserver Loxone Miniserver“)
+        if (words.Length % 2 == 0 && words.Length > 0 && words.Take(words.Length / 2).SequenceEqual(words.Skip(words.Length / 2), StringComparer.OrdinalIgnoreCase))
+            model = string.Join(" ", words.Take(words.Length / 2));
+        var first = manufacturer.Split(' ', ',')[0];
+        if (manufacturer == "" || first.Length > 1 && model.Contains(first, StringComparison.OrdinalIgnoreCase)) return model;
+        // Rechtsform weglassen: „Synology Inc.“ → „Synology“, „Hewlett Packard Enterprise“ bleibt
+        var short_ = System.Text.RegularExpressions.Regex.Replace(manufacturer,
+            @"[,\s]+(GmbH|AG|Inc\.?|Incorporated|Corp\.?|Corporation|Co\.?,?\s*Ltd\.?|Ltd\.?|LLC|S\.?A\.?|B\.?V\.?|Limited)\s*$", "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+        return (short_ + " " + model).Trim();
     }
 
     private static void UpdateInfo(ScanHost h)
@@ -189,6 +343,10 @@ public static class NetworkScanner
         if (h.Ssdp != null && h.Ssdp.Summary != "") parts.Add(h.Ssdp.Summary);
         if (h.NetBiosName != "" && !h.Hostname.StartsWith(h.NetBiosName, StringComparison.OrdinalIgnoreCase)) parts.Add("NetBIOS " + h.NetBiosName);
         if (h.Workgroup != "") parts.Add(L.T("Arbeitsgruppe ") + h.Workgroup);
+        if (h.RouterName != "" && !h.Hostname.StartsWith(h.RouterName, StringComparison.OrdinalIgnoreCase)) parts.Add(L.T("Router: ") + h.RouterName);
+        if (h.MdnsServices.Count > 0) parts.Add("mDNS: " + string.Join(", ", h.MdnsServices));
+        if (h.Firmware != "") parts.Add("Firmware " + h.Firmware);
+        if (h.MacSource != "") parts.Add(L.F("MAC via {0}", h.MacSource));
         h.Info = string.Join(" · ", parts.Distinct());
         h.Type = L.T(DeviceClassifier.Classify(h));
     }
@@ -196,10 +354,11 @@ public static class NetworkScanner
     /// <summary>CSV (Semikolon, für Excel) der Scan-Ergebnisse.</summary>
     public static string ToCsv(IEnumerable<ScanHost> hosts)
     {
-        var sb = new StringBuilder("IP;Hostname;MAC;Hersteller;Typ;Offene Ports;Ping ms;Info\n");
+        var sb = new StringBuilder("IP;Hostname;MAC;MAC-Quelle;Hersteller;Modell;Seriennummer;Typ;Offene Ports;Ping ms;Info\n");
         string Q(string s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
         foreach (var h in hosts)
-            sb.AppendLine(string.Join(";", Q(h.Ip), Q(h.Hostname), Q(h.Mac), Q(h.Vendor), Q(h.Type), Q(h.Ports), h.Ping?.ToString() ?? "", Q(h.Info)));
+            sb.AppendLine(string.Join(";", Q(h.Ip), Q(h.Hostname), Q(h.Mac), Q(h.Mac == "" ? "" : h.MacSource == "" ? "ARP" : h.MacSource), Q(h.Vendor),
+                Q(h.Model), Q(h.Serial), Q(h.Type), Q(h.Ports), h.Ping?.ToString() ?? "", Q(h.Info)));
         return sb.ToString();
     }
 

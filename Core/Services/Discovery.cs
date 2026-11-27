@@ -11,6 +11,13 @@ public static class NetBiosClient
 {
     public static async Task<(string Name, string Group)> QueryAsync(IPAddress ip, int timeoutMs = 1000)
     {
+        var r = await QueryExAsync(ip, timeoutMs);
+        return (r.Name, r.Group);
+    }
+
+    /// <summary>Wie <see cref="QueryAsync"/>, zusätzlich die MAC-Adresse aus den Statistikdaten (Windows liefert sie, Samba meist 00:00…).</summary>
+    public static async Task<(string Name, string Group, byte[] Mac)> QueryExAsync(IPAddress ip, int timeoutMs = 1000)
+    {
         try
         {
             using var udp = new UdpClient();
@@ -28,9 +35,9 @@ public static class NetBiosClient
             await udp.SendAsync(req, req.Length, new IPEndPoint(ip, 137));
 
             var recv = udp.ReceiveAsync();
-            if (await Task.WhenAny(recv, Task.Delay(timeoutMs)) != recv) return ("", "");
+            if (await Task.WhenAny(recv, Task.Delay(timeoutMs)) != recv) return ("", "", null);
             var data = recv.Result.Buffer;
-            if (data.Length < 57) return ("", "");
+            if (data.Length < 57) return ("", "", null);
             int count = data[56];
             string name = "", group = "";
             for (int i = 0; i < count; i++)
@@ -43,9 +50,11 @@ public static class NetBiosClient
                 if (suffix == 0x00 && !isGroup && name == "") name = n;
                 else if (suffix == 0x00 && isGroup && group == "") group = n;
             }
-            return (name, group);
+            int macOff = 57 + count * 18;
+            byte[] mac = data.Length >= macOff + 6 ? data.AsSpan(macOff, 6).ToArray() : null;
+            return (name, group, mac);
         }
-        catch { return ("", ""); }
+        catch { return ("", "", null); }
     }
 }
 
@@ -58,6 +67,9 @@ public class SsdpDevice
     public string Manufacturer { get; set; } = "";
     public string Model { get; set; } = "";
     public string DeviceType { get; set; } = "";
+    public string Serial { get; set; } = "";
+    public string Mac { get; set; } = "";
+    public string Udn { get; set; } = "";
 
     public string Summary
     {
@@ -108,29 +120,41 @@ public static class SsdpDiscovery
         catch { }
 
         // Gerätebeschreibungen (XML) laden
-        var tasks = result.Values.Where(d => d.Location.StartsWith("http")).Select(async d =>
-        {
-            try
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(2500);
-                var xml = await NetUtil.Http.GetStringAsync(d.Location, cts.Token);
-                var doc = XDocument.Parse(xml);
-                var device = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "device");
-                if (device == null) return;
-                string V(string n) => device.Elements().FirstOrDefault(e => e.Name.LocalName == n)?.Value?.Trim() ?? "";
-                d.FriendlyName = V("friendlyName");
-                d.Manufacturer = V("manufacturer");
-                d.Model = $"{V("modelName")} {V("modelNumber")}".Trim();
-                d.DeviceType = V("deviceType");
-            }
-            catch { }
-        });
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(result.Values.Where(d => d.Location.StartsWith("http")).Select(d => LoadDescriptionAsync(d, ct)));
         return result;
     }
 
-    private static string Header(string text, string name)
+    /// <summary>Lädt die UPnP-Gerätebeschreibung (LOCATION) und übernimmt Name, Hersteller, Modell, Seriennummer, MAC.</summary>
+    public static async Task LoadDescriptionAsync(SsdpDevice d, CancellationToken ct)
+    {
+        try
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(2500);
+            var xml = await NetUtil.Http.GetStringAsync(d.Location, cts.Token);
+            ParseDescription(d, XDocument.Parse(xml));
+        }
+        catch { }
+    }
+
+    public static void ParseDescription(SsdpDevice d, XDocument doc)
+    {
+        var device = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "device");
+        if (device == null) return;
+        string V(string n) => device.Elements().FirstOrDefault(e => e.Name.LocalName == n)?.Value?.Trim() ?? "";
+        d.FriendlyName = V("friendlyName");
+        d.Manufacturer = V("manufacturer");
+        var mn = V("modelName"); var num = V("modelNumber");
+        d.Model = num == "" || mn.Contains(num, StringComparison.OrdinalIgnoreCase) ? mn
+            : num.StartsWith(mn, StringComparison.OrdinalIgnoreCase) && mn != "" ? num : $"{mn} {num}".Trim();
+        d.DeviceType = V("deviceType");
+        d.Serial = V("serialNumber") is { Length: > 0 } sn ? sn : V("serialNum");
+        d.Udn = V("UDN");
+        // Manche Geräte nennen die MAC ausdrücklich (Sonos: MACAddress, andere: macAddress)
+        d.Mac = doc.Descendants().FirstOrDefault(e => e.Name.LocalName.Equals("MACAddress", StringComparison.OrdinalIgnoreCase))?.Value?.Trim() ?? "";
+    }
+
+    public static string Header(string text, string name)
     {
         var m = Regex.Match(text, "^" + name + @":\s*(.*)$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
         return m.Success ? m.Groups[1].Value.Trim() : "";

@@ -25,7 +25,7 @@ public static class PortCatalog
     };
 
     /// <summary>Kurze Liste für die Geräteerkennung im Netzwerkscan.</summary>
-    public static readonly int[] Quick = { 21, 22, 23, 53, 80, 139, 443, 445, 548, 554, 631, 1883, 3389, 5000, 5900, 8008, 8009, 8080, 8123, 8443, 9100, 32400, 62078 };
+    public static readonly int[] Quick = { 21, 22, 23, 53, 80, 139, 443, 445, 548, 554, 631, 1883, 3389, 1400, 5000, 5900, 8008, 8009, 8080, 8123, 8443, 9100, 32400, 49000, 62078 };
 
     public static readonly int[] Top100 =
     {

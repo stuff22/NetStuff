@@ -38,9 +38,10 @@
     <!-- Ohne Startbildschirm-Angabe läuft die App im Kompatibilitätsmodus (schwarze Ränder) -->
     <key>UILaunchScreen</key>
     <dict/>
-    <!-- Erlaubnis-Dialog „Lokales Netzwerk“ (Ping, Scanner, SNMP, Wake-on-LAN …) -->
+    <!-- Erlaubnis-Dialog „Lokales Netzwerk“ (Ping, Scanner, SNMP, Wake-on-LAN …). mDNS/Bonjour fragt der Scanner per
+         Unicast direkt beim Gerät (UDP 5353), nicht über die Bonjour-API – daher ist kein NSBonjourServices nötig. -->
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Net-Stuff prüft Geräte und Dienste in deinem lokalen Netzwerk (Ping, Netzwerkscanner, Port-Scan, SNMP, Wake-on-LAN).</string>
+    <string>Net-Stuff prüft Geräte und Dienste in deinem lokalen Netzwerk (Ping, Netzwerkscanner, Port-Scan, SNMP, Wake-on-LAN) und fragt Router und Geräte nach Name, Modell, Seriennummer und MAC-Adresse (Bonjour/mDNS, UPnP).</string>
     <!-- Kopierte Websites, Berichte und Exporte in der Dateien-App sichtbar machen -->
     <key>UIFileSharingEnabled</key>
     <true/>

@@ -553,6 +553,386 @@ public static class CoreSelfTest
             return Task.FromResult("Regeln korrekt");
         });
 
+        // Router-Hostliste: nachgebaute FRITZ!Box (TR-064 mit HTTP-Digest) – neue und alte FRITZ!OS-Variante
+        foreach (var modern in new[] { true, false })
+            await T(modern ? "TR-064 Hostliste (HostListPath)" : "TR-064 Hostliste (GetGenericHostEntry)", async () =>
+            {
+                using var fake = new FakeFritzBox(modern, "admin", "geheim");
+                var noAuth = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "", "", default, fake.Port);
+                if (noAuth.Hosts.Count != 0 || !noAuth.Summary.Contains("Kennwort")) throw new Exception("ohne Anmeldung: " + noAuth.Summary);
+                var wrong = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "admin", "falsch", "", default, fake.Port);
+                if (wrong.Hosts.Count != 0 || !wrong.Summary.Contains("abgelehnt")) throw new Exception("falsches Kennwort: " + wrong.Summary);
+                var r = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "admin", "geheim", "", default, fake.Port);
+                if (r.Hosts.Count != 2) throw new Exception($"{r.Hosts.Count} Einträge: {r.Summary}");
+                var nas = r.Hosts["192.168.178.20"];
+                if (NetUtil.FormatMac(nas.Mac) != NetUtil.FormatMac(new byte[] { 0x00, 0x11, 0x32, 0xAA, 0xBB, 0xCC }) || nas.Name != "nas" || !nas.Active)
+                    throw new Exception($"NAS falsch: {NetUtil.FormatMac(nas.Mac)} {nas.Name} {nas.Active}");
+                if (r.Hosts["192.168.178.30"] is not { Active: true, Name: "raspi" }) throw new Exception("Inaktiver Eintrag hat aktiven überschrieben");
+                return r.Summary;
+            });
+
+        await T("SNMP-ARP-Zeile", () =>
+        {
+            var res = new RouterHostResult();
+            RouterHosts.AddSnmp(res, new Lextm.SharpSnmpLib.Variable(new Lextm.SharpSnmpLib.ObjectIdentifier("1.3.6.1.2.1.4.22.1.2.12.10.0.0.42"),
+                new Lextm.SharpSnmpLib.OctetString(new byte[] { 0xB8, 0x27, 0xEB, 1, 2, 3 })), 4);
+            if (!res.Hosts.TryGetValue("10.0.0.42", out var h) || h.Mac[0] != 0xB8) throw new Exception("nicht erkannt");
+            return Task.FromResult("10.0.0.42 → " + NetUtil.FormatMac(h.Mac));
+        });
+
+        // Router-Web-APIs gegen nachgebaute Router (HTTP statt HTTPS, sonst identische Abläufe)
+        await T("UniFi OS (lokales Konto)", async () =>
+        {
+            using var r = new FakeRouter();
+            r.Route("GET /", _ => (200, "<title>UniFi OS</title>"));
+            r.Route("POST /api/auth/login", c => c.Body.Contains("\"geheim\"") ? (200, "{}", new() { ["X-Csrf-Token"] = "t1", ["Set-Cookie"] = "TOKEN=abc; Path=/" }) : (401, "{}", null));
+            r.Route("GET /proxy/network/api/self/sites", c => c.Header("Cookie").Contains("TOKEN=abc") ? (200, "{\"data\":[{\"name\":\"default\"}]}") : (401, ""));
+            r.Route("GET /proxy/network/api/s/default/stat/sta", c => c.Header("X-Csrf-Token") == "t1"
+                ? (200, "{\"data\":[{\"mac\":\"aa:bb:cc:00:00:01\",\"ip\":\"10.0.0.50\",\"hostname\":\"laptop\"},{\"mac\":\"aa:bb:cc:00:00:02\",\"ip\":\"10.0.0.51\",\"name\":\"Drucker\"}]}") : (401, ""));
+            r.Route("GET /proxy/network/api/s/default/stat/device", _ => (200, "{\"data\":[{\"mac\":\"18:e8:29:5c:71:2d\",\"ip\":\"10.0.0.12\",\"name\":\"AP Büro\",\"model\":\"U6LR\",\"serial\":\"18E8295C712D\"}]}"));
+            var none = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "", "", default, kind: RouterKind.UniFi, webBase: r.Base);
+            if (!none.Summary.Contains("UniFi OS erkannt")) throw new Exception("ohne Anmeldung: " + none.Summary);
+            var res = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "admin", "geheim", "", default, kind: RouterKind.UniFi, webBase: r.Base);
+            if (res.Hosts.Count != 3 || res.Hosts["10.0.0.51"].Name != "Drucker" || res.Hosts["10.0.0.12"].Serial != "18E8295C712D")
+                throw new Exception($"{res.Hosts.Count} Einträge: {res.Summary}");
+            return res.Summary;
+        });
+
+        await T("UniFi (API-Schlüssel)", async () =>
+        {
+            using var r = new FakeRouter();
+            r.Route("GET /", _ => (200, "UniFi OS"));
+            r.Route("GET /proxy/network/integration/v1/sites", c => c.Header("X-API-KEY") == "KEY1" ? (200, "{\"data\":[{\"id\":\"s1\"}]}") : (401, ""));
+            r.Route("GET /proxy/network/integration/v1/sites/s1/clients", _ => (200, "{\"data\":[{\"name\":\"tv\",\"ipAddress\":\"10.0.0.60\",\"macAddress\":\"aa:bb:cc:00:00:60\"}]}"));
+            r.Route("GET /proxy/network/integration/v1/sites/s1/devices", _ => (200, "{\"data\":[]}"));
+            var res = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "KEY1", "", default, kind: RouterKind.UniFi, webBase: r.Base);
+            if (res.Hosts.Count != 1 || res.Hosts["10.0.0.60"].Name != "tv") throw new Exception(res.Summary);
+            return res.Summary;
+        });
+
+        await T("OpenWrt (ubus)", async () =>
+        {
+            using var r = new FakeRouter();
+            r.Route("POST /ubus", c =>
+            {
+                if (c.Body.Contains("\"login\""))
+                    return (200, c.Body.Contains("\"geheim\"") ? "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":[0,{\"ubus_rpc_session\":\"S1\"}]}" : "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":[6]}");
+                if (c.Body.Contains("getHostHints"))
+                    return (200, "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":[0,{\"aa:bb:cc:00:00:70\":{\"ipaddrs\":[\"192.168.1.70\"],\"name\":\"nas\"},\"aa:bb:cc:00:00:71\":{\"ipaddrs\":[\"192.168.1.71\"]}}]}");
+                if (c.Body.Contains("getDHCPLeases"))
+                    return (200, "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":[0,{\"dhcp_leases\":[{\"hostname\":\"handy\",\"ipaddr\":\"192.168.1.72\",\"macaddr\":\"aa:bb:cc:00:00:72\"}]}]}");
+                return (200, "{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":[6]}");
+            });
+            var bad = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "falsch", "", default, kind: RouterKind.OpenWrt, webBase: r.Base);
+            if (!bad.Summary.Contains("abgelehnt")) throw new Exception("falsches Kennwort: " + bad.Summary);
+            var res = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "geheim", "", default, kind: RouterKind.OpenWrt, webBase: r.Base);
+            if (res.Hosts.Count != 3 || res.Hosts["192.168.1.70"].Name != "nas" || res.Hosts["192.168.1.72"].Name != "handy") throw new Exception(res.Summary);
+            return res.Summary;
+        });
+
+        await T("MikroTik (REST)", async () =>
+        {
+            using var r = new FakeRouter();
+            var auth = "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes("admin:geheim"));
+            (int, string) Guard(Ctx c, string ok) => c.Header("Authorization") == auth ? (200, ok) : (401, "{\"error\":401,\"message\":\"Unauthorized\"}");
+            r.Route("GET /rest/system/identity", c => Guard(c, "{\"name\":\"hEX\"}"));
+            r.Route("GET /rest/ip/dhcp-server/lease", c => Guard(c, "[{\"address\":\"192.168.88.10\",\"mac-address\":\"AA:BB:CC:00:00:10\",\"host-name\":\"pc\",\"status\":\"bound\"}]"));
+            r.Route("GET /rest/ip/arp", c => Guard(c, "[{\"address\":\"192.168.88.10\",\"mac-address\":\"AA:BB:CC:00:00:10\",\"complete\":\"true\"},{\"address\":\"192.168.88.11\",\"mac-address\":\"AA:BB:CC:00:00:11\",\"complete\":\"true\"}]"));
+            var none = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "", "", default, kind: RouterKind.MikroTik, webBase: r.Base);
+            if (!none.Summary.Contains("MikroTik erkannt")) throw new Exception("ohne Anmeldung: " + none.Summary);
+            var res = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "admin", "geheim", "", default, kind: RouterKind.MikroTik, webBase: r.Base);
+            if (res.Hosts.Count != 2 || res.Hosts["192.168.88.10"].Name != "pc") throw new Exception(res.Summary);
+            return res.Summary;
+        });
+
+        await T("Automatisch: keine falschen Treffer", async () =>
+        {
+            using var r = new FakeRouter();
+            r.Route("GET /", _ => (200, "<title>Irgendein Router</title>"));
+            var res = await RouterHosts.QueryAsync(System.Net.IPAddress.Loopback, "", "", "", default, tr064Port: 1, webBase: r.Base);
+            if (res.Notes.Count != 0 || res.Hosts.Count != 0) throw new Exception(res.Summary);
+            return "nichts erkannt (richtig)";
+        });
+
+        // Ubiquiti-Discovery: echte Antwort einer UNAS Pro (gekürzt)
+        await T("Ubiquiti-Discovery", () =>
+        {
+            byte[] Tlv(int t, byte[] v) => new[] { (byte)t, (byte)(v.Length >> 8), (byte)v.Length }.Concat(v).ToArray();
+            var body = Tlv(0x02, Convert.FromHexString("6c63f8100afd0a000006")).Concat(Tlv(0x01, Convert.FromHexString("6c63f8100afc")))
+                .Concat(Tlv(0x0B, Encoding.ASCII.GetBytes("UNAS-Pro"))).Concat(Tlv(0x06, Encoding.ASCII.GetBytes("UNAS Pro")))
+                .Concat(Tlv(0x0C, Encoding.ASCII.GetBytes("UNASPRO"))).Concat(Tlv(0x03, Encoding.ASCII.GetBytes("6.0.18"))).ToArray();
+            var pkt = new byte[] { 1, 0, (byte)(body.Length >> 8), (byte)body.Length }.Concat(body).ToArray();
+            var f = new DeviceFacts();
+            DeviceProbe.ParseUbiquiti(pkt, System.Net.IPAddress.Parse("10.0.0.6"), f);
+            if (NetUtil.FormatMac(f.Mac) != NetUtil.FormatMac(Convert.FromHexString("6c63f8100afd")) || f.Model != "UNAS Pro" || f.Firmware != "6.0.18")
+                throw new Exception($"{NetUtil.FormatMac(f.Mac)} {f.Model} {f.Firmware}");
+            return Task.FromResult($"{NetUtil.FormatMac(f.Mac)} · {f.Model} · {f.Firmware}");
+        });
+
+        // mDNS: nachgebauter Responder (Unicast) mit AirPlay- und iRobot-ähnlichen Einträgen
+        await T("mDNS (Unicast an Gerät)", async () =>
+        {
+            using var fake = new FakeMdns();
+            var f = new DeviceFacts();
+            await DeviceProbe.MdnsAsync(System.Net.IPAddress.Loopback, f, default, fake.Port);
+            if (f.Hostname != "Wohnzimmer.local" || NetUtil.FormatMac(f.Mac) != NetUtil.FormatMac(Convert.FromHexString("A4CF99112233"))
+                || f.Model != "AppleTV14,1" || f.Serial != "593D25BE3F" || !f.Services.Contains("airplay"))
+                throw new Exception($"{f.Hostname} {NetUtil.FormatMac(f.Mac)} {f.Model} {f.Serial} [{string.Join(",", f.Services)}]");
+            return $"{f.Hostname} · {NetUtil.FormatMac(f.Mac)} ({f.MacSource}) · {f.Model} · SN {f.Serial}";
+        });
+
+        await T("UPnP-Beschreibung", () =>
+        {
+            var d = new SsdpDevice();
+            SsdpDiscovery.ParseDescription(d, System.Xml.Linq.XDocument.Parse(
+                "<root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device><friendlyName>Küche</friendlyName><manufacturer>Sonos, Inc.</manufacturer>" +
+                "<modelName>Sonos One</modelName><modelNumber>S18</modelNumber><serialNum>48-A6-B8-11-22-33:4</serialNum><MACAddress>48:A6:B8:11:22:33</MACAddress>" +
+                "<UDN>uuid:RINCON_48A6B8112233</UDN></device></root>"));
+            var f = new DeviceFacts();
+            DeviceProbe.ApplySsdp(d, f);
+            if (f.Serial != "48-A6-B8-11-22-33:4" || NetUtil.FormatMac(f.Mac) != NetUtil.FormatMac(Convert.FromHexString("48A6B8112233")) || f.Model != "Sonos One S18")
+                throw new Exception($"{f.Serial} {NetUtil.FormatMac(f.Mac)} {f.Model}");
+            return Task.FromResult($"{f.Name} · {f.Model} · SN {f.Serial}");
+        });
+
+        await T("Modelltext und MAC aus Seriennummer", () =>
+        {
+            var a = NetworkScanner.ModelText("Loxone Electronics GmbH", "Loxone Miniserver Loxone Miniserver");
+            var b = NetworkScanner.ModelText("Synology Inc.", "DS412+");
+            var c = NetworkScanner.ModelText("HP", "HP LaserJet M203dw");
+            var d = NetworkScanner.ModelText("Hewlett Packard Enterprise", "iLO 5 in ProLiant ML350 Gen10");
+            if (a != "Loxone Miniserver" || b != "Synology DS412+" || c != "HP LaserJet M203dw" || d != "Hewlett Packard Enterprise iLO 5 in ProLiant ML350 Gen10")
+                throw new Exception($"{a} | {b} | {c} | {d}");
+            string mac = "";
+            if (OuiDatabase.Count > 0)
+            {
+                mac = NetUtil.FormatMac(NetworkScanner.MacFromId("0011321f7d4c", "Synology Inc."));
+                if (mac != NetUtil.FormatMac(Convert.FromHexString("0011321f7d4c"))) throw new Exception("Synology-MAC: " + mac);
+                if (NetworkScanner.MacFromId("0011321f7d4c", "Loxone") != null) throw new Exception("falscher Hersteller akzeptiert");
+            }
+            return Task.FromResult($"{a} · {b} · {c} · {mac}");
+        });
+
         return sb.ToString();
     }
+}
+
+/// <summary>Minimale FRITZ!Box für den Selbsttest: tr64desc.xml, Hosts-Dienst, HTTP-Digest (MD5, qop=auth).</summary>
+internal sealed class FakeFritzBox : IDisposable
+{
+    private readonly System.Net.HttpListener _listener = new();
+    private readonly bool _modern;
+    private readonly string _user, _pass;
+    private const string Realm = "F!Box SOAP-Auth", Nonce = "4F2A9C11D0E3B577";
+    public int Port { get; }
+
+    private static readonly (string Ip, string Mac, string Name, string Active)[] Entries =
+    {
+        ("192.168.178.20", "00:11:32:AA:BB:CC", "nas", "1"),
+        ("192.168.178.30", "B8:27:EB:01:02:03", "raspi", "1"),
+        ("192.168.178.30", "AA:AA:AA:AA:AA:AA", "altes-geraet", "0"),
+        ("", "11:22:33:44:55:66", "ohne-ip", "0"),
+    };
+
+    public FakeFritzBox(bool modern, string user, string pass)
+    {
+        _modern = modern; _user = user; _pass = pass;
+        var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        probe.Start(); Port = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port; probe.Stop();
+        _listener.Prefixes.Add($"http://127.0.0.1:{Port}/");
+        _listener.Start();
+        _ = Task.Run(Loop);
+    }
+
+    private async Task Loop()
+    {
+        while (_listener.IsListening)
+        {
+            System.Net.HttpListenerContext c;
+            try { c = await _listener.GetContextAsync(); } catch { return; }
+            try { Handle(c); } catch { c.Response.StatusCode = 500; }
+            try { c.Response.Close(); } catch { }
+        }
+    }
+
+    private void Write(System.Net.HttpListenerContext c, string body, int status = 200)
+    {
+        c.Response.StatusCode = status;
+        c.Response.ContentType = "text/xml";
+        var b = Encoding.UTF8.GetBytes(body);
+        c.Response.OutputStream.Write(b, 0, b.Length);
+    }
+
+    private static string Md5(string s) =>
+        Convert.ToHexString(System.Security.Cryptography.MD5.HashData(Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
+
+    private bool Authorized(System.Net.HttpListenerContext c)
+    {
+        var h = c.Request.Headers["Authorization"] ?? "";
+        if (!h.StartsWith("Digest ")) return false;
+        var p = System.Text.RegularExpressions.Regex.Matches(h, @"(\w+)=(?:""([^""]*)""|([^,\s]+))")
+            .ToDictionary(m => m.Groups[1].Value, m => m.Groups[2].Success ? m.Groups[2].Value : m.Groups[3].Value);
+        if (p.GetValueOrDefault("username") != _user) return false;
+        var ha1 = Md5($"{_user}:{Realm}:{_pass}");
+        var ha2 = Md5($"{c.Request.HttpMethod}:{p.GetValueOrDefault("uri")}");
+        var expect = Md5($"{ha1}:{Nonce}:{p.GetValueOrDefault("nc")}:{p.GetValueOrDefault("cnonce")}:{p.GetValueOrDefault("qop")}:{ha2}");
+        return p.GetValueOrDefault("response") == expect;
+    }
+
+    private void Handle(System.Net.HttpListenerContext c)
+    {
+        var path = c.Request.Url!.AbsolutePath;
+        if (path == "/tr64desc.xml")
+        {
+            Write(c, "<?xml version=\"1.0\"?><root xmlns=\"urn:dslforum-org:device-1-0\"><device><modelName>FRITZ!Box Test</modelName><serviceList>" +
+                     "<service><serviceType>urn:dslforum-org:service:Hosts:1</serviceType><controlURL>/upnp/control/hosts</controlURL></service>" +
+                     "</serviceList></device></root>");
+            return;
+        }
+        if (path == "/devicehostlist.lua")
+        {
+            if (c.Request.QueryString["sid"] != "abc123") { Write(c, "", 403); return; }
+            var items = string.Join("", Entries.Select((e, i) =>
+                $"<Item><Index>{i + 1}</Index><IPAddress>{e.Ip}</IPAddress><MACAddress>{e.Mac}</MACAddress><Active>{e.Active}</Active><HostName>{e.Name}</HostName></Item>"));
+            Write(c, $"<?xml version=\"1.0\"?><List>{items}</List>");
+            return;
+        }
+        if (path != "/upnp/control/hosts") { Write(c, "", 404); return; }
+
+        // Wie die FRITZ!Box: ohne gültige Digest-Anmeldung 401 mit Aufforderung
+        if (!Authorized(c))
+        {
+            c.Response.AddHeader("WWW-Authenticate", $"Digest realm=\"{Realm}\", nonce=\"{Nonce}\", algorithm=MD5, qop=\"auth\"");
+            Write(c, "", 401);
+            return;
+        }
+        var action = (c.Request.Headers["SOAPAction"] ?? "").Trim('"').Split('#').Last();
+        var body = new StreamReader(c.Request.InputStream).ReadToEnd();
+        string Resp(string inner) => "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>" +
+                                     $"<u:{action}Response xmlns:u=\"urn:dslforum-org:service:Hosts:1\">{inner}</u:{action}Response></s:Body></s:Envelope>";
+        switch (action)
+        {
+            case "X_AVM-DE_GetHostListPath" when _modern:
+                Write(c, Resp("<NewX_AVM-DE_HostListPath>/devicehostlist.lua?sid=abc123</NewX_AVM-DE_HostListPath>"));
+                break;
+            case "GetHostNumberOfEntries":
+                Write(c, Resp($"<NewHostNumberOfEntries>{Entries.Length}</NewHostNumberOfEntries>"));
+                break;
+            case "GetGenericHostEntry":
+                var idx = int.Parse(System.Text.RegularExpressions.Regex.Match(body, @"<NewIndex>(\d+)</NewIndex>").Groups[1].Value);
+                var e = Entries[idx];
+                Write(c, Resp($"<NewIPAddress>{e.Ip}</NewIPAddress><NewAddressSource>DHCP</NewAddressSource><NewLeaseTimeRemaining>0</NewLeaseTimeRemaining>" +
+                              $"<NewMACAddress>{e.Mac}</NewMACAddress><NewInterfaceType>Ethernet</NewInterfaceType><NewActive>{e.Active}</NewActive><NewHostName>{e.Name}</NewHostName>"));
+                break;
+            default: // unbekannte Aktion wie bei älteren FRITZ!OS-Versionen
+                Write(c, "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body><s:Fault><faultcode>s:Client</faultcode>" +
+                         "<faultstring>UPnPError</faultstring><detail><UPnPError xmlns=\"urn:dslforum-org:control-1-0\"><errorCode>401</errorCode>" +
+                         "<errorDescription>Invalid Action</errorDescription></UPnPError></detail></s:Fault></s:Body></s:Envelope>", 500);
+                break;
+        }
+    }
+
+    public void Dispose() { try { _listener.Stop(); _listener.Close(); } catch { } }
+}
+
+/// <summary>Anfrage an <see cref="FakeRouter"/>.</summary>
+internal sealed class Ctx(System.Net.HttpListenerRequest req, string body)
+{
+    public string Body { get; } = body;
+    public string Header(string n) => req.Headers[n] ?? "";
+}
+
+/// <summary>Kleiner HTTP-Server mit festen Antworten für die Router-API-Tests.</summary>
+internal sealed class FakeRouter : IDisposable
+{
+    private readonly System.Net.HttpListener _l = new();
+    private readonly Dictionary<string, Func<Ctx, (int Status, string Body, Dictionary<string, string> Headers)>> _routes = new();
+    public string Base { get; }
+
+    public FakeRouter()
+    {
+        var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        probe.Start(); var port = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port; probe.Stop();
+        Base = $"http://127.0.0.1:{port}";
+        _l.Prefixes.Add(Base + "/");
+        _l.Start();
+        _ = Task.Run(async () =>
+        {
+            while (_l.IsListening)
+            {
+                System.Net.HttpListenerContext c;
+                try { c = await _l.GetContextAsync(); } catch { return; }
+                try
+                {
+                    var body = new StreamReader(c.Request.InputStream).ReadToEnd();
+                    var key = c.Request.HttpMethod + " " + c.Request.Url!.AbsolutePath;
+                    var (status, text, headers) = _routes.TryGetValue(key, out var f) ? f(new Ctx(c.Request, body)) : (404, "not found", null);
+                    c.Response.StatusCode = status;
+                    foreach (var (k, v) in headers ?? new()) c.Response.AddHeader(k, v);
+                    var b = Encoding.UTF8.GetBytes(text);
+                    c.Response.OutputStream.Write(b, 0, b.Length);
+                }
+                catch { c.Response.StatusCode = 500; }
+                try { c.Response.Close(); } catch { }
+            }
+        });
+    }
+
+    public void Route(string key, Func<Ctx, (int, string, Dictionary<string, string>)> f) => _routes[key] = f;
+    public void Route(string key, Func<Ctx, (int, string)> f) => _routes[key] = c => { var (s, b) = f(c); return (s, b, null); };
+    public void Dispose() { try { _l.Stop(); _l.Close(); } catch { } }
+}
+
+/// <summary>mDNS-Responder für den Test: beantwortet Unicast-Anfragen wie ein Apple TV (Port 5353 → beliebiger Port).</summary>
+internal sealed class FakeMdns : IDisposable
+{
+    private readonly System.Net.Sockets.UdpClient _u = new(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+    public int Port => ((System.Net.IPEndPoint)_u.Client.LocalEndPoint!).Port;
+
+    public FakeMdns() => _ = Task.Run(Loop);
+
+    private async Task Loop()
+    {
+        while (true)
+        {
+            System.Net.Sockets.UdpReceiveResult r;
+            try { r = await _u.ReceiveAsync(); } catch { return; }
+            var q = r.Buffer;
+            int p = 12;
+            var labels = new List<string>();
+            while (q[p] != 0) { labels.Add(Encoding.UTF8.GetString(q, p + 1, q[p])); p += q[p] + 1; }
+            var name = string.Join(".", labels);
+            int type = q[p + 1] << 8 | q[p + 2];
+            var answers = new List<byte[]>();
+            byte[] N(string n) => n.Split('.').SelectMany(l => new[] { (byte)Encoding.UTF8.GetByteCount(l) }.Concat(Encoding.UTF8.GetBytes(l))).Concat(new byte[] { 0 }).ToArray();
+            byte[] RR(string owner, int t, byte[] data) => N(owner).Concat(new byte[] { (byte)(t >> 8), (byte)t, 0x80, 1, 0, 0, 0, 120, (byte)(data.Length >> 8), (byte)data.Length }).Concat(data).ToArray();
+            byte[] Txt(params string[] kv) => kv.SelectMany(s => new[] { (byte)Encoding.UTF8.GetByteCount(s) }.Concat(Encoding.UTF8.GetBytes(s))).ToArray();
+            const string air = "Wohnzimmer._airplay._tcp.local", raop = "A4CF99112233@Wohnzimmer._raop._tcp.local";
+            if (name == "1.0.0.127.in-addr.arpa") answers.Add(RR(name, 12, N("Wohnzimmer.local")));
+            else if (name == "_services._dns-sd._udp.local")
+            {
+                answers.Add(RR(name, 12, N("_airplay._tcp.local")));
+                answers.Add(RR(name, 12, N("_raop._tcp.local")));
+                answers.Add(RR(name, 12, N("_amzn-alexa._tcp.local")));
+            }
+            else if (name == "_airplay._tcp.local")
+            {
+                answers.Add(RR(name, 12, N(air)));
+                answers.Add(RR(air, 16, Txt("deviceid=A4:CF:99:11:22:33", "model=AppleTV14,1", "srcvers=770.8.1")));
+            }
+            else if (name == "_raop._tcp.local") answers.Add(RR(name, 12, N(raop)));
+            else if (name == raop && type == 16) answers.Add(RR(raop, 16, Txt("am=AppleTV14,1")));
+            else if (name == "_amzn-alexa._tcp.local")
+            {
+                answers.Add(RR(name, 12, N("Roboter._amzn-alexa._tcp.local")));
+                answers.Add(RR("Roboter._amzn-alexa._tcp.local", 16, Txt("version=1", "dsn=593D25BE3F")));
+            }
+            if (answers.Count == 0) continue;
+            var head = new byte[] { q[0], q[1], 0x84, 0, 0, 0, 0, (byte)answers.Count, 0, 0, 0, 0 };
+            var resp = head.Concat(answers.SelectMany(a => a)).ToArray();
+            await _u.SendAsync(resp, resp.Length, r.RemoteEndPoint);
+        }
+    }
+
+    public void Dispose() => _u.Dispose();
 }

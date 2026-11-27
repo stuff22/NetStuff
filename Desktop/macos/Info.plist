@@ -31,6 +31,6 @@
     <key>NSLocationUsageDescription</key>
     <string>Net-Stuff braucht den Standortzugriff, um WLAN-Namen (SSID) und Access-Point-Adressen (BSSID) anzuzeigen. Der Standort selbst wird nicht verwendet.</string>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Net-Stuff braucht Zugriff auf das lokale Netzwerk, um Geräte, IP- und MAC-Adressen in deinem Netz zu finden und anzuzeigen.</string>
+    <string>Net-Stuff braucht Zugriff auf das lokale Netzwerk, um Geräte, IP- und MAC-Adressen, Modelle und Seriennummern in deinem Netz zu finden und anzuzeigen (u. a. über Bonjour/mDNS und UPnP).</string>
 </dict>
 </plist>
