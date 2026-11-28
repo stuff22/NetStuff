@@ -1,6 +1,8 @@
 using CoreGraphics;
 using Foundation;
+using PhotosUI;
 using UIKit;
+using UniformTypeIdentifiers;
 using UserNotifications;
 
 namespace NetStuff.iOS;
@@ -15,6 +17,55 @@ internal static class IosPlatform
     {
         NetStuff.Platform.Notifier = new IosNotifier();
         NetStuff.Platform.UrlOpener = Open;
+        NetStuff.Platform.PhotoPicker = PickPhoto;
+    }
+
+    /// <summary>
+    /// Foto aus der Mediathek als Originaldatei (PHPicker, ohne Umwandlung – HEIC bleibt HEIC, Metadaten bleiben erhalten).
+    /// Braucht keinen Zugriff auf die ganze Mediathek; der Nutzer wählt genau ein Bild.
+    /// </summary>
+    private static Task<(byte[] Data, string Name)?> PickPhoto()
+    {
+        var tcs = new TaskCompletionSource<(byte[] Data, string Name)?>();
+        UIApplication.SharedApplication.InvokeOnMainThread(() =>
+        {
+            var root = TopController();
+            if (root == null) { tcs.TrySetResult(null); return; }
+            var config = new PHPickerConfiguration
+            {
+                SelectionLimit = 1,
+                Filter = PHPickerFilter.ImagesFilter,
+                PreferredAssetRepresentationMode = PHPickerConfigurationAssetRepresentationMode.Current,
+            };
+            var picker = new PHPickerViewController(config) { Delegate = new PhotoPickerDelegate(tcs) };
+            root.PresentViewController(picker, true, null);
+        });
+        return tcs.Task;
+    }
+
+    private sealed class PhotoPickerDelegate(TaskCompletionSource<(byte[] Data, string Name)?> tcs) : PHPickerViewControllerDelegate
+    {
+        public override void DidFinishPicking(PHPickerViewController picker, PHPickerResult[] results)
+        {
+            picker.DismissViewController(true, null);
+            if (results.Length == 0) { tcs.TrySetResult(null); return; }
+            var provider = results[0].ItemProvider;
+            // Ursprünglicher Bildtyp (HEIC, JPEG, DNG …), nicht eine umgewandelte Fassung
+            var type = provider.RegisteredTypeIdentifiers.FirstOrDefault(t => UTType.CreateFromIdentifier(t)?.ConformsTo(UTTypes.Image) == true)
+                       ?? UTTypes.Image.Identifier;
+            provider.LoadFileRepresentation(type, (url, error) =>
+            {
+                // Die Datei existiert nur bis zum Ende dieses Aufrufs – sofort einlesen
+                try
+                {
+                    if (url == null) { tcs.TrySetException(new IOException(error?.LocalizedDescription ?? "Foto nicht lesbar")); return; }
+                    var data = File.ReadAllBytes(url.Path!);
+                    var name = url.LastPathComponent ?? (provider.SuggestedName ?? "foto");
+                    tcs.TrySetResult((data, name));
+                }
+                catch (Exception ex) { tcs.TrySetException(ex); }
+            });
+        }
     }
 
     /// <summary>Webadressen in Safari öffnen, lokale Dateien (Berichte, PDF, CSV) über den Teilen-Dialog anbieten.</summary>

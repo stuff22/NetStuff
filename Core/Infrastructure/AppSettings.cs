@@ -25,6 +25,7 @@ public class AppSettings
     public string ScanSnmpCommunity { get; set; } = "";
     public string ScanRouterKind { get; set; } = "Auto";
     public bool ScanDeviceProbes { get; set; } = true;
+    public bool ScanOptionsExpanded { get; set; } = true;
 
     public static AppSettings Current => _current ??= Load();
 

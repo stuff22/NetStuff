@@ -76,6 +76,12 @@ public static class Platform
     /// <summary>Öffnet eine URL oder Datei (Standard: Shell; iOS: Safari bzw. Teilen-Dialog für Dateien).</summary>
     public static Action<string> UrlOpener { get; set; }
 
+    /// <summary>
+    /// Foto aus der Mediathek als Originaldatei (iOS: PHPicker – mit Standort, sofern der Nutzer ihn im Auswahldialog nicht abwählt).
+    /// null = nicht verfügbar; Rückgabe null = abgebrochen.
+    /// </summary>
+    public static Func<Task<(byte[] Data, string Name)?>> PhotoPicker { get; set; }
+
     public static bool HasArp => Arp != null;
     public static bool HasLldp => Lldp != null;
 }

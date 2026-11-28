@@ -43,6 +43,7 @@ public static class Tools
         new("sitecopy", "Website-Kopierer", "Web", () => new SiteCopyView()),
 
         new("diskusage", "Speicher-Checker", "System", () => new DiskUsageView()),
+        new("exif", "Exif-Checker", "System", () => new ExifView()),
 
         new("settings", "Einstellungen", "App", () => new SettingsView()),
     };

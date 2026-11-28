@@ -37,8 +37,14 @@ public partial class NetScanView : ToolView
         RouterUserBox.Text = cfg.ScanRouterUser;
         RouterPassBox.Text = _routerPassword;
         CommunityBox.Text = cfg.ScanSnmpCommunity;
-        // Auf iOS gibt es keine ARP-Tabelle – dort ist der Router die einzige Quelle für MAC-Adressen
-        RouterExpander.IsExpanded = !Platform.HasArp;
+        // Offen, bis der Nutzer den Bereich zuklappt (Zustand wird gemerkt)
+        RouterExpander.IsExpanded = cfg.ScanOptionsExpanded;
+        RouterExpander.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != Avalonia.Controls.Expander.IsExpandedProperty) return;
+            AppSettings.Current.ScanOptionsExpanded = RouterExpander.IsExpanded;
+            AppSettings.Current.Save();
+        };
         Loaded += async (_, _) =>
         {
             if (!Platform.HasArp) StatusText.Text = L.T("Hinweis: Dieses System gibt keine MAC-Adressen heraus – sie werden beim Router erfragt.");

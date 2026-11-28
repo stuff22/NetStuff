@@ -1,0 +1,49 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            xmlns:c="using:NetStuff.Ui.Controls"
+            x:Class="NetStuff.Ui.Views.ExifView">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Exif-Checker'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Zeigt, was ein Foto verrät: Aufnahmeort (GPS), Kamera und Seriennummern, Namen, Aufnahmezeit und Bearbeitung (EXIF, XMP, IPTC). Auf Wunsch eine Kopie ohne Metadaten speichern.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card" x:Name="DropZone">
+            <StackPanel Spacing="8">
+                <WrapPanel>
+                    <Button x:Name="PhotoButton" Classes="accent" Content="{l:T 'Foto auswählen'}" Click="Photo_Click" Margin="0,0,8,6" />
+                    <Button x:Name="FileButton" Content="{l:T 'Datei öffnen'}" Click="File_Click" Margin="0,0,16,6" />
+                    <TextBlock x:Name="DropHint" Classes="Status" VerticalAlignment="Center" Margin="0,0,0,6"
+                               Text="{l:T 'oder Bild hierher ziehen'}" />
+                </WrapPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox x:Name="UrlBox" Watermark="{l:T 'oder Bildadresse, z. B. https://example.com/foto.jpg'}" KeyDown="UrlBox_KeyDown" />
+                    <Button Grid.Column="1" x:Name="CheckButton" Content="{l:T 'Laden'}" Click="Url_Click" Margin="8,0,0,0" />
+                </Grid>
+                <TextBlock x:Name="StatusText" Classes="Status" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2" x:Name="PreviewRow" ColumnDefinitions="Auto,*" IsVisible="False" Margin="0,0,0,10">
+            <Border Classes="Card" Margin="0,0,10,0" Padding="6" x:Name="PreviewCard">
+                <Image x:Name="Preview" MaxHeight="220" MaxWidth="300" Stretch="Uniform" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="8">
+                <TextBlock x:Name="SummaryText" TextWrapping="Wrap" FontWeight="SemiBold" />
+                <WrapPanel>
+                    <Button x:Name="StripButton" Content="{l:T 'Kopie ohne Metadaten speichern'}" Click="Strip_Click" Margin="0,0,8,6" />
+                    <Button x:Name="MapButton" Content="{l:T 'In OpenStreetMap öffnen'}" Click="Map_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" Margin="0,0,8,6" />
+                </WrapPanel>
+                <Border x:Name="MapCard" Classes="Card" Margin="0" Padding="0" Height="220" ClipToBounds="True" IsVisible="False">
+                    <c:WorldMap x:Name="Map" SinglePointZoom="15" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="3">
+            <StackPanel x:Name="ResultsPanel" />
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

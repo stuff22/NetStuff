@@ -713,6 +713,40 @@ public static class CoreSelfTest
             return Task.FromResult($"{a} · {b} · {c} · {mac}");
         });
 
+        // Exif-Checker: Foto mit GPS, Namen, Seriennummer und Ausrichtung → erkennen, Metadaten entfernen, Ausrichtung behalten
+        await T("Exif-Checker (JPEG mit GPS)", () =>
+        {
+            var jpeg = TestImages.JpegWithExif();
+            var r = ExifChecker.Analyze(jpeg, "foto.jpg");
+            string Item(string name) => r.Sections.SelectMany(s => s.Items).FirstOrDefault(i => i.Name == L.T(name))?.Value ?? "";
+            if (!r.HasLocation || Math.Abs(r.Latitude!.Value - 48.208333) > 0.0001 || Math.Abs(r.Longitude!.Value - 16.370833) > 0.0001)
+                throw new Exception($"Standort: {r.Latitude} {r.Longitude}");
+            if (!Item("Namen").Contains("Max Muster") || !Item("Seriennummern").Contains("123456789") || Item("Kamera") != "Canon EOS R6")
+                throw new Exception($"Namen={Item("Namen")} SN={Item("Seriennummern")} Kamera={Item("Kamera")}");
+            if (r.Sections[0].Items[0].Level != Level.Bad) throw new Exception("Gesamturteil nicht rot");
+
+            var clean = ExifChecker.StripMetadata(jpeg);
+            var c = ExifChecker.Analyze(clean, "foto.jpg");
+            if (c.HasLocation || c.Sections.SelectMany(s => s.Items).Any(i => i.Value.Contains("Max Muster") || i.Value.Contains("123456789")))
+                throw new Exception("nach dem Entfernen noch Metadaten vorhanden");
+            var orient = c.Sections.SelectMany(s => s.Items).FirstOrDefault(i => i.Name == L.T("Ausrichtung"))?.Value ?? "";
+            if (orient != L.T("um 90° im Uhrzeigersinn gedreht")) throw new Exception("Ausrichtung verloren: " + orient);
+            if (clean[^2] != 0xFF || clean[^1] != 0xD9 || clean.Length >= jpeg.Length) throw new Exception("JPEG-Struktur");
+            return Task.FromResult($"{r.TagCount} Einträge → {c.TagCount}; Standort {r.Latitude:0.0000}, {r.Longitude:0.0000}; Ausrichtung „{orient}“ erhalten");
+        });
+
+        await T("Exif-Checker (PNG)", () =>
+        {
+            var png = TestImages.PngWithText();
+            var r = ExifChecker.Analyze(png, "bild.png");
+            if (!r.Sections.Last().Items.Any(i => i.Value.Contains("Erika Beispiel"))) throw new Exception("tEXt nicht erkannt");
+            var clean = ExifChecker.StripMetadata(png);
+            var c = ExifChecker.Analyze(clean, "bild.png");
+            if (c.Sections.Last().Items.Any(i => i.Value.Contains("Erika Beispiel"))) throw new Exception("tEXt nicht entfernt");
+            if (ExifChecker.StripMetadata(Encoding.ASCII.GetBytes("....ftypheic........")) != null) throw new Exception("HEIC sollte nicht unterstützt sein");
+            return Task.FromResult($"{png.Length} → {clean.Length} Bytes");
+        });
+
         return sb.ToString();
     }
 }
@@ -935,4 +969,90 @@ internal sealed class FakeMdns : IDisposable
     }
 
     public void Dispose() => _u.Dispose();
+}
+
+/// <summary>Testbilder für den Exif-Checker (synthetisch, damit der Test überall gleich läuft).</summary>
+public static class TestImages
+{
+    // 8×8-JPEG ohne Metadaten (mit sips erzeugt)
+    private const string CleanJpeg = "/9j/4AAQSkZJRgABAQAASABIAAD/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9sAQwAJCQkJCQkQCQkQFhAQEBYeFhYWFh4mHh4eHh4mLiYmJiYmJi4uLi4uLi4uNzc3Nzc3QEBAQEBISEhISEhISEhI/9sAQwELDAwSERIfEREfSzMqM0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tL/90ABAAB/9oADAMBAAIRAxEAPwDN03w30+Wtz/hG/wDZrb03tW5XPWxlXmepWW4+t7COp//Z";
+
+    private record E(ushort Tag, ushort Type, int Count, byte[] Data);
+    private static E Ascii(ushort tag, string v) { var b = Encoding.ASCII.GetBytes(v + "\0"); return new(tag, 2, b.Length, b); }
+    private static E Short(ushort tag, int v) => new(tag, 3, 1, new[] { (byte)(v >> 8), (byte)v });
+    private static E Long(ushort tag, uint v) => new(tag, 4, 1, BitConverter.GetBytes(v).Reverse().ToArray());
+    private static E Rationals(ushort tag, params (uint N, uint D)[] v) =>
+        new(tag, 5, v.Length, v.SelectMany(x => BitConverter.GetBytes(x.N).Reverse().Concat(BitConverter.GetBytes(x.D).Reverse())).ToArray());
+
+    /// <summary>TIFF (Big Endian) mit IFD0, Exif-IFD und GPS-IFD; Zeiger werden hier eingesetzt.</summary>
+    private static byte[] Tiff(List<E> ifd0, List<E> exif, List<E> gps)
+    {
+        int Size(List<E> l) => 2 + l.Count * 12 + 4 + l.Where(e => e.Data.Length > 4).Sum(e => e.Data.Length + (e.Data.Length & 1));
+        ifd0.Add(Long(0x8769, 0)); ifd0.Add(Long(0x8825, 0));
+        int o0 = 8, oExif = o0 + Size(ifd0), oGps = oExif + Size(exif);
+        ifd0[^2] = Long(0x8769, (uint)oExif); ifd0[^1] = Long(0x8825, (uint)oGps);
+        var outp = new List<byte> { (byte)'M', (byte)'M', 0, 42, 0, 0, 0, 8 };
+        void Write(List<E> l, int start)
+        {
+            var sorted = l.OrderBy(e => e.Tag).ToList();
+            int data = start + 2 + sorted.Count * 12 + 4;
+            var extra = new List<byte>();
+            outp.Add((byte)(sorted.Count >> 8)); outp.Add((byte)sorted.Count);
+            foreach (var e in sorted)
+            {
+                outp.AddRange(new[] { (byte)(e.Tag >> 8), (byte)e.Tag, (byte)(e.Type >> 8), (byte)e.Type });
+                outp.AddRange(BitConverter.GetBytes((uint)e.Count).Reverse());
+                if (e.Data.Length <= 4) outp.AddRange(e.Data.Concat(new byte[4 - e.Data.Length]));
+                else
+                {
+                    outp.AddRange(BitConverter.GetBytes((uint)(data + extra.Count)).Reverse());
+                    extra.AddRange(e.Data);
+                    if ((e.Data.Length & 1) == 1) extra.Add(0);
+                }
+            }
+            outp.AddRange(new byte[4]);
+            outp.AddRange(extra);
+        }
+        Write(ifd0, o0); Write(exif, oExif); Write(gps, oGps);
+        return outp.ToArray();
+    }
+
+    public static byte[] JpegWithExif()
+    {
+        var tiff = Tiff(
+            new() { Ascii(0x010F, "Canon"), Ascii(0x0110, "Canon EOS R6"), Short(0x0112, 6), Ascii(0x013B, "Max Muster"), Ascii(0x0131, "Lightroom 12.0") },
+            new() { Ascii(0x9003, "2026:11:20 14:30:00"), Ascii(0xA431, "123456789") },
+            new() { Ascii(0x0001, "N"), Rationals(0x0002, (48, 1), (12, 1), (30, 1)), Ascii(0x0003, "E"), Rationals(0x0004, (16, 1), (22, 1), (15, 1)) });
+        var payload = Encoding.ASCII.GetBytes("Exif\0\0").Concat(tiff).ToArray();
+        int len = payload.Length + 2;
+        var app1 = new byte[] { 0xFF, 0xE1, (byte)(len >> 8), (byte)len }.Concat(payload);
+        var clean = Convert.FromBase64String(CleanJpeg);
+        return clean.Take(2).Concat(app1).Concat(clean.Skip(2)).ToArray();
+    }
+
+    private static uint Crc32(byte[] b)
+    {
+        uint c = 0xFFFFFFFF;
+        foreach (var x in b)
+        {
+            c ^= x;
+            for (int k = 0; k < 8; k++) c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+        }
+        return ~c;
+    }
+
+    public static byte[] PngWithText()
+    {
+        byte[] Chunk(string type, byte[] data)
+        {
+            var t = Encoding.ASCII.GetBytes(type);
+            var crc = BitConverter.GetBytes(Crc32(t.Concat(data).ToArray())).Reverse().ToArray();
+            return BitConverter.GetBytes((uint)data.Length).Reverse().Concat(t).Concat(data).Concat(crc).ToArray();
+        }
+        var ihdr = new byte[] { 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0, 0, 0 };
+        var idat = new byte[] { 0x78, 0x9C, 0x63, 0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01 };
+        return new byte[] { 0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A }
+            .Concat(Chunk("IHDR", ihdr)).Concat(Chunk("tEXt", Encoding.Latin1.GetBytes("Author\0Erika Beispiel")))
+            .Concat(Chunk("IDAT", idat)).Concat(Chunk("IEND", Array.Empty<byte>())).ToArray();
+    }
 }

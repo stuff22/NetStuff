@@ -34,6 +34,9 @@ public class WorldMap : Control
     private Point _dragCenter;
     private MapPoint _hover;
 
+    /// <summary>Zoomstufe bei nur einem Punkt (Traceroute: Land/Region, Exif: Straße).</summary>
+    public int SinglePointZoom { get; set; } = 8;
+
     public WorldMap()
     {
         ClipToBounds = true;
@@ -87,7 +90,7 @@ public class WorldMap : Control
             double dx = ps.Max(p => p.X) - ps.Min(p => p.X), dy = ps.Max(p => p.Y) - ps.Min(p => p.Y);
             if (dx <= w - 100 && dy <= h - 100) { zoom = z; break; }
         }
-        if (_points.Select(p => (p.Lat, p.Lon)).Distinct().Count() == 1) zoom = Math.Min(zoom, 8);
+        if (_points.Select(p => (p.Lat, p.Lon)).Distinct().Count() == 1) zoom = SinglePointZoom;
         _zoom = zoom;
         var all = _points.Select(p => Project(p.Lat, p.Lon, _zoom)).ToList();
         _center = new Point((all.Min(p => p.X) + all.Max(p => p.X)) / 2, (all.Min(p => p.Y) + all.Max(p => p.Y)) / 2);

@@ -22,6 +22,21 @@ if (Array.IndexOf(args, "--scan") is var si and >= 0 && si + 1 < args.Length)
     return 0;
 }
 
+// Testfoto mit GPS, Namen und Seriennummer schreiben (für Simulator/Mac): --make-test-jpeg datei.jpg
+if (Array.IndexOf(args, "--make-test-jpeg") is var mi and >= 0 && mi + 1 < args.Length)
+{
+    File.WriteAllBytes(args[mi + 1], TestImages.JpegWithExif());
+    return 0;
+}
+
+// Exif einer Datei anzeigen: dotnet run --project CoreTests -- --exif foto.heic
+if (Array.IndexOf(args, "--exif") is var ei and >= 0 && ei + 1 < args.Length)
+{
+    var r = NetStuff.Services.ExifChecker.Analyze(File.ReadAllBytes(args[ei + 1]), Path.GetFileName(args[ei + 1]));
+    foreach (var sec in r.Sections) Console.Write(sec.ToText());
+    return 0;
+}
+
 var result = await CoreSelfTest.RunAsync(args.Contains("--live"), Console.WriteLine);
 var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 int pass = lines.Count(l => l.StartsWith("PASS")), fail = lines.Count(l => l.StartsWith("FAIL"));
