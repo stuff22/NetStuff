@@ -11,7 +11,7 @@
     <RootNamespace>NetStuff</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\netstuff.ico</ApplicationIcon>
-    <Version>1.1.6</Version>
+    <Version>1.1.7</Version>
     <Product>Net-Stuff</Product>
     <AssemblyTitle>Net-Stuff</AssemblyTitle>
     <Description>Das Schweizer Taschenmesser für Netzwerktechniker</Description>
