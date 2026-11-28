@@ -1,0 +1,41 @@
+<infra:ToolPage x:Class="NetStuff.Pages.ExifPage"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                xmlns:infra="clr-namespace:NetStuff.Infrastructure"
+                AllowDrop="True" Drop="Page_Drop" DragOver="Page_DragOver">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="Exif-Checker" Style="{StaticResource PageTitle}" />
+            <TextBlock Text="Liest alle Metadaten eines Fotos oder Videos (EXIF, GPS, XMP, IPTC, Herstellerdaten) und erklärt sie verständlich: Kamera, Belichtung, Zeit, Aufnahmeort, Bearbeitung und KI-Herkunft – und was das Bild beim Weitergeben über Sie verrät." Style="{StaticResource PageSubtitle}" />
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Foto, Bild oder Video (Datei oder Web-Adresse)" Style="{StaticResource Label}" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBox x:Name="TargetBox" Width="560" PlaceholderText="Datei wählen, hierher ziehen oder https://… eingeben" KeyDown="TargetBox_KeyDown" />
+                    </StackPanel>
+                    <WrapPanel Margin="0,8,0,0">
+                        <ui:Button x:Name="CheckButton" Content="Auswerten" Style="{StaticResource PrimaryButton}" Click="Check_Click" Margin="0,0,8,6" />
+                        <ui:Button Content="Datei öffnen" Click="Open_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button Content="Beispiel" Click="Sample_Click" Margin="0,0,8,6" Height="34" />
+                        <ui:Button x:Name="StripButton" Content="Kopie ohne Metadaten" Click="Strip_Click" Margin="0,0,8,6" Height="34" IsEnabled="False" />
+                        <ui:Button x:Name="MapButton" Content="Karte öffnen" Click="Map_Click" Margin="0,0,8,6" Height="34" Visibility="Collapsed" />
+                        <ui:Button Content="Kopieren" Click="Copy_Click" Margin="0,0,16,6" Height="34" />
+                        <CheckBox x:Name="GeoBox" Content="Adresse zum Aufnahmeort ermitteln (OpenStreetMap)" VerticalAlignment="Center" Margin="0,0,0,6" />
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
+                               Text="Tipp: Fotos einfach auf dieses Fenster ziehen. Unterstützt JPEG, HEIC, PNG, WebP, TIFF, RAW (DNG, CR2/CR3, NEF, ARW …) sowie MP4/MOV." />
+                </StackPanel>
+            </Border>
+            <TextBlock x:Name="StatusText" Style="{StaticResource Muted}" Margin="0,0,0,8" TextWrapping="Wrap" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border x:Name="PreviewCard" Style="{StaticResource Card}" Visibility="Collapsed" HorizontalAlignment="Left">
+                    <Image x:Name="Preview" MaxHeight="220" MaxWidth="360" Stretch="Uniform" />
+                </Border>
+                <StackPanel x:Name="ResultsPanel" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</infra:ToolPage>

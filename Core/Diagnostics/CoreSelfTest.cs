@@ -128,6 +128,32 @@ public static class CoreSelfTest
             return $"{sink.Sections.Count} Abschnitte · {hops.Count} Stationen · {verdict.Value[..Math.Min(40, verdict.Value.Length)]} …";
         });
 
+        // Exif-Checker (Beispielfoto, Metadaten entfernen bei gedrehtem Bild)
+        await T("Exif-Checker", async () =>
+        {
+            var sample = ExifAnalyzer.Sample();
+            var sink = new CheckCollector();
+            var r = await ExifAnalyzer.AnalyzeAsync(() => new MemoryStream(sample), ExifAnalyzer.SampleName, sample.Length, sink, geocode: false);
+            if (r.Latitude is not { } lat || Math.Abs(lat - 48.2085) > 0.001 || r.Longitude is not { } lon || Math.Abs(lon - 16.3731) > 0.001)
+                throw new Exception($"GPS falsch: {r.Latitude}, {r.Longitude}");
+            var items = sink.AllItems.ToList();
+            if (!items.Any(i => i.Value.Contains("Canon EOS R6"))) throw new Exception("Kamera fehlt");
+            if (!items.Any(i => i.Value.StartsWith("1/250 s"))) throw new Exception("Belichtungszeit fehlt");
+            if (!items.Any(i => i.Value == "083021004711" && i.Level == Level.Warn)) throw new Exception("Seriennummer nicht als Datenschutz-Hinweis");
+            if (sink.Sections[0].Items[0].Level != Level.Bad) throw new Exception("Urteil sollte vor dem Aufnahmeort warnen");
+
+            var rotated = ExifAnalyzer.TestJpeg(6, gps: true);
+            var clean = ExifAnalyzer.Strip(rotated);
+            var s2 = new CheckCollector();
+            var r2 = await ExifAnalyzer.AnalyzeAsync(() => new MemoryStream(clean), "x.jpg", clean.Length, s2, geocode: false);
+            if (r2.Latitude != null || r2.Orientation != 6 || s2.AllItems.Any(i => i.Value.Contains("Canon")))
+                throw new Exception($"Bereinigung: GPS {r2.Latitude}, Ausrichtung {r2.Orientation}");
+            // Bilddaten (ab Start of Scan) müssen unverändert sein
+            int sos(byte[] b) { for (int i = 2; i + 1 < b.Length; i++) if (b[i] == 0xFF && b[i + 1] == 0xDA) return i; return -1; }
+            if (!rotated.AsSpan(sos(rotated)).SequenceEqual(clean.AsSpan(sos(clean)))) throw new Exception("Bilddaten verändert");
+            return $"{sink.Sections.Count} Abschnitte · {r.MetadataCount} Einträge · bereinigt {rotated.Length} → {clean.Length} B, Ausrichtung erhalten";
+        });
+
         // Speicher-Checker (Testordner im Temp-Verzeichnis)
         await T("Speicher-Checker", async () =>
         {

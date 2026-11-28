@@ -1,0 +1,44 @@
+<l:ToolView xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:l="using:NetStuff.Ui.Infrastructure"
+            x:Class="NetStuff.Ui.Views.ExifView"
+            DragDrop.AllowDrop="True">
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <StackPanel>
+            <TextBlock Classes="PageTitle" Text="{l:T 'Exif-Checker'}" />
+            <TextBlock Classes="PageSubtitle" Text="{l:T 'Liest alle Metadaten eines Fotos oder Videos (EXIF, GPS, XMP, IPTC, Herstellerdaten) und erklärt sie verständlich: Kamera, Belichtung, Zeit, Aufnahmeort, Bearbeitung und KI-Herkunft – und was das Bild beim Weitergeben über Sie verrät.'}" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Classes="Card">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="Label" Text="{l:T 'Foto, Bild oder Video (Datei oder Web-Adresse)'}" />
+                <TextBox x:Name="TargetBox" MaxWidth="640" HorizontalAlignment="Left" Width="560" KeyDown="TargetBox_KeyDown"
+                         PlaceholderText="{l:T 'Datei wählen, hierher ziehen oder https://… eingeben'}" />
+                <WrapPanel>
+                    <Button x:Name="CheckButton" Classes="accent" Content="{l:T 'Auswerten'}" Click="Check_Click" Margin="0,0,8,6" />
+                    <Button Content="{l:T 'Datei öffnen'}" Click="Open_Click" Margin="0,0,8,6" />
+                    <Button x:Name="PhotosButton" Content="{l:T 'Aus Fotos wählen'}" Click="Photos_Click" Margin="0,0,8,6" IsVisible="False" />
+                    <Button Content="{l:T 'Beispiel'}" Click="Sample_Click" Margin="0,0,8,6" />
+                    <Button x:Name="StripButton" Content="{l:T 'Kopie ohne Metadaten'}" Click="Strip_Click" Margin="0,0,8,6" IsEnabled="False" />
+                    <Button x:Name="MapButton" Content="{l:T 'Karte öffnen'}" Click="Map_Click" Margin="0,0,8,6" IsVisible="False" />
+                    <Button Content="{l:T 'Kopieren'}" Click="Copy_Click" Margin="0,0,16,6" />
+                    <CheckBox x:Name="GeoBox" Content="{l:T 'Adresse zum Aufnahmeort ermitteln (OpenStreetMap)'}" Margin="0,0,0,6" />
+                </WrapPanel>
+                <TextBlock x:Name="HintText" Classes="Status" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="2" x:Name="StatusText" Classes="Status" Margin="0,0,0,8" TextWrapping="Wrap" />
+
+        <ScrollViewer Grid.Row="3">
+            <StackPanel>
+                <Border x:Name="PreviewCard" Classes="Card" IsVisible="False" HorizontalAlignment="Left">
+                    <LayoutTransformControl x:Name="PreviewRotate">
+                        <Image x:Name="Preview" MaxHeight="220" MaxWidth="360" Stretch="Uniform" />
+                    </LayoutTransformControl>
+                </Border>
+                <StackPanel x:Name="ResultsPanel" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</l:ToolView>

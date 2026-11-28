@@ -122,6 +122,7 @@ public partial class MainWindow : FluentWindow
             new("sitecopy", "Website-Kopierer", "", "Web", () => new SiteCopyPage(), "httrack offline spiegel mirror download copier herunterladen"),
 
             new("diskusage", "Speicher-Checker", "", "System", () => new DiskUsagePage(), "treesize festplatte ordner größe speicherplatz platz voll duplikate netzlaufwerk nas freigabe unc disk space aufräumen"),
+            new("exif", "Exif-Checker", "", "System", () => new ExifPage(), "exif foto bild metadaten gps standort kamera heic jpeg xmp iptc datenschutz ki"),
 
             new("settings", "Einstellungen", "", "", () => new SettingsPage(), "settings sprache language logo"),
         };

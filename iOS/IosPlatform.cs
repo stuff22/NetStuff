@@ -1,5 +1,6 @@
 using CoreGraphics;
 using Foundation;
+using PhotosUI;
 using UIKit;
 using UserNotifications;
 
@@ -15,6 +16,56 @@ internal static class IosPlatform
     {
         NetStuff.Platform.Notifier = new IosNotifier();
         NetStuff.Platform.UrlOpener = Open;
+        NetStuff.Platform.PhotoPicker = PickPhotoAsync;
+    }
+
+    /// <summary>
+    /// Foto aus der Mediathek (PHPicker – braucht keine Fotos-Berechtigung). „Current“ liefert die Originaldatei
+    /// (HEIC/JPEG/RAW) unverändert, also mit allen Metadaten inkl. Aufnahmeort.
+    /// </summary>
+    private static Task<(byte[] Data, string Name)?> PickPhotoAsync()
+    {
+        var tcs = new TaskCompletionSource<(byte[] Data, string Name)?>();
+        UIApplication.SharedApplication.InvokeOnMainThread(() =>
+        {
+            var root = TopController();
+            if (root == null) { tcs.TrySetResult(null); return; }
+            var config = new PHPickerConfiguration
+            {
+                SelectionLimit = 1,
+                Filter = PHPickerFilter.GetAnyFilter(new[] { PHPickerFilter.ImagesFilter, PHPickerFilter.VideosFilter }),
+                PreferredAssetRepresentationMode = PHPickerConfigurationAssetRepresentationMode.Current,
+            };
+            var picker = new PHPickerViewController(config) { Delegate = new PhotoPickerDelegate(tcs) };
+            root.PresentViewController(picker, true, null);
+        });
+        return tcs.Task;
+    }
+
+    private sealed class PhotoPickerDelegate : PHPickerViewControllerDelegate
+    {
+        private readonly TaskCompletionSource<(byte[] Data, string Name)?> _tcs;
+        public PhotoPickerDelegate(TaskCompletionSource<(byte[] Data, string Name)?> tcs) => _tcs = tcs;
+
+        public override void DidFinishPicking(PHPickerViewController picker, PHPickerResult[] results)
+        {
+            picker.DismissViewController(true, null);
+            var provider = results?.FirstOrDefault()?.ItemProvider;
+            var type = provider?.RegisteredTypeIdentifiers?.FirstOrDefault();
+            if (provider == null || type == null) { _tcs.TrySetResult(null); return; }
+            provider.LoadFileRepresentation(type, (url, error) =>
+            {
+                // Die Datei ist nur innerhalb dieses Rückrufs gültig – sofort lesen
+                try
+                {
+                    if (url?.Path == null) { _tcs.TrySetResult(null); return; }
+                    var data = File.ReadAllBytes(url.Path);
+                    var name = (provider.SuggestedName ?? "Foto") + Path.GetExtension(url.Path);
+                    _tcs.TrySetResult((data, name));
+                }
+                catch (Exception ex) { _tcs.TrySetException(ex); }
+            });
+        }
     }
 
     /// <summary>Webadressen in Safari öffnen, lokale Dateien (Berichte, PDF, CSV) über den Teilen-Dialog anbieten.</summary>
